@@ -41,20 +41,38 @@
         <tbody>
             @foreach($kartuPas as $i => $kartu)
             @php
-                $qrOptions = new \chillerlan\QRCode\QROptions;
-                $qrOptions->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
-                $qrOptions->scale = 3;
-                $qrOptions->imageTransparent = false;
-                $qrOptions->outputBase64 = false;
+                $qrSrc = '';
+                // 1. Coba chillerlan GD PNG
+                try {
+                    if (class_exists('\chillerlan\QRCode\QROptions') && class_exists('\chillerlan\QRCode\QRCode')) {
+                        $qrOptions = new \chillerlan\QRCode\QROptions;
+                        $qrOptions->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
+                        $qrOptions->scale = 3;
+                        $qrOptions->imageTransparent = false;
+                        $qrOptions->outputBase64 = false;
 
-                $qr = new \chillerlan\QRCode\QRCode($qrOptions);
-                $pngData = $qr->render($kartu->nomor_kartu);
-                $qrBase64 = base64_encode($pngData);
+                        $qr = new \chillerlan\QRCode\QRCode($qrOptions);
+                        $pngData = $qr->render($kartu->nomor_kartu);
+                        $qrSrc = 'data:image/png;base64,' . base64_encode($pngData);
+                    }
+                } catch (\Throwable $e) {
+                    $qrSrc = '';
+                }
+
+                // 2. Fallback ke SimpleSoftwareIO QrCode SVG
+                if (!$qrSrc) {
+                    try {
+                        $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($kartu->nomor_kartu);
+                        $qrSrc = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                    } catch (\Throwable $e) {
+                        $qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($kartu->nomor_kartu);
+                    }
+                }
             @endphp
             <tr>
                 <td>{{ $i + 1 }}</td>
                 <td class="qr-code">
-                    <img src="data:image/png;base64,{{ $qrBase64 }}" width="40" height="40">
+                    <img src="{{ $qrSrc }}" width="40" height="40">
                 </td>
                 <td><strong>{{ $kartu->nomor_kartu }}</strong></td>
                 <td>{{ $kartu->nama_pemegang }}</td>

@@ -221,23 +221,52 @@ class KartuPasController extends Controller
     {
         $kartu = KartuPas::findOrFail($id);
 
-        $options = new \chillerlan\QRCode\QROptions;
-        $options->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
-        $options->scale = 20;
-        $options->imageTransparent = false;
-        $options->outputBase64 = false;
-
-        $qr = new \chillerlan\QRCode\QRCode($options);
-        $pngData = $qr->render($kartu->nomor_kartu);
-
         $namaPemegang = \Illuminate\Support\Str::slug($kartu->nama_pemegang, '_');
         $instansi     = \Illuminate\Support\Str::slug($kartu->perusahaan, '_');
         $noReg        = \Illuminate\Support\Str::slug($kartu->nomor_kartu, '_');
 
-        $filename = "{$namaPemegang}_{$instansi}_{$noReg}.png";
+        $baseFilename = "{$namaPemegang}_{$instansi}_{$noReg}";
 
-        return response($pngData)
-            ->header('Content-Type', 'image/png')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        // 1. Coba gunakan chillerlan (GD PNG)
+        try {
+            if (class_exists('\chillerlan\QRCode\QROptions') && class_exists('\chillerlan\QRCode\QRCode')) {
+                $options = new \chillerlan\QRCode\QROptions;
+                $options->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
+                $options->scale = 20;
+                $options->imageTransparent = false;
+                $options->outputBase64 = false;
+
+                $qr = new \chillerlan\QRCode\QRCode($options);
+                $pngData = $qr->render($kartu->nomor_kartu);
+
+                return response($pngData)
+                    ->header('Content-Type', 'image/png')
+                    ->header('Content-Disposition', 'attachment; filename="' . $baseFilename . '.png"');
+            }
+        } catch (\Throwable $e) {
+            // Lanjut ke fallback jika chillerlan error/tidak kompatibel
+        }
+
+        // 2. Fallback universal ke SimpleSoftwareIO QrCode SVG (Tanpa butuh Imagick/GD)
+        try {
+            $svgData = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(400)
+                ->margin(1)
+                ->generate($kartu->nomor_kartu);
+
+            return response($svgData)
+                ->header('Content-Type', 'image/svg+xml')
+                ->header('Content-Disposition', 'attachment; filename="' . $baseFilename . '.svg"');
+        } catch (\Throwable $e) {
+            // 3. Ultimate Fallback via QR Code API Service
+            $apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" . urlencode($kartu->nomor_kartu);
+            $imageData = @file_get_contents($apiUrl);
+            if ($imageData !== false) {
+                return response($imageData)
+                    ->header('Content-Type', 'image/png')
+                    ->header('Content-Disposition', 'attachment; filename="' . $baseFilename . '.png"');
+            }
+
+            return redirect()->back()->with('error', 'Gagal mengunduh QR Code.');
+        }
     }
 }
