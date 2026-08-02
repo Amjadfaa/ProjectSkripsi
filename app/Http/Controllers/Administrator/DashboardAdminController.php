@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Administrator;
 
 use App\Http\Controllers\Controller;
 use App\Models\KartuPas;
+use App\Models\Instansi;
+use App\Models\CameraDevice;
+use App\Models\ScanLog;
 use App\Models\Permohonan;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
