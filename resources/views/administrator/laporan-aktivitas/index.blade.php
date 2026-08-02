@@ -146,7 +146,7 @@
                             <tr class="hover:bg-gray-50 transition">
                                 <td class="p-3 font-mono text-xs text-gray-600">
                                     <div class="font-bold text-gray-800">{{ $log->waktu_scan->format('d/m/Y') }}</div>
-                                    <div>{{ $log->waktu_scan->format('H:i:s') }} WITA</div>
+                                    <div>{{ $log->waktu_scan->format('H:i:s') }} WIT</div>
                                 </td>
                                 <td class="p-3">
                                     <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-bold mr-1">Area {{ $log->kode_area }}</span>
