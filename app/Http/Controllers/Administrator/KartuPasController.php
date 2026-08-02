@@ -93,6 +93,13 @@ class KartuPasController extends Controller
             'status'          => 'aktif',
         ]);
 
+        // Cek dan kirim notifikasi email secara otomatis jika kartu baru langsung mendekati masa kadaluarsa (<30 hari)
+        try {
+            \Illuminate\Support\Facades\Artisan::call('notifikasi:kadaluarsa');
+        } catch (\Throwable $e) {
+            // Abaikan error background mail agar proses simpan kartu tidak terganggu
+        }
+
         return redirect()->route('administrator.kartu-pas.index')
             ->with('success', 'Kartu PAS berhasil ditambahkan.');
     }
@@ -151,6 +158,13 @@ class KartuPasController extends Controller
             'tanggal_berlaku' => $request->tanggal_berlaku,
             'status'          => $request->status,
         ]);
+
+        // Cek dan kirim notifikasi email secara otomatis jika data kartu diupdate mendekati masa kadaluarsa
+        try {
+            \Illuminate\Support\Facades\Artisan::call('notifikasi:kadaluarsa');
+        } catch (\Throwable $e) {
+            // Abaikan error background mail agar proses update kartu tidak terganggu
+        }
 
         return redirect()->route('administrator.kartu-pas.index')
             ->with('success', 'Kartu PAS berhasil diupdate.');
