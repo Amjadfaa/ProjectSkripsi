@@ -30,7 +30,7 @@
     </div>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-5 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
             <p class="text-xs text-gray-500 uppercase font-semibold">Total Kartu PAS</p>
             <p class="text-3xl font-bold text-blue-600 mt-1">{{ $totalKartu }}</p>
@@ -51,24 +51,6 @@
             <p class="text-3xl font-bold text-yellow-600 mt-1">{{ $kartuAkanBerakhir }}</p>
             <p class="text-xs text-gray-400 mt-1">Dalam 30 hari</p>
         </div>
-    </div>
-
-    <div class="grid grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-500">
-            <p class="text-xs text-gray-500 uppercase font-semibold">Total Pemohon</p>
-            <p class="text-3xl font-bold text-purple-600 mt-1">{{ $totalPemohon }}</p>
-            <p class="text-xs text-gray-400 mt-1">User terdaftar</p>
-        </div>
-        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-400">
-            <p class="text-xs text-gray-500 uppercase font-semibold">Total Permohonan</p>
-            <p class="text-3xl font-bold text-blue-500 mt-1">{{ $totalPermohonan }}</p>
-            <p class="text-xs text-gray-400 mt-1">Semua permohonan</p>
-        </div>
-        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-400">
-            <p class="text-xs text-gray-500 uppercase font-semibold">Disetujui</p>
-            <p class="text-3xl font-bold text-green-500 mt-1">{{ $totalDisetujui }}</p>
-            <p class="text-xs text-gray-400 mt-1">Permohonan disetujui</p>
-        </div>
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-400">
             <p class="text-xs text-gray-500 uppercase font-semibold">Tidak Aktif</p>
             <p class="text-3xl font-bold text-gray-600 mt-1">{{ $kartuTidakAktif }}</p>
@@ -85,18 +67,12 @@
             <canvas id="chartStatusKartu" height="220"></canvas>
         </div>
 
-        <!-- Grafik Permohonan Bulanan (Bar) -->
+        <!-- Grafik Kartu PAS per Instansi (Bar Horizontal) -->
         <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-gray-800 mb-4">📋 Permohonan per Bulan {{ date('Y') }}</h3>
-            <canvas id="chartPermohonan" height="220"></canvas>
+            <h3 class="font-bold text-gray-800 mb-4">🏢 Kartu PAS Aktif per Instansi</h3>
+            <canvas id="chartInstansi" height="220"></canvas>
         </div>
 
-    </div>
-
-    <!-- Grafik Kartu PAS per Instansi (Bar Horizontal) -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-        <h3 class="font-bold text-gray-800 mb-4">🏢 Kartu PAS Aktif per Instansi</h3>
-        <canvas id="chartInstansi" height="120"></canvas>
     </div>
 
     <!-- Peringatan Kartu Akan Berakhir -->
@@ -151,39 +127,7 @@
             }
         });
 
-        // 2. Bar Chart - Permohonan per Bulan
-        const bulanLabel = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        const dataPermohonan = @json($laporanBulanan->pluck('total_permohonan', 'bulan'));
-        const dataDisetujui  = @json($laporanBulanan->pluck('disetujui', 'bulan'));
 
-        const permohonanData = bulanLabel.map((_, i) => dataPermohonan[i + 1] ?? 0);
-        const disetujuiData  = bulanLabel.map((_, i) => dataDisetujui[i + 1] ?? 0);
-
-        new Chart(document.getElementById('chartPermohonan'), {
-            type: 'bar',
-            data: {
-                labels: bulanLabel,
-                datasets: [
-                    {
-                        label: 'Total Permohonan',
-                        data: permohonanData,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 6,
-                    },
-                    {
-                        label: 'Disetujui',
-                        data: disetujuiData,
-                        backgroundColor: '#22c55e',
-                        borderRadius: 6,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-            }
-        });
 
         // 3. Bar Horizontal - Kartu PAS per Instansi
         @php

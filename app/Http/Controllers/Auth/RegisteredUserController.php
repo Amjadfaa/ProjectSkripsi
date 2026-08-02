@@ -50,10 +50,6 @@ class RegisteredUserController extends Controller
 
     Auth::login($user);
 
-    return match($user->role) {
-        'administrator' => redirect()->route('administrator.dashboard'),
-        'verifikator'   => redirect()->route('verifikator.dashboard'),
-        default         => redirect()->route('pemohon.dashboard'),
-    };
+    return redirect()->route('administrator.dashboard');
     }
 }

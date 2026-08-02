@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * { font-family: 'Poppins', sans-serif; }
         body { background: #f1f5f9; }
@@ -253,39 +254,12 @@
         <!-- Navigation -->
         <nav class="sidebar-nav">
 
-            @if(auth()->user()->role === 'pemohon')
-                <div class="nav-label">Menu Utama</div>
-                <a href="{{ route('pemohon.dashboard') }}"
-                   class="nav-item {{ request()->routeIs('pemohon.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-                <div class="nav-label">Layanan</div>
-                <a href="{{ route('pemohon.permohonan.index') }}"
-                   class="nav-item {{ request()->routeIs('pemohon.permohonan.*') ? 'active' : '' }}">
-                    <i class="fas fa-folder-open"></i> Permohonan Saya
-                </a>
-                <a href="{{ route('pemohon.berkas-persyaratan.index') }}"
-                   class="nav-item {{ request()->routeIs('pemohon.berkas-persyaratan.*') ? 'active' : '' }}">
-                    <i class="fas fa-file-download"></i> Berkas Persyaratan
-                </a>
-                <div class="nav-label">Akun</div>
-                <a href="{{ route('profile.edit') }}"
-                   class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-                    <i class="fas fa-user-circle"></i> Edit Profil
-                </a>
-            @endif
-
-            @if(auth()->user()->role === 'administrator')
                 <div class="nav-label">Menu Utama</div>
                 <a href="{{ route('administrator.dashboard') }}"
                    class="nav-item {{ request()->routeIs('administrator.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
                 <div class="nav-label">Manajemen</div>
-                <a href="{{ route('administrator.permohonan.index') }}"
-                   class="nav-item {{ request()->routeIs('administrator.permohonan.*') ? 'active' : '' }}">
-                    <i class="fas fa-clipboard-list"></i> Permohonan
-                </a>
                 <a href="{{ route('administrator.kartu-pas.index') }}"
                    class="nav-item {{ request()->routeIs('administrator.kartu-pas.*') ? 'active' : '' }}">
                     <i class="fas fa-id-card"></i> Kartu PAS
@@ -298,45 +272,24 @@
                    class="nav-item {{ request()->routeIs('administrator.instansi.*') ? 'active' : '' }}">
                     <i class="fas fa-building"></i> Instansi
                 </a>
-                <div class="nav-label">Dokumen</div>
-                <a href="{{ route('administrator.berkas-persyaratan.index') }}"
-                   class="nav-item {{ request()->routeIs('administrator.berkas-persyaratan.*') ? 'active' : '' }}">
-                    <i class="fas fa-file-upload"></i> Berkas Persyaratan
+                <a href="{{ route('administrator.perangkat-kamera.index') }}"
+                   class="nav-item {{ request()->routeIs('administrator.perangkat-kamera.*') ? 'active' : '' }}">
+                    <i class="fas fa-video"></i> Perangkat Kamera
                 </a>
                 <div class="nav-label">Laporan</div>
                 <a href="{{ route('administrator.laporan.index') }}"
-                   class="nav-item {{ request()->routeIs('administrator.laporan.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-bar"></i> Laporan Bulanan
+                   class="nav-item {{ request()->routeIs('administrator.laporan.index') || request()->routeIs('administrator.laporan.export*') ? 'active' : '' }}">
+                    <i class="fas fa-id-card"></i> Laporan Kartu PAS
                 </a>
-                <div class="nav-label">Kelola User</div>
-                <a href="{{ route('administrator.users.index') }}"
-                class="nav-item {{ request()->routeIs('administrator.users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> Manajemen User
-                </a>
-                <div class="nav-label">Akun</div>
-                <a href="{{ route('profile.edit') }}"
-                   class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-                    <i class="fas fa-user-circle"></i> Edit Profil
-                </a>
-            @endif
-
-            @if(auth()->user()->role === 'verifikator')
-                <div class="nav-label">Menu Utama</div>
-                <a href="{{ route('verifikator.dashboard') }}"
-                   class="nav-item {{ request()->routeIs('verifikator.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-                <div class="nav-label">Verifikasi</div>
-                <a href="{{ route('verifikator.permohonan.index') }}"
-                   class="nav-item {{ request()->routeIs('verifikator.permohonan.*') ? 'active' : '' }}">
-                    <i class="fas fa-check-circle"></i> Verifikasi Permohonan
+                <a href="{{ route('administrator.laporan-aktivitas.index') }}"
+                   class="nav-item {{ request()->routeIs('administrator.laporan-aktivitas.*') ? 'active' : '' }}">
+                    <i class="fas fa-walking"></i> Laporan Aktivitas
                 </a>
                 <div class="nav-label">Akun</div>
                 <a href="{{ route('profile.edit') }}"
                    class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                     <i class="fas fa-user-circle"></i> Edit Profil
                 </a>
-            @endif
 
         </nav>
 
@@ -471,6 +424,43 @@
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     if (hamburgerBtn) {
         hamburgerBtn.addEventListener('click', openSidebar);
+    }
+
+    // SweetAlert2 Flash Notifications
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: {!! json_encode(session('success')) !!},
+            timer: 3000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: {!! json_encode(session('error')) !!},
+            confirmButtonColor: '#1e3a5f'
+        });
+    @endif
+
+    // Global Confirm Helper Function
+    function SwalConfirm(title, text, confirmButtonText = 'Ya, Hapus!') {
+        return Swal.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        });
     }
 </script>
 

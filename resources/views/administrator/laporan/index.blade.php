@@ -1,158 +1,256 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Laporan Bulanan</h2>
+        <h2 class="font-semibold text-xl text-gray-800">Laporan Kartu PAS</h2>
     </x-slot>
 
-    <!-- Filter Tahun -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6">
-        <form method="GET" action="{{ route('administrator.laporan.index') }}" class="flex items-end gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Pilih Tahun</label>
-                <select name="tahun" class="border-gray-300 rounded-lg shadow-sm text-sm">
-                    @foreach($tahunList as $t)
-                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                    @endforeach
-                    <option value="{{ date('Y') }}" {{ $tahun == date('Y') ? 'selected' : '' }}>{{ date('Y') }}</option>
-                </select>
+    <!-- Filter & Action Header -->
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <form method="GET" action="{{ route('administrator.laporan.index') }}" class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Pilih Tahun Laporan</label>
+                    <select name="tahun" class="border-gray-300 rounded-lg shadow-sm text-sm font-bold text-gray-800">
+                        @foreach($tahunList as $t)
+                            <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                        @endforeach
+                        @if(!$tahunList->contains(date('Y')))
+                            <option value="{{ date('Y') }}" {{ $tahun == date('Y') ? 'selected' : '' }}>Tahun {{ date('Y') }}</option>
+                        @endif
+                    </select>
+                </div>
+                <button type="submit" class="self-end bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                    <i class="fas fa-filter mr-1"></i> Filter Data
+                </button>
             </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">
-                Tampilkan
-            </button>
-            <div class="flex gap-2 ml-auto">
+
+            <div class="flex gap-2">
                 <a href="{{ route('administrator.laporan.export.excel', ['tahun' => $tahun]) }}"
-                   class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 flex items-center gap-2">
+                   class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2 transition">
                     <i class="fas fa-file-excel"></i> Export Excel
                 </a>
                 <a href="{{ route('administrator.laporan.export.pdf', ['tahun' => $tahun]) }}"
-                   class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 flex items-center gap-2">
+                   class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2 transition">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Ringkasan KPI -->
-    <div class="grid grid-cols-6 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-blue-500">
-            <p class="text-2xl font-bold text-blue-600">{{ $laporanBulanan->sum('total_permohonan') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Total Permohonan</p>
+    <!-- Ringkasan KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Kartu Terbit ({{ $tahun }})</p>
+                <p class="text-2xl font-black text-blue-600 mt-0.5">{{ number_format($totalKartuTerbit) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-id-card"></i>
+            </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-green-500">
-            <p class="text-2xl font-bold text-green-600">{{ $laporanBulanan->sum('disetujui') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Disetujui</p>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Kartu PAS Aktif</p>
+                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ number_format($totalKartuAktif) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-check-circle"></i>
+            </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-red-500">
-            <p class="text-2xl font-bold text-red-600">{{ $laporanBulanan->sum('ditolak') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Ditolak</p>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Kartu Kadaluarsa</p>
+                <p class="text-2xl font-black text-amber-600 mt-0.5">{{ number_format($totalKadaluarsa) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-clock"></i>
+            </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-purple-500">
-            <p class="text-2xl font-bold text-purple-600">{{ $laporanBulanan->sum('kartu_baru') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Kartu Baru</p>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-yellow-500">
-            <p class="text-2xl font-bold text-yellow-600">{{ $laporanBulanan->sum('kartu_kadaluarsa') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Kadaluarsa</p>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 text-center border-t-4 border-teal-500">
-            <p class="text-2xl font-bold text-teal-600">{{ $laporanBulanan->sum('kartu_diperpanjang') }}</p>
-            <p class="text-xs text-gray-500 mt-1">Diperpanjang</p>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Kartu Nonaktif / Blokir</p>
+                <p class="text-2xl font-black text-rose-600 mt-0.5">{{ number_format($totalNonaktif) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-ban"></i>
+            </div>
         </div>
     </div>
 
-    <!-- Grafik -->
-    <div class="grid grid-cols-2 gap-6 mb-6">
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-gray-800 mb-4">📋 Permohonan per Bulan</h3>
-            <canvas id="chartPermohonan" height="250"></canvas>
+    <!-- Visual Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <!-- Main Line Chart for Kartu PAS per Bulan -->
+        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-base text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-chart-line text-blue-600"></i> Tren Kartu PAS per Bulan (Tahun {{ $tahun }})
+                    </h3>
+                    <p class="text-xs text-gray-500">Statistik perkembangan kartu baru terbit & diperpanjang setiap bulan</p>
+                </div>
+            </div>
+            <div class="relative h-[280px]">
+                <canvas id="chartKartuPasTrend"></canvas>
+            </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="font-bold text-gray-800 mb-4">🪪 Kartu PAS per Bulan</h3>
-            <canvas id="chartKartu" height="250"></canvas>
+
+        <!-- Donut Chart for Distribution per Instansi -->
+        <div class="lg:col-span-4 bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex flex-col">
+            <div class="mb-4">
+                <h3 class="font-bold text-base text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-purple-600"></i> Distribusi per Instansi
+                </h3>
+                <p class="text-xs text-gray-500">Proporsi penerbitan Kartu PAS per perusahaan</p>
+            </div>
+            <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
+                <canvas id="chartDistribusiInstansi"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Tabel Laporan -->
-    <div class="bg-white rounded-xl shadow p-6">
-        <h3 class="font-bold text-lg text-gray-800 mb-4">📊 Detail Laporan Bulanan {{ $tahun }}</h3>
+    <!-- Tabel Detail Laporan Bulanan -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <h3 class="font-bold text-base text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-table text-indigo-600"></i> Detail Laporan Kartu PAS Bulanan (Tahun {{ $tahun }})
+        </h3>
 
-        @if($laporanBulanan->isEmpty())
-            <p class="text-gray-500 text-center py-8">Belum ada data laporan untuk tahun {{ $tahun }}.</p>
-        @else
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm text-left border-collapse">
                 <thead>
-                    <tr style="background: #1e3a5f; color: white;">
-                        <th class="px-4 py-3 text-left">Bulan</th>
-                        <th class="px-4 py-3 text-center">Total Permohonan</th>
-                        <th class="px-4 py-3 text-center">Disetujui</th>
-                        <th class="px-4 py-3 text-center">Ditolak</th>
-                        <th class="px-4 py-3 text-center">Kartu Baru</th>
-                        <th class="px-4 py-3 text-center">Kadaluarsa</th>
-                        <th class="px-4 py-3 text-center">Diperpanjang</th>
+                    <tr class="bg-slate-800 text-white text-xs uppercase tracking-wider">
+                        <th class="p-3">Bulan</th>
+                        <th class="p-3 text-center">Kartu Baru Terbit</th>
+                        <th class="p-3 text-center">Kartu Diperpanjang</th>
+                        <th class="p-3 text-center">Kartu Kadaluarsa</th>
+                        <th class="p-3 text-center">Total Terbit / Diperbarui</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach($laporanBulanan as $laporan)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold text-gray-800">
+                <tbody class="divide-y divide-gray-200">
+                    @foreach($laporanKartu as $laporan)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-3 font-bold text-gray-800">
                             {{ DateTime::createFromFormat('!m', $laporan->bulan)->format('F') }} {{ $laporan->tahun }}
                         </td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{{ $laporan->total_permohonan }}</span></td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">{{ $laporan->disetujui }}</span></td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">{{ $laporan->ditolak }}</span></td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">{{ $laporan->kartu_baru }}</span></td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">{{ $laporan->kartu_kadaluarsa }}</span></td>
-                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700">{{ $laporan->kartu_diperpanjang }}</span></td>
+                        <td class="p-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                                {{ number_format($laporan->kartu_baru) }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                                {{ number_format($laporan->kartu_diperpanjang) }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                                {{ number_format($laporan->kartu_kadaluarsa) }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center font-bold text-slate-800">
+                            <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-800">
+                                {{ number_format($laporan->total_terbit) }}
+                            </span>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="bg-gray-100 font-bold">
-                        <td class="px-4 py-3">Total</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('total_permohonan') }}</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('disetujui') }}</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('ditolak') }}</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('kartu_baru') }}</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('kartu_kadaluarsa') }}</td>
-                        <td class="px-4 py-3 text-center">{{ $laporanBulanan->sum('kartu_diperpanjang') }}</td>
+                    <tr class="bg-slate-100 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td class="p-3">TOTAL TAHUN {{ $tahun }}</td>
+                        <td class="p-3 text-center text-blue-700">{{ number_format($laporanKartu->sum('kartu_baru')) }}</td>
+                        <td class="p-3 text-center text-purple-700">{{ number_format($laporanKartu->sum('kartu_diperpanjang')) }}</td>
+                        <td class="p-3 text-center text-amber-700">{{ number_format($laporanKartu->sum('kartu_kadaluarsa')) }}</td>
+                        <td class="p-3 text-center text-slate-900">{{ number_format($laporanKartu->sum('total_terbit')) }}</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        @endif
     </div>
 
+    <!-- Chart.js Integration -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const bulanLabel = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        const dataPermohonan   = @json($laporanBulanan->pluck('total_permohonan', 'bulan'));
-        const dataDisetujui    = @json($laporanBulanan->pluck('disetujui', 'bulan'));
-        const dataKartuBaru    = @json($laporanBulanan->pluck('kartu_baru', 'bulan'));
-        const dataKadaluarsa   = @json($laporanBulanan->pluck('kartu_kadaluarsa', 'bulan'));
+        const bulanLabel        = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const dataKartuBaru    = @json($laporanKartu->pluck('kartu_baru', 'bulan'));
+        const dataDiperpanjang = @json($laporanKartu->pluck('kartu_diperpanjang', 'bulan'));
+        const dataKadaluarsa   = @json($laporanKartu->pluck('kartu_kadaluarsa', 'bulan'));
 
-        new Chart(document.getElementById('chartPermohonan'), {
-            type: 'bar',
-            data: {
-                labels: bulanLabel,
-                datasets: [
-                    { label: 'Total Permohonan', data: bulanLabel.map((_, i) => dataPermohonan[i+1] ?? 0), backgroundColor: '#3b82f6', borderRadius: 6 },
-                    { label: 'Disetujui', data: bulanLabel.map((_, i) => dataDisetujui[i+1] ?? 0), backgroundColor: '#22c55e', borderRadius: 6 },
-                ]
-            },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-        });
-
-        new Chart(document.getElementById('chartKartu'), {
+        // Line Chart for Trend
+        const ctxTrend = document.getElementById('chartKartuPasTrend').getContext('2d');
+        new Chart(ctxTrend, {
             type: 'line',
             data: {
                 labels: bulanLabel,
                 datasets: [
-                    { label: 'Kartu Baru', data: bulanLabel.map((_, i) => dataKartuBaru[i+1] ?? 0), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true },
-                    { label: 'Kadaluarsa', data: bulanLabel.map((_, i) => dataKadaluarsa[i+1] ?? 0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true },
+                    { 
+                        label: 'Kartu Baru Terbit', 
+                        data: bulanLabel.map((_, i) => dataKartuBaru[i+1] ?? 0), 
+                        borderColor: '#2563eb', 
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)', 
+                        borderWidth: 3,
+                        tension: 0.35, 
+                        fill: true 
+                    },
+                    { 
+                        label: 'Kartu Diperpanjang', 
+                        data: bulanLabel.map((_, i) => dataDiperpanjang[i+1] ?? 0), 
+                        borderColor: '#9333ea', 
+                        backgroundColor: 'rgba(147, 51, 234, 0.1)', 
+                        borderWidth: 3,
+                        tension: 0.35, 
+                        fill: true 
+                    },
+                    { 
+                        label: 'Kadaluarsa', 
+                        data: bulanLabel.map((_, i) => dataKadaluarsa[i+1] ?? 0), 
+                        borderColor: '#d97706', 
+                        backgroundColor: 'rgba(217, 119, 6, 0.05)', 
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.35
+                    }
                 ]
             },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { position: 'top', labels: { usePointStyle: true, font: { weight: 'bold' } } } 
+                }, 
+                scales: { 
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } } 
+                } 
+            }
+        });
+
+        // Donut Chart for Instansi Distribution
+        const instansiNames  = @json($distribusiInstansi->pluck('nama_instansi'));
+        const instansiCounts = @json($distribusiInstansi->pluck('kartu_pas_count'));
+
+        const ctxDonut = document.getElementById('chartDistribusiInstansi').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: instansiNames,
+                datasets: [{
+                    data: instansiCounts,
+                    backgroundColor: [
+                        '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+                        '#06b6d4', '#84cc16', '#64748b', '#f97316'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                }
+            }
         });
     </script>
-
 </x-app-layout>

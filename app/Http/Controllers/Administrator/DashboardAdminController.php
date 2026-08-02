@@ -15,18 +15,18 @@ class DashboardAdminController extends Controller
 {
     public function index()
     {
-        $totalPemohon    = User::where('role', 'pemohon')->count();
-        $totalPermohonan = Permohonan::count();
-        $totalDisetujui  = Permohonan::where('status', 'disetujui')->count();
+        $totalKartu      = KartuPas::count();
         $totalKartuAktif = KartuPas::where('status', 'aktif')->count();
+        $kartuKadaluarsa = KartuPas::where('status', 'kadaluarsa')->count();
+        $kartuTidakAktif = KartuPas::where('status', 'tidak_aktif')->count();
 
         $laporanBulanan = $this->getLaporanBulanan(date('Y'));
 
         return view('administrator.dashboard', compact(
-            'totalPemohon',
-            'totalPermohonan',
-            'totalDisetujui',
+            'totalKartu',
             'totalKartuAktif',
+            'kartuKadaluarsa',
+            'kartuTidakAktif',
             'laporanBulanan'
         ));
     }

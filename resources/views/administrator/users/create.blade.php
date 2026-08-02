@@ -33,9 +33,9 @@
                     <label class="block text-sm font-medium text-gray-600 mb-1">Role</label>
                     <select name="role" id="role" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm"
                             onchange="togglePerusahaan(this.value)" required>
-                        <option value="pemohon" {{ old('role') == 'pemohon' ? 'selected' : '' }}>Pemohon</option>
-                        <option value="administrator" {{ old('role') == 'administrator' ? 'selected' : '' }}>Administrator</option>
+                        <option value="administrator" {{ old('role', 'administrator') == 'administrator' ? 'selected' : '' }}>Administrator</option>
                         <option value="verifikator" {{ old('role') == 'verifikator' ? 'selected' : '' }}>Verifikator</option>
+                        <option value="pemohon" {{ old('role') == 'pemohon' ? 'selected' : '' }}>Pemohon</option>
                     </select>
                 </div>
                 <div id="fieldPerusahaan">

@@ -4,18 +4,19 @@
     <meta charset="utf-8">
     <title>Laporan Kartu PAS</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; }
+        body { font-family: Arial, sans-serif; font-size: 11px; }
         h2 { text-align: center; color: #1e3a5f; margin-bottom: 4px; }
-        p.subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 11px; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 15px; font-size: 10px; }
         table { width: 100%; border-collapse: collapse; }
         thead { background: #1e3a5f; color: white; }
-        th { padding: 8px 6px; text-align: left; font-size: 11px; }
-        td { padding: 7px 6px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
+        th { padding: 6px 5px; text-align: left; font-size: 10px; }
+        td { padding: 5px 5px; border-bottom: 1px solid #e5e7eb; font-size: 10px; vertical-align: middle; }
         tr:nth-child(even) { background: #f8fafc; }
         .status-aktif { color: #16a34a; font-weight: bold; }
         .status-kadaluarsa { color: #dc2626; font-weight: bold; }
         .status-tidak_aktif { color: #6b7280; font-weight: bold; }
-        .footer { margin-top: 30px; font-size: 10px; color: #94a3b8; text-align: right; }
+        .footer { margin-top: 20px; font-size: 10px; color: #94a3b8; text-align: right; }
+        .qr-code { text-align: center; }
     </style>
 </head>
 <body>
@@ -26,7 +27,8 @@
     <table>
         <thead>
             <tr>
-                <th>No</th>
+                <th style="width: 25px;">No</th>
+                <th style="width: 50px; text-align: center;">QR Code</th>
                 <th>No. Kartu</th>
                 <th>Nama Pemegang</th>
                 <th>Instansi</th>
@@ -38,9 +40,23 @@
         </thead>
         <tbody>
             @foreach($kartuPas as $i => $kartu)
+            @php
+                $qrOptions = new \chillerlan\QRCode\QROptions;
+                $qrOptions->outputInterface = \chillerlan\QRCode\Output\QRGdImagePNG::class;
+                $qrOptions->scale = 3;
+                $qrOptions->imageTransparent = false;
+                $qrOptions->outputBase64 = false;
+
+                $qr = new \chillerlan\QRCode\QRCode($qrOptions);
+                $pngData = $qr->render($kartu->nomor_kartu);
+                $qrBase64 = base64_encode($pngData);
+            @endphp
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td>{{ $kartu->nomor_kartu }}</td>
+                <td class="qr-code">
+                    <img src="data:image/png;base64,{{ $qrBase64 }}" width="40" height="40">
+                </td>
+                <td><strong>{{ $kartu->nomor_kartu }}</strong></td>
                 <td>{{ $kartu->nama_pemegang }}</td>
                 <td>{{ $kartu->perusahaan }}</td>
                 <td>{{ $kartu->area_akses }}</td>

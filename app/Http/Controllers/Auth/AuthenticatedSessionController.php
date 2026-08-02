@@ -28,13 +28,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
     $request->session()->regenerate();
 
-    $role = auth()->user()->role;
-
-    return match($role) {
-        'administrator' => redirect()->route('administrator.dashboard'),
-        'verifikator'   => redirect()->route('verifikator.dashboard'),
-        default         => redirect()->route('pemohon.dashboard'),
-    };
+    return redirect()->route('administrator.dashboard');
     }
 
     /**

@@ -12,13 +12,18 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 
 class KartuPasExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle, WithEvents
 {
     protected $filters;
+    protected $dataItems;
 
     public function __construct($filters = [])
     {
@@ -44,7 +49,8 @@ class KartuPasExport implements FromCollection, WithHeadings, WithMapping, WithS
             $query->where('status', $this->filters['status']);
         }
 
-        return $query->get();
+        $this->dataItems = $query->get();
+        return $this->dataItems;
     }
 
     public function title(): string
@@ -59,9 +65,11 @@ class KartuPasExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Nama Pemegang',
             'Instansi/Perusahaan',
             'Area Akses',
+            'Jabatan',
             'Tanggal Terbit',
             'Tanggal Berlaku',
             'Status',
+            'QR Code',
         ];
     }
 
@@ -72,125 +80,169 @@ class KartuPasExport implements FromCollection, WithHeadings, WithMapping, WithS
             $kartu->nama_pemegang,
             $kartu->perusahaan,
             $kartu->area_akses,
+            $kartu->jabatan ?? '-',
             $kartu->tanggal_terbit->format('d/m/Y'),
             $kartu->tanggal_berlaku->format('d/m/Y'),
             ucfirst(str_replace('_', ' ', $kartu->status)),
+            '', // QR code column - will be filled with image in afterSheet
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $lastRow = $sheet->getHighestRow();
-
-        // Style header
-        $sheet->getStyle('A1:G1')->applyFromArray([
-            'font' => [
-                'bold'  => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'size'  => 11,
-            ],
-            'fill' => [
-                'fillType'   => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1e3a5f'],
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
-
-        // Border semua cell
-        $sheet->getStyle('A1:G' . $lastRow)->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['rgb' => 'D1D5DB'],
-                ],
-            ],
-        ]);
-
-        // Warna baris ganjil
-        for ($row = 2; $row <= $lastRow; $row++) {
-            if ($row % 2 == 0) {
-                $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
-                    'fill' => [
-                        'fillType'   => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'F8FAFC'],
-                    ],
-                ]);
-            }
-        }
-
-        // Alignment semua data
-        $sheet->getStyle('A2:G' . $lastRow)->applyFromArray([
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
-
-        // Warna status
-        for ($row = 2; $row <= $lastRow; $row++) {
-            $status = $sheet->getCell('G' . $row)->getValue();
-            if ($status === 'Aktif') {
-                $sheet->getStyle('G' . $row)->applyFromArray([
-                    'font' => ['color' => ['rgb' => '16a34a'], 'bold' => true],
-                ]);
-            } elseif ($status === 'Kadaluarsa') {
-                $sheet->getStyle('G' . $row)->applyFromArray([
-                    'font' => ['color' => ['rgb' => 'dc2626'], 'bold' => true],
-                ]);
-            } else {
-                $sheet->getStyle('G' . $row)->applyFromArray([
-                    'font' => ['color' => ['rgb' => '6b7280'], 'bold' => true],
-                ]);
-            }
-        }
-
-        // Tinggi baris header
-        $sheet->getRowDimension(1)->setRowHeight(25);
-
         return [];
+    }
+
+    /**
+     * Generate a GD image resource for a QR code PNG
+     */
+    private function generateQrGdImage(string $text): \GdImage|false
+    {
+        $options = new QROptions;
+        $options->outputInterface = QRGdImagePNG::class;
+        $options->scale = 4;
+        $options->imageTransparent = false;
+        $options->outputBase64 = false;
+
+        $qr = new QRCode($options);
+        $pngData = $qr->render($text);
+
+        return imagecreatefromstring($pngData);
     }
 
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function(AfterSheet $event) {
-                $sheet     = $event->sheet->getDelegate();
-                $lastRow   = $sheet->getHighestRow();
-                $lastCol   = $sheet->getHighestColumn();
+                $sheet = $event->sheet->getDelegate();
 
-                // Tambah judul di atas tabel
+                // Insert 3 header title rows
                 $sheet->insertNewRowBefore(1, 3);
 
-                // Judul utama
-                $sheet->mergeCells('A1:G1');
+                // Main Title
+                $sheet->mergeCells('A1:I1');
                 $sheet->setCellValue('A1', 'LAPORAN DATA KARTU PAS');
                 $sheet->getStyle('A1')->applyFromArray([
                     'font'      => ['bold' => true, 'size' => 14, 'color' => ['rgb' => '1e3a5f']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // Subjudul
-                $sheet->mergeCells('A2:G2');
+                // Subtitle
+                $sheet->mergeCells('A2:I2');
                 $sheet->setCellValue('A2', 'MONPASKU - Sistem Monitoring PAS Bandara');
                 $sheet->getStyle('A2')->applyFromArray([
                     'font'      => ['size' => 10, 'color' => ['rgb' => '64748b']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // Tanggal cetak
-                $sheet->mergeCells('A3:G3');
+                // Print Date
+                $sheet->mergeCells('A3:I3');
                 $sheet->setCellValue('A3', 'Dicetak: ' . now()->format('d/m/Y H:i'));
                 $sheet->getStyle('A3')->applyFromArray([
                     'font'      => ['size' => 9, 'color' => ['rgb' => '94a3b8']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // Tinggi baris judul
+                $lastRow = $sheet->getHighestRow();
+
+                // Style table header row (Row 4)
+                $sheet->getStyle('A4:I4')->applyFromArray([
+                    'font' => [
+                        'bold'  => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                        'size'  => 11,
+                    ],
+                    'fill' => [
+                        'fillType'   => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '1e3a5f'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical'   => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+
+                // Style all data cells
+                $sheet->getStyle('A4:I' . $lastRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color'       => ['rgb' => 'D1D5DB'],
+                        ],
+                    ],
+                    'alignment' => [
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+
+                // Alternating row colors
+                for ($row = 5; $row <= $lastRow; $row++) {
+                    if ($row % 2 == 1) {
+                        $sheet->getStyle('A' . $row . ':I' . $row)->applyFromArray([
+                            'fill' => [
+                                'fillType'   => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'F8FAFC'],
+                            ],
+                        ]);
+                    }
+                }
+
+                // Status column coloring
+                for ($row = 5; $row <= $lastRow; $row++) {
+                    $status = $sheet->getCell('H' . $row)->getValue();
+                    $color = match($status) {
+                        'Aktif'      => '16a34a',
+                        'Kadaluarsa' => 'dc2626',
+                        default      => '6b7280',
+                    };
+                    $sheet->getStyle('H' . $row)->applyFromArray([
+                        'font' => ['color' => ['rgb' => $color], 'bold' => true],
+                    ]);
+                }
+
+                // Row heights
                 $sheet->getRowDimension(1)->setRowHeight(30);
                 $sheet->getRowDimension(2)->setRowHeight(18);
                 $sheet->getRowDimension(3)->setRowHeight(15);
+                $sheet->getRowDimension(4)->setRowHeight(25);
+
+                // Set QR Code column width
+                $sheet->getColumnDimension('I')->setAutoSize(false);
+                $sheet->getColumnDimension('I')->setWidth(12);
+
+                // Embed QR Code PNG images for each data row
+                if ($this->dataItems && count($this->dataItems) > 0) {
+                    foreach ($this->dataItems as $index => $kartu) {
+                        $rowNum = $index + 5; // data starts at row 5
+
+                        // Set row height for QR code
+                        $sheet->getRowDimension($rowNum)->setRowHeight(55);
+
+                        // Clear the text placeholder
+                        $sheet->setCellValue('I' . $rowNum, '');
+
+                        try {
+                            $gdImage = $this->generateQrGdImage($kartu->nomor_kartu);
+
+                            if ($gdImage !== false) {
+                                $drawing = new MemoryDrawing();
+                                $drawing->setName('QR-' . $kartu->nomor_kartu);
+                                $drawing->setDescription('QR Code: ' . $kartu->nomor_kartu);
+                                $drawing->setImageResource($gdImage);
+                                $drawing->setRenderingFunction(MemoryDrawing::RENDERING_PNG);
+                                $drawing->setMimeType(MemoryDrawing::MIMETYPE_PNG);
+                                $drawing->setHeight(50);
+                                $drawing->setCoordinates('I' . $rowNum);
+                                $drawing->setOffsetX(8);
+                                $drawing->setOffsetY(3);
+                                $drawing->setWorksheet($sheet);
+                            }
+                        } catch (\Throwable $e) {
+                            // Fallback: write text if image fails
+                            $sheet->setCellValue('I' . $rowNum, $kartu->nomor_kartu);
+                        }
+                    }
+                }
             },
         ];
     }

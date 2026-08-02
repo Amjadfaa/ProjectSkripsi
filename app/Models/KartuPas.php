@@ -12,20 +12,14 @@ class KartuPas extends Model
     protected $table = 'kartu_pas';
 
     protected $fillable = [
+        'instansi_id',
         'permohonan_id',
         'nomor_kartu',
+        'email',
         'nama_pemegang',
         'perusahaan',
         'area_akses',
         'jabatan',
-        'tanggal_terbit',
-        'tanggal_berlaku',
-        'status',
-        'permohonan_id',
-        'nomor_kartu',
-        'nama_pemegang',
-        'perusahaan',
-        'area_akses',
         'tanggal_terbit',
         'tanggal_berlaku',
         'status',
@@ -37,6 +31,12 @@ class KartuPas extends Model
         'tanggal_terbit'  => 'date',
         'tanggal_berlaku' => 'date',
     ];
+
+    // Relasi ke Instansi
+    public function instansi()
+    {
+        return $this->belongsTo(Instansi::class, 'instansi_id');
+    }
 
     // Relasi ke Permohonan
     public function permohonan()

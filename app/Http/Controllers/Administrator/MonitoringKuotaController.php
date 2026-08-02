@@ -34,9 +34,10 @@ class MonitoringKuotaController extends Controller
     public function show(int $id)
     {
         $instansi = Instansi::findOrFail($id);
-        $kartuPas = KartuPas::where('perusahaan', $instansi->nama_instansi)
-            ->latest()
-            ->get();
+        $kartuPas = KartuPas::where(function($q) use ($instansi) {
+            $q->where('instansi_id', $instansi->id)
+              ->orWhere('perusahaan', $instansi->nama_instansi);
+        })->latest()->get();
 
         return view('administrator.monitoring-kuota.show', compact('instansi', 'kartuPas'));
     }
@@ -67,5 +68,44 @@ class MonitoringKuotaController extends Controller
         Instansi::findOrFail($id)->update(['kuota' => $request->kuota]);
 
         return redirect()->back()->with('success', 'Kuota berhasil diupdate.');
+    }
+
+    public function getDetailAjax(int $id)
+    {
+        $instansi = Instansi::findOrFail($id);
+        $kartuPas = KartuPas::where(function($q) use ($instansi) {
+            $q->where('instansi_id', $instansi->id)
+              ->orWhere('perusahaan', $instansi->nama_instansi);
+        })->latest()->get();
+
+        $kartuAktif    = $kartuPas->where('status', 'aktif')->count();
+        $kartuNonaktif = $kartuPas->where('status', '!=', 'aktif')->count();
+        $sisaKuota     = $instansi->kuota - $kartuAktif;
+
+        return response()->json([
+            'success'  => true,
+            'instansi' => [
+                'id'            => $instansi->id,
+                'nama_instansi' => $instansi->nama_instansi,
+                'alamat'        => $instansi->alamat ?? '-',
+                'kuota'         => $instansi->kuota,
+                'kartu_aktif'   => $kartuAktif,
+                'sisa_kuota'    => $sisaKuota,
+                'nonaktif'      => $kartuNonaktif,
+            ],
+            'kartu_pas' => $kartuPas->map(function($k) {
+                return [
+                    'id'                  => $k->id,
+                    'nomor_kartu'         => $k->nomor_kartu,
+                    'nama_pemegang'       => $k->nama_pemegang,
+                    'area_akses'          => $k->area_akses,
+                    'jabatan'             => $k->jabatan ?? '-',
+                    'tanggal_berlaku'     => $k->tanggal_berlaku ? $k->tanggal_berlaku->format('d/m/Y') : '-',
+                    'status'              => $k->status,
+                    'keterangan_nonaktif' => $k->keterangan_nonaktif ? ucfirst($k->keterangan_nonaktif) : null,
+                    'catatan_nonaktif'    => $k->catatan_nonaktif,
+                ];
+            }),
+        ]);
     }
 }

@@ -16,20 +16,5 @@ class UserSeeder extends Seeder
             'password'   => Hash::make('password'),
             'role'       => 'administrator',
         ]);
-
-        User::create([
-            'name'       => 'Verifikator',
-            'email'      => 'verifikator@monitoring-pas.test',
-            'password'   => Hash::make('password'),
-            'role'       => 'verifikator',
-        ]);
-
-        User::create([
-            'name'       => 'Pemohon PT ABC',
-            'email'      => 'pemohon@monitoring-pas.test',
-            'password'   => Hash::make('password'),
-            'role'       => 'pemohon',
-            'perusahaan' => 'PT ABC',
-        ]);
     }
 }

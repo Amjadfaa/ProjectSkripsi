@@ -20,7 +20,20 @@ class Instansi extends Model
     
     public function kartuPas()
     {
-        return $this->hasMany(\App\Models\KartuPas::class, 'perusahaan', 'nama_instansi');
+        return $this->hasMany(\App\Models\KartuPas::class, 'instansi_id');
+    }
+
+    public function getSisaKuotaAttribute(): int
+    {
+        $aktif = $this->kartuPas()->where('status', 'aktif')->count();
+        if ($this->id) {
+            $aktifByName = KartuPas::whereNull('instansi_id')
+                ->where('perusahaan', $this->nama_instansi)
+                ->where('status', 'aktif')
+                ->count();
+            $aktif += $aktifByName;
+        }
+        return max(0, $this->kuota - $aktif);
     }
 }
 
