@@ -15,18 +15,51 @@ class DashboardAdminController extends Controller
 {
     public function index()
     {
-        $totalKartu      = KartuPas::count();
-        $totalKartuAktif = KartuPas::where('status', 'aktif')->count();
-        $kartuKadaluarsa = KartuPas::where('status', 'kadaluarsa')->count();
-        $kartuTidakAktif = KartuPas::where('status', 'tidak_aktif')->count();
+        $totalKartu          = KartuPas::count();
+        $totalKartuAktif     = KartuPas::where('status', 'aktif')->count();
+        $kartuKadaluarsa     = KartuPas::where('status', 'kadaluarsa')->count();
+        $kartuTidakAktif     = KartuPas::where('status', 'tidak_aktif')->count();
+        $kartuAkanBerakhir   = KartuPas::where('status', 'aktif')
+            ->whereBetween('tanggal_berlaku', [now(), now()->addDays(30)])->count();
 
-        $laporanBulanan = $this->getLaporanBulanan(date('Y'));
+        $kartuHampirKadaluarsa = KartuPas::where('status', 'aktif')
+            ->whereBetween('tanggal_berlaku', [now(), now()->addDays(30)])
+            ->orderBy('tanggal_berlaku')
+            ->limit(5)
+            ->get();
+
+        $totalInstansi       = Instansi::count();
+        $instansiKuotaKritis = Instansi::where('is_active', true)
+            ->get()
+            ->filter(fn($instansi) => $instansi->sisa_kuota <= 3);
+
+        $totalPerangkat      = CameraDevice::count();
+        $perangkatAktif      = CameraDevice::where('is_active', true)->count();
+
+        $recentScanLogs      = ScanLog::latest('waktu_scan')->limit(6)->get();
+
+        $kartuPerInstansi    = KartuPas::where('status', 'aktif')
+            ->selectRaw('perusahaan, COUNT(*) as total')
+            ->groupBy('perusahaan')
+            ->orderByDesc('total')
+            ->limit(6)
+            ->get();
+
+        $laporanBulanan      = $this->getLaporanBulanan(date('Y'));
 
         return view('administrator.dashboard', compact(
             'totalKartu',
             'totalKartuAktif',
             'kartuKadaluarsa',
             'kartuTidakAktif',
+            'kartuAkanBerakhir',
+            'kartuHampirKadaluarsa',
+            'totalInstansi',
+            'instansiKuotaKritis',
+            'totalPerangkat',
+            'perangkatAktif',
+            'recentScanLogs',
+            'kartuPerInstansi',
             'laporanBulanan'
         ));
     }
