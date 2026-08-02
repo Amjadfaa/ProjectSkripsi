@@ -272,7 +272,7 @@
     </div>
 
     <!-- MODAL BESAR TAMBAH KARTU PAS -->
-    <div id="modalTambahKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalTambahKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -296,7 +296,6 @@
 
             <form method="POST" action="{{ route('administrator.kartu-pas.simpan') }}">
                 @csrf
-
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Kartu / Registrasi</label>
@@ -306,37 +305,28 @@
                         @error('nomor_kartu') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email Pemegang</label>
-                        <input type="email" name="email" value="{{ old('email') }}"
-                               placeholder="Email untuk notifikasi"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                        @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap Pemegang</label>
                         <input type="text" name="nama_pemegang" value="{{ old('nama_pemegang') }}"
                                placeholder="Nama lengkap pemegang"
                                class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                         @error('nama_pemegang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
-                        <select name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                            <option value="">-- Pilih Instansi --</option>
-                            @foreach($instansiList as $instansi)
-                                @php $sisa = $instansi->sisa_kuota; @endphp
-                                <option value="{{ $instansi->id }}"
-                                    {{ old('instansi_id') == $instansi->id ? 'selected' : '' }}
-                                    {{ $sisa <= 0 ? 'disabled' : '' }}>
-                                    {{ $instansi->nama_instansi }} &mdash; (Sisa Kuota: {{ $sisa }} / Total: {{ $instansi->kuota }}) {{ $sisa <= 0 ? '[KUOTA HABIS]' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('instansi_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
+                    <select name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                        <option value="">-- Pilih Instansi --</option>
+                        @foreach($instansiList as $instansi)
+                            @php $sisa = $instansi->sisa_kuota; @endphp
+                            <option value="{{ $instansi->id }}"
+                                {{ old('instansi_id') == $instansi->id ? 'selected' : '' }}
+                                {{ $sisa <= 0 ? 'disabled' : '' }}>
+                                {{ $instansi->nama_instansi }} &mdash; (Sisa Kuota: {{ $sisa }} / Total: {{ $instansi->kuota }}) {{ $sisa <= 0 ? '[KUOTA HABIS]' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('instansi_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -417,7 +407,7 @@
     </div>
 
     <!-- MODAL EDIT KARTU PAS (SPA) -->
-    <div id="modalEditKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalEditKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -437,27 +427,21 @@
                         <input type="text" id="edit_nomor_kartu" name="nomor_kartu" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email Pemegang</label>
-                        <input type="email" id="edit_email" name="email" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemegang</label>
                         <input type="text" id="edit_nama_pemegang" name="nama_pemegang" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
-                        <select id="edit_instansi_id" name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                            <option value="">-- Pilih Instansi --</option>
-                            @foreach($instansiList as $instansi)
-                                <option value="{{ $instansi->id }}">
-                                    {{ $instansi->nama_instansi }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
+                    <select id="edit_instansi_id" name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                        <option value="">-- Pilih Instansi --</option>
+                        @foreach($instansiList as $instansi)
+                            <option value="{{ $instansi->id }}">
+                                {{ $instansi->nama_instansi }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -524,7 +508,7 @@
     </div>
 
     <!-- MODAL PERPANJANGAN KARTU PAS (SPA) -->
-    <div id="modalPerpanjanganKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalPerpanjanganKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -594,7 +578,7 @@
     </div>
 
     <!-- MODAL KELOLA / TAMBAH AREA AKSES -->
-    <div id="modalAreaAkses" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalAreaAkses" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center pb-3 border-b mb-4">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -643,7 +627,7 @@
     </div>
 
     <!-- MODAL KELOLA / TAMBAH JABATAN -->
-    <div id="modalJabatan" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalJabatan" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center pb-3 border-b mb-4">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -731,7 +715,9 @@
             form.action = "{{ url('/administrator/kartu-pas') }}/" + kartu.id;
 
             document.getElementById('edit_nomor_kartu').value   = kartu.nomor_kartu || '';
-            document.getElementById('edit_email').value         = kartu.email || '';
+            if (document.getElementById('edit_email')) {
+                document.getElementById('edit_email').value     = kartu.email || '';
+            }
             document.getElementById('edit_nama_pemegang').value = kartu.nama_pemegang || '';
             document.getElementById('edit_instansi_id').value   = kartu.instansi_id || '';
             

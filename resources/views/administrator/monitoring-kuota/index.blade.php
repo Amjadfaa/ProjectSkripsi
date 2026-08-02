@@ -206,7 +206,7 @@
     </div>
 
     <!-- SPA MODAL DETAIL INSTANSI & DAFTAR KARTU PAS -->
-    <div id="modalDetailInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalDetailInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 relative max-h-[92vh] flex flex-col">
             <!-- Modal Header -->
             <div class="flex justify-between items-center pb-4 border-b">
@@ -284,7 +284,7 @@
     </div>
 
     <!-- MODAL POPUP NONAKTIFKAN KARTU PAS -->
-    <div id="modalNonaktifkan" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalNonaktifkan" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
             <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
                 <i class="fas fa-user-slash text-rose-600"></i> Nonaktifkan Kartu PAS

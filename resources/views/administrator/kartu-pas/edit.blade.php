@@ -33,14 +33,6 @@
                     @error('nama_pemegang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-600 mb-1">Email Pemegang</label>
-                <input type="email" name="email" value="{{ old('email', $kartuPas->email) }}"
-                    placeholder="Email untuk notifikasi"
-                    class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-600 mb-1">Instansi / Perusahaan</label>
@@ -152,7 +144,7 @@
     </div>
 
     <!-- MODAL KELOLA / TAMBAH AREA AKSES -->
-    <div id="modalAreaAkses" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalAreaAkses" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center pb-3 border-b mb-4">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -201,7 +193,7 @@
     </div>
 
     <!-- MODAL KELOLA / TAMBAH JABATAN -->
-    <div id="modalJabatan" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalJabatan" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center pb-3 border-b mb-4">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">

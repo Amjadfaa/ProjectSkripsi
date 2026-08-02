@@ -97,7 +97,7 @@
     </div>
 
     <!-- MODAL BESAR TAMBAH INSTANSI -->
-    <div id="modalTambahInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalTambahInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -167,7 +167,7 @@
     </div>
 
     <!-- MODAL EDIT INSTANSI (SPA) -->
-    <div id="modalEditInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalEditInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
