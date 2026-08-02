@@ -97,4 +97,29 @@ Route::post('/scan/logout', [ScanController::class, 'logout'])->name('scan.logou
 Route::get('/reset-password-manual', [App\Http\Controllers\Auth\ResetPasswordManualController::class, 'create'])->name('reset.manual');
 Route::post('/reset-password-manual', [App\Http\Controllers\Auth\ResetPasswordManualController::class, 'store'])->name('reset.manual.store');
 
+// Route Uji Coba Kirim Email (Untuk Server Hosting / cPanel)
+Route::get('/test-email', function (\Illuminate\Http\Request $request) {
+    $to = $request->query('to', env('MAIL_FROM_ADDRESS', 'admin@example.com'));
+    
+    try {
+        \Illuminate\Support\Facades\Mail::raw("Halo! Ini tes sukses pengiriman email dari MONPASKU Online.\nDikirim pada: " . now()->format('d/m/Y H:i:s'), function ($message) use ($to) {
+            $message->to($to)->subject('✅ Tes Pengiriman Email MONPASKU Online');
+        });
+        
+        return response()->json([
+            'status' => 'SUCCESS',
+            'message' => "Email tes BERHASIL dikirim ke [{$to}]! Silakan cek folder Inbox atau Spam.",
+            'from' => config('mail.from.address'),
+            'mailer' => config('mail.default'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'message' => 'Gagal mengirim email: ' . $e->getMessage(),
+            'from' => config('mail.from.address'),
+            'mailer' => config('mail.default'),
+        ], 500);
+    }
+});
+
 require __DIR__.'/auth.php';
