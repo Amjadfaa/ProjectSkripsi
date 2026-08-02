@@ -183,13 +183,7 @@
                 </button>
             </div>
 
-            <!-- Register -->
-            <div class="text-center pt-2 border-t border-gray-100">
-                <p class="text-xs text-gray-500">
-                    Belum punya akun?
-                    <a href="{{ route('register') }}" class="text-blue-600 font-bold hover:underline">Daftar Akun Baru</a>
-                </p>
-            </div>
+
         </form>
     </div>
 
