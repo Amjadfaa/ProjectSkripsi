@@ -7,7 +7,7 @@
 
     <!-- Filter Card Header -->
     <div class="bg-white rounded-xl shadow-sm p-5 mb-6 border border-gray-100">
-        <form method="GET" action="{{ route('administrator.laporan-aktivitas.index') }}" class="space-y-4">
+        <form id="filterForm" method="GET" action="{{ route('administrator.laporan-aktivitas.index') }}" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <!-- Filter Tanggal -->
                 <div>
@@ -43,7 +43,7 @@
 
                 <!-- Filter Tipe Aktivitas (Masuk/Keluar) -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Tipe Scan (Masuk/Keluar)</label>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Tipe Scan</label>
                     <select name="tipe_aktivitas" class="w-full border-gray-300 rounded-lg shadow-sm text-xs p-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">-- Semua Tipe Scan --</option>
                         <option value="masuk" {{ $tipeAktivitas == 'masuk' ? 'selected' : '' }}>Scan Masuk (IN)</option>
@@ -60,20 +60,20 @@
 
             <div class="flex items-center justify-between pt-3 border-t border-gray-100 flex-wrap gap-3">
                 <div class="flex items-center gap-2">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                    <button type="submit" id="btnFilterSubmit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
                         <i class="fas fa-filter"></i> Terapkan Filter
                     </button>
-                    <a href="{{ route('administrator.laporan-aktivitas.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-xs font-semibold transition">
+                    <a href="{{ route('administrator.laporan-aktivitas.index') }}" onclick="resetFilterSpa(event)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg text-xs font-semibold transition">
                         Reset
                     </a>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('administrator.laporan-aktivitas.export.excel', request()->all()) }}"
+                    <a id="btnExportExcel" href="{{ route('administrator.laporan-aktivitas.export.excel', request()->all()) }}"
                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
                         <i class="fas fa-file-excel"></i> Export Excel
                     </a>
-                    <a href="{{ route('administrator.laporan-aktivitas.export.pdf', request()->all()) }}"
+                    <a id="btnExportPdf" href="{{ route('administrator.laporan-aktivitas.export.pdf', request()->all()) }}"
                        class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
                         <i class="fas fa-file-pdf"></i> Export PDF
                     </a>
@@ -87,7 +87,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500 flex items-center justify-between">
             <div>
                 <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Scan</p>
-                <p class="text-2xl font-black text-blue-600 mt-0.5">{{ number_format($totalScan) }}</p>
+                <p id="kpiTotalScan" class="text-2xl font-black text-blue-600 mt-0.5">{{ number_format($totalScan) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-walking"></i>
@@ -97,7 +97,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500 flex items-center justify-between">
             <div>
                 <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Scan Masuk (IN)</p>
-                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ number_format($totalMasuk) }}</p>
+                <p id="kpiTotalMasuk" class="text-2xl font-black text-emerald-600 mt-0.5">{{ number_format($totalMasuk) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-sign-in-alt"></i>
@@ -107,7 +107,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500 flex items-center justify-between">
             <div>
                 <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Scan Keluar (OUT)</p>
-                <p class="text-2xl font-black text-amber-600 mt-0.5">{{ number_format($totalKeluar) }}</p>
+                <p id="kpiTotalKeluar" class="text-2xl font-black text-amber-600 mt-0.5">{{ number_format($totalKeluar) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-sign-out-alt"></i>
@@ -117,7 +117,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500 flex items-center justify-between">
             <div>
                 <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Akses Diterima</p>
-                <p class="text-2xl font-black text-teal-600 mt-0.5">{{ number_format($totalDiterima) }}</p>
+                <p id="kpiTotalDiterima" class="text-2xl font-black text-teal-600 mt-0.5">{{ number_format($totalDiterima) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-check-circle"></i>
@@ -127,7 +127,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500 flex items-center justify-between">
             <div>
                 <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Akses Ditolak</p>
-                <p class="text-2xl font-black text-rose-600 mt-0.5">{{ number_format($totalDitolak) }}</p>
+                <p id="kpiTotalDitolak" class="text-2xl font-black text-rose-600 mt-0.5">{{ number_format($totalDitolak) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-times-circle"></i>
@@ -138,88 +138,9 @@
     <!-- Chart Row & Log Table -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         
-        <!-- Log Table -->
-        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-extrabold text-base text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-list-alt text-blue-600"></i> Riwayat Aktivitas Scan Masuk / Keluar
-                    </h3>
-                    <span class="text-xs text-gray-500 font-medium">Menampilkan {{ $scanLogs->firstItem() ?? 0 }} - {{ $scanLogs->lastItem() ?? 0 }} dari {{ $scanLogs->total() }} data</span>
-                </div>
-
-                @if($scanLogs->isEmpty())
-                    <p class="text-gray-500 text-center py-12">Tidak ada data aktivitas scan ditemukan untuk kriteria filter ini.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-800 text-white uppercase tracking-wider text-[11px]">
-                                    <th class="p-3">Waktu Scan</th>
-                                    <th class="p-3">Perangkat Kamera & Area</th>
-                                    <th class="p-3">No. Kartu PAS</th>
-                                    <th class="p-3">Pemegang & Perusahaan</th>
-                                    <th class="p-3 text-center">Aktivitas</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3">Keterangan / Catatan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                @foreach($scanLogs as $log)
-                                <tr class="hover:bg-gray-50/80 transition">
-                                    <td class="p-3 font-mono text-xs text-gray-600">
-                                        <div class="font-bold text-gray-800 flex items-center gap-1">
-                                            <i class="far fa-calendar-alt text-blue-500 text-[11px]"></i>
-                                            {{ $log->waktu_scan->translatedFormat('l, d M Y') }}
-                                        </div>
-                                        <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
-                                            <i class="far fa-clock text-gray-400 text-[10px]"></i>
-                                            {{ $log->waktu_scan->format('H:i:s') }} WIT
-                                        </div>
-                                    </td>
-                                    <td class="p-3">
-                                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[11px] font-bold inline-block mb-0.5">Area {{ $log->kode_area }}</span>
-                                        <p class="text-[11px] text-gray-500">{{ optional($log->cameraDevice)->nama_kamera ?? 'Kamera Station' }}</p>
-                                    </td>
-                                    <td class="p-3 font-mono font-bold text-purple-700">
-                                        {{ $log->nomor_kartu }}
-                                    </td>
-                                    <td class="p-3">
-                                        <p class="font-bold text-gray-800 text-xs">{{ $log->nama_pemegang }}</p>
-                                        <p class="text-[11px] text-gray-500">{{ $log->perusahaan }}</p>
-                                    </td>
-                                    <td class="p-3 text-center">
-                                        <span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase {{ $log->tipe_aktivitas === 'keluar' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300' }}">
-                                            <i class="fas {{ $log->tipe_aktivitas === 'keluar' ? 'fa-sign-out-alt' : 'fa-sign-in-alt' }} mr-0.5"></i>
-                                            {{ $log->tipe_aktivitas ?: 'masuk' }}
-                                        </span>
-                                    </td>
-                                    <td class="p-3 text-center">
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider {{ $log->status_akses === 'diterima' ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-rose-100 text-rose-700 border border-rose-300' }}">
-                                            {{ $log->status_akses }}
-                                        </span>
-                                    </td>
-                                    <td class="p-3 text-xs text-gray-600">
-                                        <div class="font-medium text-gray-800">{{ $log->alasan }}</div>
-                                        @if($log->catatan)
-                                            <div class="text-[11px] text-blue-700 mt-1 italic bg-blue-50/80 px-2 py-1 rounded border border-blue-200/80 inline-block">
-                                                <i class="fas fa-sticky-note mr-1"></i> Catatan: {{ $log->catatan }}
-                                            </div>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            @if(!$scanLogs->isEmpty())
-                <div class="mt-4 pt-3 border-t border-gray-100">
-                    {{ $scanLogs->links() }}
-                </div>
-            @endif
+        <!-- Log Table (SPA Container) -->
+        <div id="tableContainer" class="lg:col-span-8 bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col justify-between relative">
+            @include('administrator.laporan-aktivitas.partials.table', ['scanLogs' => $scanLogs])
         </div>
 
         <!-- Chart Side Column -->
@@ -237,33 +158,126 @@
 
     </div>
 
-    <!-- Chart.js Integration -->
+    <!-- Chart.js Integration & SPA AJAX Script -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const areaLabels = @json($chartDataArea->keys());
-        const areaTotals = @json($chartDataArea->values());
+        let areaChart = null;
 
-        const ctxArea = document.getElementById('chartAktivitasArea').getContext('2d');
-        new Chart(ctxArea, {
-            type: 'doughnut',
-            data: {
-                labels: areaLabels.map(a => 'Area ' + a),
-                datasets: [{
-                    data: areaTotals,
-                    backgroundColor: [
-                        '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-                }
+        function initChart(labels, dataValues) {
+            const ctxArea = document.getElementById('chartAktivitasArea').getContext('2d');
+            if (areaChart) {
+                areaChart.destroy();
             }
+
+            areaChart = new Chart(ctxArea, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: [
+                            '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // Initialize Chart on first load
+        const initialLabels = @json($chartDataArea->keys()->map(fn($a) => 'Area ' . $a));
+        const initialData = @json($chartDataArea->values());
+        initChart(initialLabels, initialData);
+
+        // SPA AJAX Navigation & Pagination Handler
+        function fetchSpaData(url) {
+            const container = document.getElementById('tableContainer');
+            if (container) {
+                container.style.opacity = '0.5';
+            }
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (container) {
+                    container.innerHTML = data.table_html;
+                    container.style.opacity = '1';
+                }
+
+                // Update KPI Cards
+                if (data.totalScan !== undefined) document.getElementById('kpiTotalScan').innerText = data.totalScan;
+                if (data.totalMasuk !== undefined) document.getElementById('kpiTotalMasuk').innerText = data.totalMasuk;
+                if (data.totalKeluar !== undefined) document.getElementById('kpiTotalKeluar').innerText = data.totalKeluar;
+                if (data.totalDiterima !== undefined) document.getElementById('kpiTotalDiterima').innerText = data.totalDiterima;
+                if (data.totalDitolak !== undefined) document.getElementById('kpiTotalDitolak').innerText = data.totalDitolak;
+
+                // Update Chart
+                if (data.chartLabels && data.chartValues) {
+                    initChart(data.chartLabels, data.chartValues);
+                }
+
+                // Update Export Links
+                const urlObj = new URL(url, window.location.origin);
+                const queryStr = urlObj.search;
+                const btnExcel = document.getElementById('btnExportExcel');
+                const btnPdf = document.getElementById('btnExportPdf');
+                if (btnExcel) btnExcel.href = `{{ route('administrator.laporan-aktivitas.export.excel') }}${queryStr}`;
+                if (btnPdf) btnPdf.href = `{{ route('administrator.laporan-aktivitas.export.pdf') }}${queryStr}`;
+
+                // Update Browser URL without reload
+                window.history.pushState(null, '', url);
+            })
+            .catch(err => {
+                if (container) container.style.opacity = '1';
+                console.error('SPA Fetch Error:', err);
+            });
+        }
+
+        // SPA Filter Form Submit Event Listener
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            const targetUrl = `${this.action}?${params.toString()}`;
+            fetchSpaData(targetUrl);
+        });
+
+        // SPA Pagination Clicks Listener
+        document.getElementById('tableContainer').addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link && link.href && (link.href.includes('page=') || link.href.includes('laporan-aktivitas'))) {
+                e.preventDefault();
+                fetchSpaData(link.href);
+            }
+        });
+
+        // Reset Filter SPA
+        function resetFilterSpa(e) {
+            e.preventDefault();
+            const form = document.getElementById('filterForm');
+            if (form) {
+                form.reset();
+                const defaultUrl = "{{ route('administrator.laporan-aktivitas.index') }}";
+                fetchSpaData(defaultUrl);
+            }
+        }
+
+        // Handle Browser Back/Forward buttons
+        window.addEventListener('popstate', function() {
+            fetchSpaData(window.location.href);
         });
     </script>
 </x-app-layout>

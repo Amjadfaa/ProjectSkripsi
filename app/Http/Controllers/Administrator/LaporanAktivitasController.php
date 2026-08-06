@@ -58,8 +58,8 @@ class LaporanAktivitasController extends Controller
         $totalMasuk    = (clone $query)->where('tipe_aktivitas', 'masuk')->count();
         $totalKeluar   = (clone $query)->where('tipe_aktivitas', 'keluar')->count();
 
-        // Paginated log data
-        $scanLogs = $query->latest('waktu_scan')->paginate(15)->withQueryString();
+        // Paginated log data (max 6 items per page)
+        $scanLogs = $query->latest('waktu_scan')->paginate(6)->withQueryString();
 
         // Dropdown filter master lists
         $areaAksesList = AreaAkses::orderBy('kode')->get();
@@ -71,6 +71,19 @@ class LaporanAktivitasController extends Controller
             ->whereDate('waktu_scan', '<=', $endDate)
             ->groupBy('kode_area')
             ->pluck('total', 'kode_area');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'table_html' => view('administrator.laporan-aktivitas.partials.table', compact('scanLogs'))->render(),
+                'totalScan' => number_format($totalScan),
+                'totalMasuk' => number_format($totalMasuk),
+                'totalKeluar' => number_format($totalKeluar),
+                'totalDiterima' => number_format($totalDiterima),
+                'totalDitolak' => number_format($totalDitolak),
+                'chartLabels' => $chartDataArea->keys()->map(fn($a) => 'Area ' . $a)->toArray(),
+                'chartValues' => $chartDataArea->values()->toArray(),
+            ]);
+        }
 
         return view('administrator.laporan-aktivitas.index', compact(
             'scanLogs', 'startDate', 'endDate', 'kodeArea', 'statusAkses', 'tipeAktivitas', 'cameraId', 'search',
