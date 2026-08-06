@@ -3,7 +3,9 @@
         <h3 class="font-extrabold text-base text-gray-800 flex items-center gap-2">
             <i class="fas fa-list-alt text-blue-600"></i> Riwayat Aktivitas Scan Masuk / Keluar
         </h3>
-        <span class="text-xs text-gray-500 font-medium">Menampilkan {{ $scanLogs->firstItem() ?? 0 }} - {{ $scanLogs->lastItem() ?? 0 }} dari {{ $scanLogs->total() }} data</span>
+        <span class="text-xs text-gray-500 font-medium">
+            Halaman {{ $scanLogs->currentPage() }} dari {{ $scanLogs->lastPage() }}
+        </span>
     </div>
 
     @if($scanLogs->isEmpty())
@@ -71,8 +73,50 @@
             </table>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
-            {{ $scanLogs->links() }}
+        <!-- Custom Rapi & Elegant Indonesian Pagination Bar -->
+        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+            <div class="text-xs text-gray-500 font-medium">
+                Menampilkan <span class="font-bold text-gray-800">{{ $scanLogs->firstItem() ?? 0 }}</span> s/d <span class="font-bold text-gray-800">{{ $scanLogs->lastItem() ?? 0 }}</span> dari total <span class="font-bold text-blue-600">{{ $scanLogs->total() }}</span> data
+            </div>
+
+            @if($scanLogs->hasPages())
+                <div class="inline-flex items-center space-x-1 rounded-xl bg-gray-100/90 p-1 border border-gray-200/80">
+                    {{-- Previous Page Link --}}
+                    @if ($scanLogs->onFirstPage())
+                        <span class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 cursor-not-allowed select-none">
+                            <i class="fas fa-chevron-left text-[10px]"></i>
+                        </span>
+                    @else
+                        <a href="{{ $scanLogs->previousPageUrl() }}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
+                            <i class="fas fa-chevron-left text-[10px]"></i>
+                        </a>
+                    @endif
+
+                    {{-- Page Links --}}
+                    @foreach ($scanLogs->getUrlRange(1, $scanLogs->lastPage()) as $page => $url)
+                        @if ($page == $scanLogs->currentPage())
+                            <span class="px-3 py-1.5 rounded-lg text-xs font-black bg-blue-600 text-white shadow-sm">
+                                {{ $page }}
+                            </span>
+                        @else
+                            <a href="{{ $url }}" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
+                                {{ $page }}
+                            </a>
+                        @endif
+                    @endforeach
+
+                    {{-- Next Page Link --}}
+                    @if ($scanLogs->hasMorePages())
+                        <a href="{{ $scanLogs->nextPageUrl() }}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
+                            <i class="fas fa-chevron-right text-[10px]"></i>
+                        </a>
+                    @else
+                        <span class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 cursor-not-allowed select-none">
+                            <i class="fas fa-chevron-right text-[10px]"></i>
+                        </span>
+                    @endif
+                </div>
+            @endif
         </div>
     @endif
 </div>
