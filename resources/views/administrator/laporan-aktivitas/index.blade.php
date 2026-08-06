@@ -8,14 +8,15 @@
         <form method="GET" action="{{ route('administrator.laporan-aktivitas.index') }}" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <!-- Tanggal Mulai -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Filter Tanggal -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Tanggal Mulai</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" class="w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                </div>
-                <!-- Tanggal Selesai -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Tanggal Selesai</label>
-                    <input type="date" name="end_date" value="{{ $endDate }}" class="w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Rentang Tanggal</label>
+                    <div class="flex items-center gap-1">
+                        <input type="date" name="start_date" value="{{ $startDate }}" class="w-full border-gray-300 rounded-lg shadow-sm text-sm p-2">
+                        <span class="text-gray-400 text-xs">s/d</span>
+                        <input type="date" name="end_date" value="{{ $endDate }}" class="w-full border-gray-300 rounded-lg shadow-sm text-sm p-2">
+                    </div>
                 </div>
                 <!-- Filter Area Akses -->
                 <div>
@@ -36,6 +37,15 @@
                         <option value="">-- Semua Status --</option>
                         <option value="diterima" {{ $statusAkses == 'diterima' ? 'selected' : '' }}>Diterima (Berhasil)</option>
                         <option value="ditolak" {{ $statusAkses == 'ditolak' ? 'selected' : '' }}>Ditolak (Gagal)</option>
+                    </select>
+                </div>
+                <!-- Filter Tipe Aktivitas (Masuk/Keluar) -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Tipe Scan (Masuk/Keluar)</label>
+                    <select name="tipe_aktivitas" class="w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                        <option value="">-- Semua Scan --</option>
+                        <option value="masuk" {{ $tipeAktivitas == 'masuk' ? 'selected' : '' }}>Scan Masuk</option>
+                        <option value="keluar" {{ $tipeAktivitas == 'keluar' ? 'selected' : '' }}>Scan Keluar</option>
                     </select>
                 </div>
                 <!-- Search Input -->
@@ -70,7 +80,7 @@
     </div>
 
     <!-- Ringkasan KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500 flex items-center justify-between">
             <div>
                 <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Scan Aktivitas</p>
@@ -83,33 +93,41 @@
 
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500 flex items-center justify-between">
             <div>
-                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Akses Diterima (Berhasil)</p>
-                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ number_format($totalDiterima) }}</p>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Scan Masuk (IN)</p>
+                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ number_format($totalMasuk) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Scan Keluar (OUT)</p>
+                <p class="text-2xl font-black text-amber-600 mt-0.5">{{ number_format($totalKeluar) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Akses Diterima</p>
+                <p class="text-2xl font-black text-teal-600 mt-0.5">{{ number_format($totalDiterima) }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-check-circle"></i>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500 flex items-center justify-between">
             <div>
-                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Akses Ditolak (Pelanggaran)</p>
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Akses Ditolak</p>
                 <p class="text-2xl font-black text-rose-600 mt-0.5">{{ number_format($totalDitolak) }}</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0">
                 <i class="fas fa-times-circle"></i>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-purple-500 flex items-center justify-between">
-            <div>
-                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Tingkat Keberhasilan</p>
-                <p class="text-2xl font-black text-purple-600 mt-0.5">
-                    {{ $totalScan > 0 ? number_format(($totalDiterima / $totalScan) * 100, 1) : 0 }}%
-                </p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg shrink-0">
-                <i class="fas fa-percentage"></i>
             </div>
         </div>
     </div>
@@ -137,6 +155,7 @@
                                 <th class="p-3">Perangkat Kamera & Area</th>
                                 <th class="p-3">No. Kartu PAS</th>
                                 <th class="p-3">Pemegang & Perusahaan</th>
+                                <th class="p-3 text-center">Aktivitas</th>
                                 <th class="p-3 text-center">Status</th>
                                 <th class="p-3">Keterangan</th>
                             </tr>
@@ -160,12 +179,23 @@
                                     <p class="text-xs text-gray-500">{{ $log->perusahaan }}</p>
                                 </td>
                                 <td class="p-3 text-center">
+                                    <span class="px-2.5 py-0.5 rounded text-xs font-extrabold uppercase {{ $log->tipe_aktivitas === 'keluar' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300' }}">
+                                        <i class="fas {{ $log->tipe_aktivitas === 'keluar' ? 'fa-sign-out-alt' : 'fa-sign-in-alt' }} mr-1"></i>
+                                        {{ $log->tipe_aktivitas ?: 'masuk' }}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
                                     <span class="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase {{ $log->status_akses === 'diterima' ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-rose-100 text-rose-700 border border-rose-300' }}">
                                         {{ $log->status_akses }}
                                     </span>
                                 </td>
                                 <td class="p-3 text-xs text-gray-600">
-                                    {{ $log->alasan }}
+                                    <div class="font-medium text-gray-800">{{ $log->alasan }}</div>
+                                    @if($log->catatan)
+                                        <div class="text-[11px] text-blue-700 mt-1 italic bg-blue-50/80 px-2 py-1 rounded border border-blue-200/80 inline-block">
+                                            <i class="fas fa-sticky-note mr-1"></i> Catatan: {{ $log->catatan }}
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach

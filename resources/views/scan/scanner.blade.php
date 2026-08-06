@@ -123,6 +123,27 @@
         </div>
 
         <div class="flex items-center gap-4">
+            <!-- Dynamic Scan Direction Mode Switcher (Masuk / Keluar) -->
+            @if($device->tipe_scan === 'masuk_keluar')
+            <div class="flex items-center bg-slate-900/90 border border-slate-700/80 p-1 rounded-xl shadow-inner">
+                <button type="button" id="btnModeMasuk" onclick="setScanMode('masuk')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
+                    <i class="fas fa-sign-in-alt"></i> SCAN MASUK
+                </button>
+                <button type="button" id="btnModeKeluar" onclick="setScanMode('keluar')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                    <i class="fas fa-sign-out-alt"></i> SCAN KELUAR
+                </button>
+            </div>
+            @else
+            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 px-3 py-1.5 rounded-xl shadow-sm">
+                <span class="text-xs font-extrabold uppercase tracking-wider {{ $device->tipe_scan === 'masuk' ? 'text-emerald-400' : 'text-amber-400' }}">
+                    <i class="fas {{ $device->tipe_scan === 'masuk' ? 'fa-sign-in-alt' : 'fa-sign-out-alt' }} mr-1"></i>
+                    MODE {{ strtoupper($device->tipe_scan) }}
+                </span>
+            </div>
+            @endif
+
             <!-- Digital Clock Ticker -->
             <div class="hidden sm:flex flex-col items-end text-right border-r border-slate-800 pr-4">
                 <span id="liveClock" class="text-sm font-mono font-bold text-blue-400 leading-tight">00:00:00</span>
@@ -260,6 +281,27 @@
                             <span id="resAreaAkses" class="font-bold text-blue-300 text-sm block mt-0.5"></span>
                         </div>
                     </div>
+
+                    <!-- Notes / Catatan Form Input -->
+                    <div id="catatanFormContainer" class="mt-4 pt-3.5 border-t border-white/15 hidden">
+                        <label for="inputCatatan" class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fas fa-edit text-amber-400"></i> Catatan / Alasan Akses Area (Opsional):
+                            </span>
+                            <span id="catatanSavedBadge" class="text-[11px] font-bold text-emerald-400 opacity-0 transition-opacity flex items-center gap-1">
+                                <i class="fas fa-check-circle"></i> Catatan Tersimpan
+                            </span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="inputCatatan" placeholder="Contoh: Inspeksi teknis, maintenance genset, pengawasan..." 
+                                   onkeypress="if(event.key === 'Enter'){ event.preventDefault(); submitScanCatatan(); }"
+                                   class="w-full bg-black/40 border border-white/20 text-white placeholder-slate-400 rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40">
+                            <button type="button" id="btnSaveCatatan" onclick="submitScanCatatan()" 
+                                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition shrink-0 flex items-center gap-1.5 shadow-md">
+                                <i class="fas fa-save"></i> Simpan
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -281,8 +323,10 @@
                                 <th class="p-3 font-bold">Waktu</th>
                                 <th class="p-3 font-bold">No. Kartu</th>
                                 <th class="p-3 font-bold">Nama Pemegang</th>
+                                <th class="p-3 font-bold">Aktivitas</th>
                                 <th class="p-3 font-bold">Status Akses</th>
                                 <th class="p-3 font-bold">Keterangan / Alasan</th>
+                                <th class="p-3 font-bold">Catatan Akses</th>
                             </tr>
                         </thead>
                         <tbody id="logTableBody" class="divide-y divide-slate-800/50">
@@ -292,15 +336,24 @@
                                 <td class="p-3 font-mono font-bold text-amber-400">{{ $log->nomor_kartu }}</td>
                                 <td class="p-3 text-slate-200 font-bold">{{ $log->nama_pemegang }}</td>
                                 <td class="p-3">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {{ $log->tipe_aktivitas === 'keluar' ? 'bg-amber-950/80 text-amber-300 border border-amber-700/50' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50' }}">
+                                        <i class="fas {{ $log->tipe_aktivitas === 'keluar' ? 'fa-sign-out-alt' : 'fa-sign-in-alt' }} mr-0.5"></i>
+                                        {{ $log->tipe_aktivitas ?: 'masuk' }}
+                                    </span>
+                                </td>
+                                <td class="p-3">
                                     <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider {{ $log->status_akses === 'diterima' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50' : 'bg-rose-950/80 text-rose-400 border border-rose-700/50' }}">
                                         {{ $log->status_akses }}
                                     </span>
                                 </td>
                                 <td class="p-3 text-slate-400 font-medium">{{ $log->alasan }}</td>
+                                <td class="p-3 text-slate-300 font-medium italic text-[11px]" id="log-catatan-{{ $log->id }}">
+                                    {{ $log->catatan ?: '-' }}
+                                </td>
                             </tr>
                             @empty
                             <tr id="emptyRow">
-                                <td colspan="5" class="py-8 text-center text-slate-500 font-medium">Belum ada riwayat scan pada sesi ini.</td>
+                                <td colspan="7" class="py-8 text-center text-slate-500 font-medium">Belum ada riwayat scan pada sesi ini.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -461,6 +514,30 @@
             }, 1000);
         }
 
+        let selectedScanMode = '{{ $device->tipe_scan === "keluar" ? "keluar" : "masuk" }}';
+
+        function setScanMode(mode) {
+            selectedScanMode = mode;
+            const btnMasuk = document.getElementById('btnModeMasuk');
+            const btnKeluar = document.getElementById('btnModeKeluar');
+
+            if (mode === 'masuk') {
+                if (btnMasuk) {
+                    btnMasuk.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30';
+                }
+                if (btnKeluar) {
+                    btnKeluar.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                }
+            } else {
+                if (btnMasuk) {
+                    btnMasuk.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                }
+                if (btnKeluar) {
+                    btnKeluar.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 bg-amber-600 text-white shadow-md shadow-amber-600/30';
+                }
+            }
+        }
+
         function processQrCode(qrCode) {
             if (isProcessing) return;
 
@@ -492,7 +569,10 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ qr_code: cleanCode })
+                body: JSON.stringify({
+                    qr_code: cleanCode,
+                    tipe_aktivitas: selectedScanMode
+                })
             })
             .then(res => res.json())
             .then(data => {
@@ -513,6 +593,8 @@
             });
         }
 
+        let currentScanLogId = null;
+
         function displayResult(res) {
             const panel = document.getElementById('resultPanel');
             const idle = document.getElementById('idleState');
@@ -529,6 +611,23 @@
 
             time.innerText = (res.data && res.data.waktu) ? res.data.waktu : new Date().toLocaleTimeString('id-ID');
 
+            // Handle Catatan Input Form Visibility & Data
+            const cContainer = document.getElementById('catatanFormContainer');
+            const cInput = document.getElementById('inputCatatan');
+            const cBadge = document.getElementById('catatanSavedBadge');
+
+            if (res.data && res.data.id) {
+                currentScanLogId = res.data.id;
+                if (cContainer) cContainer.classList.remove('hidden');
+                if (cInput) cInput.value = res.data.catatan || '';
+                if (cBadge) cBadge.classList.add('opacity-0');
+            } else {
+                currentScanLogId = null;
+                if (cContainer) cContainer.classList.add('hidden');
+            }
+
+            const actType = (res.data && res.data.tipe_aktivitas) ? res.data.tipe_aktivitas.toUpperCase() : selectedScanMode.toUpperCase();
+
             if (res.status === 'diterima') {
                 playSuccessSound();
                 if (cooldownTimerInterval) { clearInterval(cooldownTimerInterval); cooldownTimerInterval = null; }
@@ -536,7 +635,7 @@
                 panel.className = 'status-granted rounded-2xl p-6 transition-all duration-300 text-white relative overflow-hidden';
                 iconBg.className = 'w-14 h-14 rounded-2xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-3xl font-black border border-emerald-400/40 shadow-inner';
                 icon.className = 'fas fa-check-circle text-emerald-400';
-                title.innerText = 'AKSES DITERIMA DI AREA ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
+                title.innerText = 'AKSES DITERIMA (' + actType + ') DI AREA ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
                 sub.innerText = 'Kartu PAS Valid & Diizinkan di Area ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
 
                 document.getElementById('resNama').innerText = res.data.nama_pemegang || '-';
@@ -562,7 +661,7 @@
                 panel.className = 'status-denied rounded-2xl p-6 transition-all duration-300 text-white relative overflow-hidden';
                 iconBg.className = 'w-14 h-14 rounded-2xl bg-rose-400/20 text-rose-300 flex items-center justify-center text-3xl font-black border border-rose-400/40 shadow-inner';
                 icon.className = 'fas fa-times-circle text-rose-400';
-                title.innerText = 'AKSES DITOLAK!';
+                title.innerText = 'AKSES DITOLAK (' + actType + ')!';
                 sub.innerText = res.alasan || 'Tidak Diizinkan';
 
                 document.getElementById('resNama').innerText = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
@@ -570,6 +669,56 @@
                 document.getElementById('resNoKartu').innerText = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : (res.data ? res.data.nomor_kartu : '-');
                 document.getElementById('resAreaAkses').innerText = (res.data && res.data.area_dimiliki) ? 'Milik: ' + res.data.area_dimiliki + ' (Kamera: Area ' + res.data.area_kamera + ')' : '-';
             }
+        }
+
+        function submitScanCatatan() {
+            if (!currentScanLogId) return;
+
+            const cInput = document.getElementById('inputCatatan');
+            const noteVal = cInput ? cInput.value.trim() : '';
+            const btn = document.getElementById('btnSaveCatatan');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            }
+
+            fetch(`/scan/catatan/${currentScanLogId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ catatan: noteVal })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                }
+
+                if (data.success) {
+                    const badge = document.getElementById('catatanSavedBadge');
+                    if (badge) {
+                        badge.classList.remove('opacity-0');
+                        setTimeout(() => badge.classList.add('opacity-0'), 3000);
+                    }
+
+                    // Update log history table row cell
+                    const cell = document.getElementById(`log-catatan-${currentScanLogId}`);
+                    if (cell) {
+                        cell.innerText = noteVal || '-';
+                    }
+                }
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                }
+                console.error('Error saving scan note:', err);
+            });
         }
 
         function prependLogTable(res) {
@@ -593,13 +742,21 @@
 
             const noKartu = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : '-';
             const nama = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
+            const logId = (res.data && res.data.id) ? res.data.id : '';
+
+            const tipeAct = (res.data && res.data.tipe_aktivitas) ? res.data.tipe_aktivitas : selectedScanMode;
+            const actBadge = (tipeAct === 'keluar')
+                ? '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-950/80 text-amber-300 border border-amber-700/50"><i class="fas fa-sign-out-alt mr-0.5"></i> keluar</span>'
+                : '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-700/50"><i class="fas fa-sign-in-alt mr-0.5"></i> masuk</span>';
 
             tr.innerHTML = `
                 <td class="p-3 text-slate-400 font-mono font-semibold">${timeStr}</td>
                 <td class="p-3 font-mono font-bold text-amber-400">${noKartu}</td>
                 <td class="p-3 text-slate-200 font-bold">${nama}</td>
+                <td class="p-3">${actBadge}</td>
                 <td class="p-3">${statusBadge}</td>
                 <td class="p-3 text-slate-400 font-medium">${res.alasan || '-'}</td>
+                <td class="p-3 text-slate-300 font-medium italic text-[11px]" id="log-catatan-${logId}">-</td>
             `;
 
             // Insert new scan at the VERY TOP of the table

@@ -15,12 +15,13 @@ class LaporanAktivitasController extends Controller
 {
     public function index(Request $request)
     {
-        $startDate    = $request->get('start_date', date('Y-m-01'));
-        $endDate      = $request->get('end_date', date('Y-m-d'));
-        $kodeArea     = $request->get('kode_area');
-        $statusAkses  = $request->get('status_akses');
-        $cameraId     = $request->get('camera_device_id');
-        $search       = $request->get('search');
+        $startDate     = $request->get('start_date', date('Y-m-01'));
+        $endDate       = $request->get('end_date', date('Y-m-d'));
+        $kodeArea      = $request->get('kode_area');
+        $statusAkses   = $request->get('status_akses');
+        $tipeAktivitas = $request->get('tipe_aktivitas');
+        $cameraId      = $request->get('camera_device_id');
+        $search        = $request->get('search');
 
         $query = ScanLog::with('cameraDevice')
             ->whereDate('waktu_scan', '>=', $startDate)
@@ -32,6 +33,10 @@ class LaporanAktivitasController extends Controller
 
         if (!empty($statusAkses)) {
             $query->where('status_akses', $statusAkses);
+        }
+
+        if (!empty($tipeAktivitas)) {
+            $query->where('tipe_aktivitas', $tipeAktivitas);
         }
 
         if (!empty($cameraId)) {
@@ -47,9 +52,11 @@ class LaporanAktivitasController extends Controller
         }
 
         // Summary KPI
-        $totalScan    = (clone $query)->count();
-        $totalDiterima = (clone $query)->where('status_akses', 'diterima')->count();
-        $totalDitolak  = (clone $query)->where('status_akses', 'ditolak')->count();
+        $totalScan     = (clone $query)->count();
+        $totalDiterima  = (clone $query)->where('status_akses', 'diterima')->count();
+        $totalDitolak   = (clone $query)->where('status_akses', 'ditolak')->count();
+        $totalMasuk    = (clone $query)->where('tipe_aktivitas', 'masuk')->count();
+        $totalKeluar   = (clone $query)->where('tipe_aktivitas', 'keluar')->count();
 
         // Paginated log data
         $scanLogs = $query->latest('waktu_scan')->paginate(15)->withQueryString();
@@ -66,18 +73,19 @@ class LaporanAktivitasController extends Controller
             ->pluck('total', 'kode_area');
 
         return view('administrator.laporan-aktivitas.index', compact(
-            'scanLogs', 'startDate', 'endDate', 'kodeArea', 'statusAkses', 'cameraId', 'search',
-            'totalScan', 'totalDiterima', 'totalDitolak',
+            'scanLogs', 'startDate', 'endDate', 'kodeArea', 'statusAkses', 'tipeAktivitas', 'cameraId', 'search',
+            'totalScan', 'totalDiterima', 'totalDitolak', 'totalMasuk', 'totalKeluar',
             'areaAksesList', 'cameraDevices', 'chartDataArea'
         ));
     }
 
     public function exportPdf(Request $request)
     {
-        $startDate   = $request->get('start_date', date('Y-m-01'));
-        $endDate     = $request->get('end_date', date('Y-m-d'));
-        $kodeArea    = $request->get('kode_area');
-        $statusAkses = $request->get('status_akses');
+        $startDate     = $request->get('start_date', date('Y-m-01'));
+        $endDate       = $request->get('end_date', date('Y-m-d'));
+        $kodeArea      = $request->get('kode_area');
+        $statusAkses   = $request->get('status_akses');
+        $tipeAktivitas = $request->get('tipe_aktivitas');
 
         $query = ScanLog::with('cameraDevice')
             ->whereDate('waktu_scan', '>=', $startDate)
@@ -91,9 +99,13 @@ class LaporanAktivitasController extends Controller
             $query->where('status_akses', $statusAkses);
         }
 
+        if (!empty($tipeAktivitas)) {
+            $query->where('tipe_aktivitas', $tipeAktivitas);
+        }
+
         $logs = $query->latest('waktu_scan')->get();
 
-        $pdf = Pdf::loadView('administrator.laporan-aktivitas.pdf', compact('logs', 'startDate', 'endDate', 'kodeArea', 'statusAkses'))
+        $pdf = Pdf::loadView('administrator.laporan-aktivitas.pdf', compact('logs', 'startDate', 'endDate', 'kodeArea', 'statusAkses', 'tipeAktivitas'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->download('laporan-aktivitas-area-' . date('Ymd', strtotime($startDate)) . '-sd-' . date('Ymd', strtotime($endDate)) . '.pdf');
@@ -101,14 +113,15 @@ class LaporanAktivitasController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $startDate   = $request->get('start_date', date('Y-m-01'));
-        $endDate     = $request->get('end_date', date('Y-m-d'));
-        $kodeArea    = $request->get('kode_area');
-        $statusAkses = $request->get('status_akses');
+        $startDate     = $request->get('start_date', date('Y-m-01'));
+        $endDate       = $request->get('end_date', date('Y-m-d'));
+        $kodeArea      = $request->get('kode_area');
+        $statusAkses   = $request->get('status_akses');
+        $tipeAktivitas = $request->get('tipe_aktivitas');
 
         return Excel::download(
-            new LaporanAktivitasExport($startDate, $endDate, $kodeArea, $statusAkses),
-            'laporan-aktivitas-scan.xlsx'
+            new LaporanAktivitasExport($startDate, $endDate, $kodeArea, $statusAkses, $tipeAktivitas),
+            'laporan-aktivitas-area-' . date('Ymd', strtotime($startDate)) . '-sd-' . date('Ymd', strtotime($endDate)) . '.xlsx'
         );
     }
 }

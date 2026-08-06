@@ -92,6 +92,7 @@ Route::get('/scan/login', [ScanController::class, 'loginForm'])->name('scan.logi
 Route::post('/scan/login', [ScanController::class, 'login'])->name('scan.login.submit');
 Route::get('/scan/scanner', [ScanController::class, 'scanner'])->name('scan.scanner');
 Route::post('/scan/process', [ScanController::class, 'processScan'])->name('scan.process');
+Route::post('/scan/catatan/{id}', [ScanController::class, 'updateCatatan'])->name('scan.catatan');
 Route::post('/scan/logout', [ScanController::class, 'logout'])->name('scan.logout');
 
 Route::get('/reset-password-manual', [App\Http\Controllers\Auth\ResetPasswordManualController::class, 'create'])->name('reset.manual');

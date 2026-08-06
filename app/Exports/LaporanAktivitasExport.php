@@ -15,13 +15,15 @@ class LaporanAktivitasExport implements FromCollection, WithHeadings, WithMappin
     protected $endDate;
     protected $kodeArea;
     protected $statusAkses;
+    protected $tipeAktivitas;
 
-    public function __construct($startDate, $endDate, $kodeArea = null, $statusAkses = null)
+    public function __construct($startDate, $endDate, $kodeArea = null, $statusAkses = null, $tipeAktivitas = null)
     {
-        $this->startDate   = $startDate;
-        $this->endDate     = $endDate;
-        $this->kodeArea    = $kodeArea;
-        $this->statusAkses = $statusAkses;
+        $this->startDate     = $startDate;
+        $this->endDate       = $endDate;
+        $this->kodeArea      = $kodeArea;
+        $this->statusAkses   = $statusAkses;
+        $this->tipeAktivitas = $tipeAktivitas;
     }
 
     public function collection()
@@ -38,6 +40,10 @@ class LaporanAktivitasExport implements FromCollection, WithHeadings, WithMappin
             $query->where('status_akses', $this->statusAkses);
         }
 
+        if (!empty($this->tipeAktivitas)) {
+            $query->where('tipe_aktivitas', $this->tipeAktivitas);
+        }
+
         return $query->latest('waktu_scan')->get();
     }
 
@@ -50,8 +56,10 @@ class LaporanAktivitasExport implements FromCollection, WithHeadings, WithMappin
             'Perusahaan / Instansi',
             'Area Akses',
             'Perangkat Kamera',
+            'Tipe Aktivitas',
             'Status Akses',
             'Keterangan / Alasan',
+            'Catatan Akses',
         ];
     }
 
@@ -64,8 +72,10 @@ class LaporanAktivitasExport implements FromCollection, WithHeadings, WithMappin
             $log->perusahaan,
             'Area ' . $log->kode_area,
             optional($log->cameraDevice)->nama_kamera ?? '-',
+            strtoupper($log->tipe_aktivitas ?: 'MASUK'),
             strtoupper($log->status_akses),
             $log->alasan,
+            $log->catatan ?: '-',
         ];
     }
 

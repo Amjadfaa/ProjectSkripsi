@@ -14,11 +14,13 @@ class ScanLog extends Model
     protected $fillable = [
         'camera_device_id',
         'kode_area',
+        'tipe_aktivitas',
         'nomor_kartu',
         'nama_pemegang',
         'perusahaan',
         'status_akses',
         'alasan',
+        'catatan',
         'waktu_scan',
     ];
 

@@ -28,13 +28,14 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 12%;">Waktu Scan</th>
-                <th style="width: 15%;">No. Kartu PAS</th>
-                <th style="width: 20%;">Nama Pemegang</th>
-                <th style="width: 20%;">Perusahaan / Instansi</th>
-                <th style="width: 10%;">Area</th>
-                <th style="width: 10%;">Status</th>
-                <th style="width: 13%;">Keterangan</th>
+                <th style="width: 11%;">Waktu Scan</th>
+                <th style="width: 14%;">No. Kartu PAS</th>
+                <th style="width: 18%;">Nama Pemegang</th>
+                <th style="width: 18%;">Perusahaan / Instansi</th>
+                <th style="width: 9%;">Area</th>
+                <th style="width: 10%;">Aktivitas</th>
+                <th style="width: 8%;">Status</th>
+                <th style="width: 12%;">Keterangan</th>
             </tr>
         </thead>
         <tbody>
@@ -46,15 +47,25 @@
                 <td>{{ $log->perusahaan }}</td>
                 <td>Area {{ $log->kode_area }}</td>
                 <td>
+                    <span class="badge-diterima" style="background: {{ $log->tipe_aktivitas === 'keluar' ? '#fef3c7; color: #92400e;' : '#dcfce7; color: #15803d;' }}">
+                        {{ strtoupper($log->tipe_aktivitas ?: 'MASUK') }}
+                    </span>
+                </td>
+                <td>
                     <span class="{{ $log->status_akses === 'diterima' ? 'badge-diterima' : 'badge-ditolak' }}">
                         {{ strtoupper($log->status_akses) }}
                     </span>
                 </td>
-                <td>{{ $log->alasan }}</td>
+                <td>
+                    {{ $log->alasan }}
+                    @if($log->catatan)
+                        <br><span style="color: #1d4ed8; font-style: italic; font-size: 8px;">Catatan: {{ $log->catatan }}</span>
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="7" style="text-align: center; color: #94a3b8; padding: 15px;">Tidak ada data aktivitas scan pada periode ini.</td>
+                <td colspan="8" style="text-align: center; color: #94a3b8; padding: 15px;">Tidak ada data aktivitas scan pada periode ini.</td>
             </tr>
             @endforelse
         </tbody>
