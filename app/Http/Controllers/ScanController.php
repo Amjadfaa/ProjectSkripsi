@@ -120,7 +120,7 @@ class ScanController extends Controller
                     'perusahaan'     => $recentScan->perusahaan,
                     'tipe_aktivitas' => $recentScan->tipe_aktivitas,
                     'remaining'      => $remaining,
-                    'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
@@ -152,7 +152,7 @@ class ScanController extends Controller
                     'id'             => $log->id,
                     'nomor_kartu'    => $nomorKartu,
                     'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
@@ -182,7 +182,7 @@ class ScanController extends Controller
                     'nama_pemegang'  => $kartu->nama_pemegang,
                     'perusahaan'     => $kartu->perusahaan,
                     'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
@@ -212,7 +212,7 @@ class ScanController extends Controller
                     'nama_pemegang'  => $kartu->nama_pemegang,
                     'perusahaan'     => $kartu->perusahaan,
                     'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
@@ -247,7 +247,7 @@ class ScanController extends Controller
                     'area_dimiliki'  => $kartu->area_akses,
                     'area_kamera'    => $device->kode_area,
                     'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
@@ -280,7 +280,7 @@ class ScanController extends Controller
                 'area_kamera'    => $device->kode_area,
                 'tipe_aktivitas' => $tipeAktivitas,
                 'foto'           => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
-                'waktu'          => $waktuNow->translatedFormat('d F Y - H:i:s'),
+                'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
             ]
         ]);
     }

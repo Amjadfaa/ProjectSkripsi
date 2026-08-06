@@ -185,7 +185,7 @@
                 </div>
 
                 <!-- Viewfinder Box -->
-                <div class="scan-viewfinder flex-1 min-h-[380px] flex items-center justify-center relative w-full">
+                <div class="scan-viewfinder flex-1 min-h-[360px] h-full flex items-center justify-center relative w-full overflow-hidden">
                     
                     <div class="corner-tl"></div>
                     <div class="corner-tr"></div>
@@ -201,16 +201,16 @@
                             <i class="fas fa-camera-retro"></i>
                         </div>
                         <h4 class="text-sm font-bold text-slate-200 mb-1">Klik untuk Mengaktifkan Kamera 60 FPS</h4>
-                        <p class="text-xs text-slate-400 max-w-[250px]">Atau gunakan Hardware Barcode / QR Scanner USB otomatis</p>
+                        <p class="text-xs text-slate-400 max-w-[260px]">Atau gunakan Hardware Barcode / QR Scanner USB otomatis</p>
                     </div>
 
                 </div>
             </div>
 
             <!-- Hardware Barcode Scanner / Manual Input Form -->
-            <div class="glass-card rounded-2xl p-5 shrink-0">
-                <div class="flex items-center justify-between mb-2.5">
-                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <div class="glass-card rounded-2xl p-4 shrink-0">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                         <i class="fas fa-barcode text-amber-400"></i> Input Manual / Scanner USB
                     </h3>
                     <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/50 flex items-center gap-1">
@@ -220,8 +220,8 @@
 
                 <form id="scanForm" onsubmit="handleManualSubmit(event)" class="relative">
                     <input type="text" id="qrInput" autocomplete="off" placeholder="Scan Barcode / Ketik No. Kartu PAS..."
-                           class="w-full bg-slate-950/90 border border-slate-700/80 text-white placeholder-slate-500 rounded-xl pl-4 pr-28 py-3 text-sm font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-inner">
-                    <button type="submit" class="absolute right-1.5 top-1.5 bottom-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-extrabold tracking-wide transition shadow-md">
+                           class="w-full bg-slate-950/90 border border-slate-700/80 text-white placeholder-slate-500 rounded-xl pl-4 pr-28 py-2.5 text-xs font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-inner">
+                    <button type="submit" class="absolute right-1 top-1 bottom-1 bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-extrabold tracking-wide transition shadow-md">
                         VERIFIKASI
                     </button>
                 </form>
@@ -233,57 +233,61 @@
         <div class="lg:col-span-7 flex flex-col h-full gap-5">
 
             <!-- Result Card Panel -->
-            <div id="resultPanel" class="status-idle rounded-2xl p-6 transition-all duration-300 min-h-[250px] flex flex-col justify-center relative overflow-hidden shrink-0">
+            <div id="resultPanel" class="status-idle rounded-2xl p-5 transition-all duration-300 min-h-[240px] flex flex-col justify-center relative overflow-hidden shrink-0">
                 
                 <!-- Idle State -->
-                <div id="idleState" class="text-center text-slate-400 py-8 flex flex-col items-center justify-center">
-                    <div class="w-20 h-20 rounded-3xl bg-slate-800/60 border border-slate-700/60 text-slate-500 flex items-center justify-center text-3xl mb-3 shadow-xl">
+                <div id="idleState" class="text-center text-slate-400 py-6 flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-slate-500 flex items-center justify-center text-2xl mb-2.5 shadow-xl">
                         <i class="fas fa-id-card"></i>
                     </div>
-                    <h3 class="text-base font-black tracking-wide text-slate-200">SIAP MEMINDAI KARTU PAS</h3>
-                    <p class="text-xs text-slate-400 mt-1 max-w-md">Dekatkan QR Code Kartu PAS ke depan kamera atau tembakkan sinar barcode scanner ke kartu</p>
+                    <h3 class="text-sm font-black tracking-wide text-slate-200">SIAP MEMINDAI KARTU PAS</h3>
+                    <p class="text-xs text-slate-400 mt-0.5 max-w-md">Dekatkan QR Code Kartu PAS ke depan kamera atau tembakkan sinar barcode scanner ke kartu</p>
                 </div>
 
                 <!-- Result Content State -->
                 <div id="resultContent" class="hidden">
                     <!-- Status Header Banner -->
-                    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/15 mb-4">
-                        <div class="flex items-center gap-3.5">
-                            <div id="resultIconBg" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-black shrink-0 shadow-lg">
+                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-white/15 mb-3.5">
+                        <div class="flex items-center gap-3">
+                            <div id="resultIconBg" class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
                                 <i id="resultIcon" class="fas"></i>
                             </div>
                             <div>
-                                <h2 id="resultTitle" class="text-2xl font-black tracking-wider uppercase leading-none"></h2>
-                                <p id="resultSubtitle" class="text-xs opacity-90 font-semibold mt-1"></p>
+                                <h2 id="resultTitle" class="text-lg font-black tracking-wider uppercase leading-tight"></h2>
+                                <p id="resultSubtitle" class="text-[11px] opacity-90 font-semibold mt-0.5"></p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span id="resultTime" class="text-xs font-mono font-bold bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 block"></span>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span id="resultTime" class="text-[11px] font-mono font-bold bg-black/40 px-2.5 py-1 rounded-lg border border-white/10 block"></span>
+                            <button type="button" onclick="closeResultPanel()" title="Tutup Result Panel"
+                                    class="bg-black/40 hover:bg-white/20 text-white w-8 h-8 rounded-lg flex items-center justify-center transition border border-white/15 text-xs shrink-0">
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Holder Details Cards -->
-                    <div id="resultDetails" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div class="bg-black/25 p-3.5 rounded-xl border border-white/10">
-                            <span class="text-[11px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nama Pemegang</span>
-                            <span id="resNama" class="font-extrabold text-white text-base block mt-0.5"></span>
+                    <div id="resultDetails" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nama Pemegang</span>
+                            <span id="resNama" class="font-extrabold text-white text-sm block mt-0.5"></span>
                         </div>
-                        <div class="bg-black/25 p-3.5 rounded-xl border border-white/10">
-                            <span class="text-[11px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Instansi / Perusahaan</span>
-                            <span id="resPerusahaan" class="font-extrabold text-white text-base block mt-0.5"></span>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Instansi / Perusahaan</span>
+                            <span id="resPerusahaan" class="font-extrabold text-white text-sm block mt-0.5"></span>
                         </div>
-                        <div class="bg-black/25 p-3.5 rounded-xl border border-white/10">
-                            <span class="text-[11px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nomor Kartu PAS</span>
-                            <span id="resNoKartu" class="font-mono font-black text-amber-300 text-sm block mt-0.5"></span>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nomor Kartu PAS</span>
+                            <span id="resNoKartu" class="font-mono font-black text-amber-300 text-xs block mt-0.5"></span>
                         </div>
-                        <div class="bg-black/25 p-3.5 rounded-xl border border-white/10">
-                            <span class="text-[11px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Area Akses Terdaftar</span>
-                            <span id="resAreaAkses" class="font-bold text-blue-300 text-sm block mt-0.5"></span>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Area Akses Terdaftar</span>
+                            <span id="resAreaAkses" class="font-bold text-blue-300 text-xs block mt-0.5"></span>
                         </div>
                     </div>
 
                     <!-- Notes / Catatan Form Input -->
-                    <div id="catatanFormContainer" class="mt-4 pt-3.5 border-t border-white/15 hidden">
+                    <div id="catatanFormContainer" class="mt-3.5 pt-3 border-t border-white/15 hidden">
                         <label for="inputCatatan" class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
                             <span class="flex items-center gap-1.5">
                                 <i class="fas fa-edit text-amber-400"></i> Catatan / Alasan Akses Area (Opsional):
@@ -295,7 +299,7 @@
                         <div class="flex items-center gap-2">
                             <input type="text" id="inputCatatan" placeholder="Contoh: Inspeksi teknis, maintenance genset, pengawasan..." 
                                    onkeypress="if(event.key === 'Enter'){ event.preventDefault(); submitScanCatatan(); }"
-                                   class="w-full bg-black/40 border border-white/20 text-white placeholder-slate-400 rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40">
+                                   class="w-full bg-black/40 border border-white/20 text-white placeholder-slate-400 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40">
                             <button type="button" id="btnSaveCatatan" onclick="submitScanCatatan()" 
                                     class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition shrink-0 flex items-center gap-1.5 shadow-md">
                                 <i class="fas fa-save"></i> Simpan
@@ -307,53 +311,56 @@
             </div>
 
             <!-- Recent Scan Activity Table (Scrollable Section) -->
-            <div class="glass-card rounded-2xl p-5 flex-1 flex flex-col min-h-0">
-                <div class="flex items-center justify-between mb-3.5 shrink-0">
+            <div class="glass-card rounded-2xl p-4 flex-1 flex flex-col min-h-0">
+                <div class="flex items-center justify-between mb-3 shrink-0">
                     <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                         <i class="fas fa-history text-slate-400"></i> Riwayat Scan Terbaru (Perangkat Ini)
                     </h3>
-                    <span class="text-[11px] text-slate-400 font-medium">Scrollable Log</span>
+                    <span class="text-[10px] text-slate-400 font-medium">Scrollable Log</span>
                 </div>
 
                 <!-- Scrollable Table Box -->
-                <div class="flex-1 overflow-y-auto custom-scroll border border-slate-800/80 rounded-xl min-h-[220px] max-h-[340px]">
-                    <table class="w-full text-left text-xs">
+                <div class="flex-1 overflow-x-auto overflow-y-auto custom-scroll border border-slate-800/80 rounded-xl min-h-[280px] h-full">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
                         <thead class="sticky top-0 bg-slate-950/95 backdrop-blur border-b border-slate-800 z-10">
                             <tr class="text-slate-400 uppercase tracking-wider text-[10px]">
-                                <th class="p-3 font-bold">Waktu</th>
-                                <th class="p-3 font-bold">No. Kartu</th>
-                                <th class="p-3 font-bold">Nama Pemegang</th>
-                                <th class="p-3 font-bold">Aktivitas</th>
-                                <th class="p-3 font-bold">Status Akses</th>
-                                <th class="p-3 font-bold">Keterangan / Alasan</th>
-                                <th class="p-3 font-bold">Catatan Akses</th>
+                                <th class="px-2.5 py-2 font-extrabold min-w-[105px]">Waktu</th>
+                                <th class="px-2.5 py-2 font-extrabold min-w-[110px]">No. Kartu</th>
+                                <th class="px-2.5 py-2 font-extrabold min-w-[110px]">Nama Pemegang</th>
+                                <th class="px-2.5 py-2 font-extrabold text-center">Aktivitas</th>
+                                <th class="px-2.5 py-2 font-extrabold text-center">Status Akses</th>
+                                <th class="px-2.5 py-2 font-extrabold min-w-[140px]">Keterangan / Alasan</th>
+                                <th class="px-2.5 py-2 font-extrabold min-w-[120px]">Catatan Akses</th>
                             </tr>
                         </thead>
                         <tbody id="logTableBody" class="divide-y divide-slate-800/50">
                             @forelse($recentLogs as $log)
                             <tr class="hover:bg-slate-800/40 transition">
-                                <td class="p-3 text-slate-400 font-mono font-semibold">{{ $log->waktu_scan->format('H:i:s') }}</td>
-                                <td class="p-3 font-mono font-bold text-amber-400">{{ $log->nomor_kartu }}</td>
-                                <td class="p-3 text-slate-200 font-bold">{{ $log->nama_pemegang }}</td>
-                                <td class="p-3">
+                                <td class="px-2.5 py-2 font-mono text-[11px]">
+                                    <div class="text-[10px] text-slate-400 leading-tight">{{ $log->waktu_scan->translatedFormat('d M Y') }}</div>
+                                    <div class="font-bold text-slate-200 text-[11px] leading-tight">{{ $log->waktu_scan->format('H:i:s') }} WIT</div>
+                                </td>
+                                <td class="px-2.5 py-2 font-mono font-bold text-amber-400 text-[11px]">{{ $log->nomor_kartu }}</td>
+                                <td class="px-2.5 py-2 text-slate-200 font-bold text-[11px]">{{ $log->nama_pemegang }}</td>
+                                <td class="px-2.5 py-2 text-center">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {{ $log->tipe_aktivitas === 'keluar' ? 'bg-amber-950/80 text-amber-300 border border-amber-700/50' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50' }}">
                                         <i class="fas {{ $log->tipe_aktivitas === 'keluar' ? 'fa-sign-out-alt' : 'fa-sign-in-alt' }} mr-0.5"></i>
                                         {{ $log->tipe_aktivitas ?: 'masuk' }}
                                     </span>
                                 </td>
-                                <td class="p-3">
-                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider {{ $log->status_akses === 'diterima' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50' : 'bg-rose-950/80 text-rose-400 border border-rose-700/50' }}">
+                                <td class="px-2.5 py-2 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider {{ $log->status_akses === 'diterima' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50' : 'bg-rose-950/80 text-rose-400 border border-rose-700/50' }}">
                                         {{ $log->status_akses }}
                                     </span>
                                 </td>
-                                <td class="p-3 text-slate-400 font-medium">{{ $log->alasan }}</td>
-                                <td class="p-3 text-slate-300 font-medium italic text-[11px]" id="log-catatan-{{ $log->id }}">
+                                <td class="px-2.5 py-2 text-slate-400 font-medium text-[11px] max-w-[200px] truncate" title="{{ $log->alasan }}">{{ $log->alasan }}</td>
+                                <td class="px-2.5 py-2 text-slate-300 font-medium italic text-[11px]" id="log-catatan-{{ $log->id }}">
                                     {{ $log->catatan ?: '-' }}
                                 </td>
                             </tr>
                             @empty
                             <tr id="emptyRow">
-                                <td colspan="7" class="py-8 text-center text-slate-500 font-medium">Belum ada riwayat scan pada sesi ini.</td>
+                                <td colspan="7" class="py-8 text-center text-slate-500 font-medium text-xs">Belum ada riwayat scan pada sesi ini.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -546,18 +553,8 @@
             const lastTime = lastScanTimes[cleanCode];
 
             // Client-Side Anti-Redundancy Cooldown (60 Seconds)
+            // USER INSTRUCTION: Keep cooldown active silently, but DO NOT disrupt or change the UI!
             if (lastTime && (now - lastTime < 60000)) {
-                const remainingSec = Math.ceil((60000 - (now - lastTime)) / 1000);
-                displayResult({
-                    status: 'cooldown',
-                    message: 'JEDA SCAN (Anti-Redundansi 1 Menit)',
-                    alasan: 'Kartu [' + cleanCode + '] baru di-scan.',
-                    remaining: remainingSec,
-                    data: {
-                        nomor_kartu: cleanCode,
-                        waktu: new Date().toLocaleTimeString('id-ID')
-                    }
-                });
                 return;
             }
 
@@ -577,14 +574,16 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'cooldown') {
-                    // Update client cooldown tracker
+                    // Update client cooldown tracker silently without resetting UI
                     lastScanTimes[cleanCode] = Date.now();
+                    setTimeout(() => { isProcessing = false; }, 600);
+                    return;
                 } else if (data.status === 'diterima' || data.status === 'ditolak') {
                     lastScanTimes[cleanCode] = Date.now();
                     prependLogTable(data);
+                    displayResult(data);
                 }
                 
-                displayResult(data);
                 setTimeout(() => { isProcessing = false; }, 600);
             })
             .catch(err => {
@@ -595,7 +594,22 @@
 
         let currentScanLogId = null;
 
+        function closeResultPanel() {
+            const panel = document.getElementById('resultPanel');
+            const idle = document.getElementById('idleState');
+            const content = document.getElementById('resultContent');
+
+            if (content) content.classList.add('hidden');
+            if (idle) idle.classList.remove('hidden');
+            if (panel) {
+                panel.className = 'status-idle rounded-2xl p-5 transition-all duration-300 min-h-[240px] flex flex-col justify-center relative overflow-hidden shrink-0';
+            }
+            currentScanLogId = null;
+        }
+
         function displayResult(res) {
+            if (!res || res.status === 'cooldown') return;
+
             const panel = document.getElementById('resultPanel');
             const idle = document.getElementById('idleState');
             const content = document.getElementById('resultContent');
@@ -630,10 +644,9 @@
 
             if (res.status === 'diterima') {
                 playSuccessSound();
-                if (cooldownTimerInterval) { clearInterval(cooldownTimerInterval); cooldownTimerInterval = null; }
 
-                panel.className = 'status-granted rounded-2xl p-6 transition-all duration-300 text-white relative overflow-hidden';
-                iconBg.className = 'w-14 h-14 rounded-2xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-3xl font-black border border-emerald-400/40 shadow-inner';
+                panel.className = 'status-granted rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
+                iconBg.className = 'w-12 h-12 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-2xl font-black border border-emerald-400/40 shadow-inner';
                 icon.className = 'fas fa-check-circle text-emerald-400';
                 title.innerText = 'AKSES DITERIMA (' + actType + ') DI AREA ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
                 sub.innerText = 'Kartu PAS Valid & Diizinkan di Area ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
@@ -642,24 +655,9 @@
                 document.getElementById('resPerusahaan').innerText = res.data.perusahaan || '-';
                 document.getElementById('resNoKartu').innerText = res.data.nomor_kartu || '-';
                 document.getElementById('resAreaAkses').innerText = res.data.area_akses || '-';
-            } else if (res.status === 'cooldown') {
-                // NO SOUND on cooldown (user requested)
-                panel.className = 'status-cooldown rounded-2xl p-6 transition-all duration-300 text-white relative overflow-hidden';
-                iconBg.className = 'w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-3xl font-black border border-amber-400/40 shadow-inner';
-                icon.className = 'fas fa-hourglass-half text-amber-400';
-                title.innerText = 'JEDA SCAN KARTU (1 MENIT)';
-
-                document.getElementById('resNama').innerText = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
-                document.getElementById('resPerusahaan').innerText = (res.data && res.data.perusahaan) ? res.data.perusahaan : '-';
-                document.getElementById('resNoKartu').innerText = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : '-';
-                
-                const rem = res.remaining || (res.data && res.data.remaining ? res.data.remaining : 60);
-                startCooldownCountdown(res.data ? res.data.nomor_kartu : '', rem);
             } else {
-                if (cooldownTimerInterval) { clearInterval(cooldownTimerInterval); cooldownTimerInterval = null; }
-
-                panel.className = 'status-denied rounded-2xl p-6 transition-all duration-300 text-white relative overflow-hidden';
-                iconBg.className = 'w-14 h-14 rounded-2xl bg-rose-400/20 text-rose-300 flex items-center justify-center text-3xl font-black border border-rose-400/40 shadow-inner';
+                panel.className = 'status-denied rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
+                iconBg.className = 'w-12 h-12 rounded-xl bg-rose-400/20 text-rose-300 flex items-center justify-center text-2xl font-black border border-rose-400/40 shadow-inner';
                 icon.className = 'fas fa-times-circle text-rose-400';
                 title.innerText = 'AKSES DITOLAK (' + actType + ')!';
                 sub.innerText = res.alasan || 'Tidak Diizinkan';
@@ -733,7 +731,14 @@
             tr.className = 'hover:bg-slate-800/40 transition animate-pulse';
 
             const now = new Date();
+            const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const dayName = days[now.getDay()];
+            const dayNum = now.getDate().toString().padStart(2, '0');
+            const monthName = months[now.getMonth()];
+            const year = now.getFullYear();
             const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+            const fullDateStr = `${dayName}, ${dayNum} ${monthName} ${year}`;
 
             const isGranted = (res.status === 'diterima');
             const statusBadge = isGranted 
@@ -750,13 +755,16 @@
                 : '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-700/50"><i class="fas fa-sign-in-alt mr-0.5"></i> masuk</span>';
 
             tr.innerHTML = `
-                <td class="p-3 text-slate-400 font-mono font-semibold">${timeStr}</td>
-                <td class="p-3 font-mono font-bold text-amber-400">${noKartu}</td>
-                <td class="p-3 text-slate-200 font-bold">${nama}</td>
-                <td class="p-3">${actBadge}</td>
-                <td class="p-3">${statusBadge}</td>
-                <td class="p-3 text-slate-400 font-medium">${res.alasan || '-'}</td>
-                <td class="p-3 text-slate-300 font-medium italic text-[11px]" id="log-catatan-${logId}">-</td>
+                <td class="px-2.5 py-2 font-mono text-[11px]">
+                    <div class="text-[10px] text-slate-400 leading-tight">${dayNum} ${monthName} ${year}</div>
+                    <div class="font-bold text-slate-200 text-[11px] leading-tight">${timeStr} WIT</div>
+                </td>
+                <td class="px-2.5 py-2 font-mono font-bold text-amber-400 text-[11px]">${noKartu}</td>
+                <td class="px-2.5 py-2 text-slate-200 font-bold text-[11px]">${nama}</td>
+                <td class="px-2.5 py-2 text-center">${actBadge}</td>
+                <td class="px-2.5 py-2 text-center">${statusBadge}</td>
+                <td class="px-2.5 py-2 text-slate-400 font-medium text-[11px] max-w-[200px] truncate" title="${res.alasan || '-'}">${res.alasan || '-'}</td>
+                <td class="px-2.5 py-2 text-slate-300 font-medium italic text-[11px]" id="log-catatan-${logId}">-</td>
             `;
 
             // Insert new scan at the VERY TOP of the table
