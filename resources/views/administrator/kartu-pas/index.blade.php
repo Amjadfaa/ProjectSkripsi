@@ -298,7 +298,7 @@
                 @csrf
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Kartu / Registrasi</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Registrasi</label>
                         <input type="text" name="nomor_kartu" value="{{ old('nomor_kartu') }}"
                                placeholder="Contoh: PAS-2026-001"
                                class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
@@ -423,7 +423,7 @@
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Kartu / Registrasi</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Registrasi</label>
                         <input type="text" id="edit_nomor_kartu" name="nomor_kartu" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                     </div>
                     <div>
