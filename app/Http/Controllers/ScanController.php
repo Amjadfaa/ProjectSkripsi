@@ -128,7 +128,7 @@ class ScanController extends Controller
         $kartu = KartuPas::with('instansi')->where('nomor_kartu', $nomorKartu)->first();
 
         if (!$kartu) {
-            $alasanTolak = 'Pengguna kartu tidak terdaftar di Area ' . $device->kode_area;
+            $alasanTolak = 'Nomor kartu PAS tidak terdaftar dalam sistem';
 
             // Log failed scan
             $log = ScanLog::create([
@@ -144,11 +144,12 @@ class ScanController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
-                'status'  => 'ditolak',
-                'message' => 'AKSES DITOLAK: Pengguna kartu tidak terdaftar di Area ' . $device->kode_area . '!',
-                'alasan'  => $alasanTolak,
-                'data'    => [
+                'success'       => false,
+                'status'        => 'ditolak',
+                'is_kadaluarsa' => false,
+                'message'       => 'AKSES DITOLAK: Nomor kartu PAS tidak terdaftar dalam sistem!',
+                'alasan'        => $alasanTolak,
+                'data'          => [
                     'id'             => $log->id,
                     'nomor_kartu'    => $nomorKartu,
                     'tipe_aktivitas' => $tipeAktivitas,
@@ -157,8 +158,62 @@ class ScanController extends Controller
             ]);
         }
 
-        // Check active status
+        $formattedTanggalBerlaku = $kartu->tanggal_berlaku ? Carbon::parse($kartu->tanggal_berlaku)->translatedFormat('d F Y') : '-';
+        $formattedTanggalBerlakuShort = $kartu->tanggal_berlaku ? Carbon::parse($kartu->tanggal_berlaku)->format('d/m/Y') : '-';
+
+        // 1. Check Expiration FIRST
+        $isExpired = false;
+        if ($kartu->status === 'kadaluarsa') {
+            $isExpired = true;
+        } elseif ($kartu->tanggal_berlaku && Carbon::parse($kartu->tanggal_berlaku)->endOfDay()->isPast()) {
+            $isExpired = true;
+            // Update status kartu di database menjadi kadaluarsa
+            $kartu->status = 'kadaluarsa';
+            $kartu->save();
+        }
+
+        if ($isExpired) {
+            $alasanKadaluarsa = 'Kartu PAS sudah Kadaluarsa (Masa berlaku habis: ' . $formattedTanggalBerlakuShort . ')';
+
+            $log = ScanLog::create([
+                'camera_device_id' => $device->id,
+                'kode_area'        => $device->kode_area,
+                'tipe_aktivitas'   => $tipeAktivitas,
+                'nomor_kartu'      => $kartu->nomor_kartu,
+                'nama_pemegang'    => $kartu->nama_pemegang,
+                'perusahaan'       => $kartu->perusahaan,
+                'status_akses'     => 'ditolak',
+                'alasan'           => $alasanKadaluarsa,
+                'waktu_scan'       => $waktuNow,
+            ]);
+
+            return response()->json([
+                'success'       => false,
+                'status'        => 'ditolak',
+                'is_kadaluarsa' => true,
+                'message'       => 'AKSES DITOLAK: Kartu PAS Sudah Kadaluarsa (Expired)!',
+                'alasan'        => 'Kartu PAS Kadaluarsa sejak ' . $formattedTanggalBerlaku,
+                'data'          => [
+                    'id'               => $log->id,
+                    'nomor_kartu'      => $kartu->nomor_kartu,
+                    'nama_pemegang'    => $kartu->nama_pemegang,
+                    'perusahaan'       => $kartu->perusahaan,
+                    'jabatan'          => $kartu->jabatan,
+                    'area_akses'       => $kartu->area_akses,
+                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
+                    'status_kartu'     => 'kadaluarsa',
+                    'is_kadaluarsa'    => true,
+                    'tipe_aktivitas'   => $tipeAktivitas,
+                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
+                ]
+            ]);
+        }
+
+        // 2. Check active status (e.g. dinonaktifkan / tidak_aktif)
         if ($kartu->status !== 'aktif') {
+            $statusLabel = strtoupper(str_replace('_', ' ', $kartu->status));
+            $alasanNonaktif = 'Status kartu PAS ' . $statusLabel . ($kartu->keterangan_nonaktif ? ' (' . $kartu->keterangan_nonaktif . ')' : '');
+
             $log = ScanLog::create([
                 'camera_device_id' => $device->id,
                 'kode_area'        => $device->kode_area,
@@ -167,60 +222,36 @@ class ScanController extends Controller
                 'nama_pemegang'    => $kartu->nama_pemegang,
                 'perusahaan'       => $kartu->perusahaan,
                 'status_akses'     => 'ditolak',
-                'alasan'           => 'Status kartu PAS ' . strtoupper($kartu->status),
+                'alasan'           => $alasanNonaktif,
                 'waktu_scan'       => $waktuNow,
             ]);
 
             return response()->json([
-                'success' => false,
-                'status'  => 'ditolak',
-                'message' => 'AKSES DITOLAK: Status Kartu PAS ' . strtoupper($kartu->status) . '!',
-                'alasan'  => 'Status kartu PAS ' . strtoupper($kartu->status),
-                'data'    => [
-                    'id'             => $log->id,
-                    'nomor_kartu'    => $kartu->nomor_kartu,
-                    'nama_pemegang'  => $kartu->nama_pemegang,
-                    'perusahaan'     => $kartu->perusahaan,
-                    'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
+                'success'       => false,
+                'status'        => 'ditolak',
+                'is_kadaluarsa' => false,
+                'message'       => 'AKSES DITOLAK: Status Kartu PAS ' . $statusLabel . '!',
+                'alasan'        => $alasanNonaktif,
+                'data'          => [
+                    'id'               => $log->id,
+                    'nomor_kartu'      => $kartu->nomor_kartu,
+                    'nama_pemegang'    => $kartu->nama_pemegang,
+                    'perusahaan'       => $kartu->perusahaan,
+                    'jabatan'          => $kartu->jabatan,
+                    'area_akses'       => $kartu->area_akses,
+                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
+                    'status_kartu'     => $kartu->status,
+                    'is_kadaluarsa'    => false,
+                    'tipe_aktivitas'   => $tipeAktivitas,
+                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
 
-        // Check expiration
-        if ($kartu->tanggal_kadaluarsa && Carbon::parse($kartu->tanggal_kadaluarsa)->endOfDay()->isPast()) {
-            $log = ScanLog::create([
-                'camera_device_id' => $device->id,
-                'kode_area'        => $device->kode_area,
-                'tipe_aktivitas'   => $tipeAktivitas,
-                'nomor_kartu'      => $kartu->nomor_kartu,
-                'nama_pemegang'    => $kartu->nama_pemegang,
-                'perusahaan'       => $kartu->perusahaan,
-                'status_akses'     => 'ditolak',
-                'alasan'           => 'Kartu PAS sudah Kadaluarsa (' . Carbon::parse($kartu->tanggal_kadaluarsa)->format('d/m/Y') . ')',
-                'waktu_scan'       => $waktuNow,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'status'  => 'ditolak',
-                'message' => 'AKSES DITOLAK: Masa berlaku Kartu PAS sudah habis (Kadaluarsa)!',
-                'alasan'  => 'Kartu PAS Kadaluarsa',
-                'data'    => [
-                    'id'             => $log->id,
-                    'nomor_kartu'    => $kartu->nomor_kartu,
-                    'nama_pemegang'  => $kartu->nama_pemegang,
-                    'perusahaan'     => $kartu->perusahaan,
-                    'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
-                ]
-            ]);
-        }
-
-        // Check area access
+        // 3. Check Area Access Permissions
         $userAreas = array_map('trim', explode(',', $kartu->area_akses ?? ''));
         if (!in_array($device->kode_area, $userAreas)) {
-            $alasanTolakArea = 'Pengguna kartu tidak terdaftar di Area ' . $device->kode_area;
+            $alasanTolakArea = 'Pemegang kartu tidak memiliki izin akses di Area ' . $device->kode_area;
 
             $log = ScanLog::create([
                 'camera_device_id' => $device->id,
@@ -235,24 +266,29 @@ class ScanController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
-                'status'  => 'ditolak',
-                'message' => 'AKSES DITOLAK: Pemegang kartu tidak memiliki ijin akses di Area ' . $device->kode_area . '!',
-                'alasan'  => $alasanTolakArea,
-                'data'    => [
-                    'id'             => $log->id,
-                    'nomor_kartu'    => $kartu->nomor_kartu,
-                    'nama_pemegang'  => $kartu->nama_pemegang,
-                    'perusahaan'     => $kartu->perusahaan,
-                    'area_dimiliki'  => $kartu->area_akses,
-                    'area_kamera'    => $device->kode_area,
-                    'tipe_aktivitas' => $tipeAktivitas,
-                    'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
+                'success'       => false,
+                'status'        => 'ditolak',
+                'is_kadaluarsa' => false,
+                'message'       => 'AKSES DITOLAK: Pemegang kartu tidak memiliki izin akses di Area ' . $device->kode_area . '!',
+                'alasan'        => $alasanTolakArea,
+                'data'          => [
+                    'id'               => $log->id,
+                    'nomor_kartu'      => $kartu->nomor_kartu,
+                    'nama_pemegang'    => $kartu->nama_pemegang,
+                    'perusahaan'       => $kartu->perusahaan,
+                    'jabatan'          => $kartu->jabatan,
+                    'area_dimiliki'    => $kartu->area_akses,
+                    'area_kamera'      => $device->kode_area,
+                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
+                    'status_kartu'     => $kartu->status,
+                    'is_kadaluarsa'    => false,
+                    'tipe_aktivitas'   => $tipeAktivitas,
+                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
         }
 
-        // ACCESS GRANTED!
+        // 4. ACCESS GRANTED!
         $log = ScanLog::create([
             'camera_device_id' => $device->id,
             'kode_area'        => $device->kode_area,
@@ -266,21 +302,25 @@ class ScanController extends Controller
         ]);
 
         return response()->json([
-            'success' => true,
-            'status'  => 'diterima',
-            'message' => 'AKSES DITERIMA (' . strtoupper($tipeAktivitas) . ') DI AREA ' . $device->kode_area,
-            'alasan'  => 'Valid & Diizinkan di Area ' . $device->kode_area,
-            'data'    => [
-                'id'             => $log->id,
-                'nomor_kartu'    => $kartu->nomor_kartu,
-                'nama_pemegang'  => $kartu->nama_pemegang,
-                'perusahaan'     => $kartu->perusahaan,
-                'jabatan'        => $kartu->jabatan,
-                'area_akses'     => $kartu->area_akses,
-                'area_kamera'    => $device->kode_area,
-                'tipe_aktivitas' => $tipeAktivitas,
-                'foto'           => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
-                'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
+            'success'       => true,
+            'status'        => 'diterima',
+            'is_kadaluarsa' => false,
+            'message'       => 'AKSES DITERIMA (' . strtoupper($tipeAktivitas) . ') DI AREA ' . $device->kode_area,
+            'alasan'        => 'Valid & Diizinkan di Area ' . $device->kode_area,
+            'data'          => [
+                'id'               => $log->id,
+                'nomor_kartu'      => $kartu->nomor_kartu,
+                'nama_pemegang'    => $kartu->nama_pemegang,
+                'perusahaan'       => $kartu->perusahaan,
+                'jabatan'          => $kartu->jabatan,
+                'area_akses'       => $kartu->area_akses,
+                'area_kamera'      => $device->kode_area,
+                'tanggal_berlaku'  => $formattedTanggalBerlaku,
+                'status_kartu'     => $kartu->status,
+                'is_kadaluarsa'    => false,
+                'tipe_aktivitas'   => $tipeAktivitas,
+                'foto'             => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
+                'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
             ]
         ]);
     }

@@ -47,6 +47,10 @@ class KartuPas extends Model
     // Cek apakah kartu sudah kadaluarsa
     public function isKadaluarsa(): bool
     {
-        return $this->tanggal_berlaku->isPast();
+        if ($this->status === 'kadaluarsa') {
+            return true;
+        }
+
+        return $this->tanggal_berlaku ? $this->tanggal_berlaku->isPast() : false;
     }
 }

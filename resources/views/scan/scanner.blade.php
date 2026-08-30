@@ -66,6 +66,12 @@
             box-shadow: 0 0 40px rgba(239, 68, 68, 0.35);
             animation: pulseRed 1.5s infinite;
         }
+        .status-kadaluarsa {
+            background: linear-gradient(135deg, rgba(136, 19, 55, 0.95) 0%, rgba(76, 5, 25, 0.98) 100%);
+            border: 2px solid #f43f5e;
+            box-shadow: 0 0 45px rgba(244, 63, 94, 0.45);
+            animation: pulseKadaluarsa 1.5s infinite;
+        }
         .status-cooldown {
             background: linear-gradient(135deg, rgba(120, 53, 15, 0.9) 0%, rgba(69, 26, 3, 0.95) 100%);
             border: 2px solid #f59e0b;
@@ -79,6 +85,10 @@
         @keyframes pulseRed {
             0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); }
             50% { box-shadow: 0 0 50px rgba(239, 68, 68, 0.65); }
+        }
+        @keyframes pulseKadaluarsa {
+            0%, 100% { box-shadow: 0 0 25px rgba(244, 63, 94, 0.35); }
+            50% { box-shadow: 0 0 55px rgba(244, 63, 94, 0.7); }
         }
         @keyframes pulseAmber {
             0%, 100% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.3); }
@@ -195,6 +205,19 @@
                     <!-- Webcam stream container -->
                     <div id="reader" class="hidden"></div>
 
+                    <!-- HUD Notification Banner on Live Camera Overlay -->
+                    <div id="cameraHudOverlay" class="absolute inset-x-4 bottom-4 z-20 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-3">
+                        <div id="cameraHudBox" class="p-3 rounded-xl backdrop-blur-md border shadow-2xl flex items-center gap-3">
+                            <div id="cameraHudIconWrap" class="w-9 h-9 rounded-lg flex items-center justify-center text-lg font-black shrink-0">
+                                <i id="cameraHudIcon" class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div id="cameraHudTitle" class="text-xs font-black uppercase tracking-wider truncate"></div>
+                                <div id="cameraHudSub" class="text-[11px] opacity-90 truncate mt-0.5"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Centered Placeholder -->
                     <div id="scannerPlaceholder" onclick="toggleWebcam()" class="flex flex-col items-center justify-center p-6 text-center z-10 cursor-pointer w-full h-full hover:bg-slate-900/40 transition">
                         <div class="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/30 text-blue-400 flex items-center justify-center text-2xl mb-3 shadow-inner">
@@ -247,7 +270,7 @@
                 <!-- Result Content State -->
                 <div id="resultContent" class="hidden">
                     <!-- Status Header Banner -->
-                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-white/15 mb-3.5">
+                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-white/15 mb-3">
                         <div class="flex items-center gap-3">
                             <div id="resultIconBg" class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-black shrink-0 shadow-lg">
                                 <i id="resultIcon" class="fas"></i>
@@ -266,15 +289,31 @@
                         </div>
                     </div>
 
+                    <!-- Prominent Expired Warning Banner (Shown only when card is Kadaluarsa) -->
+                    <div id="kadaluarsaAlertBox" class="hidden mb-3 bg-rose-950/90 border-2 border-rose-500/80 p-3.5 rounded-xl flex items-start gap-3 shadow-lg shadow-rose-950/50">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/30 border border-rose-400 flex items-center justify-center text-rose-300 text-xl shrink-0 mt-0.5 shadow-inner">
+                            <i class="fas fa-calendar-xmark animate-pulse"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-black text-rose-200 uppercase tracking-wider flex items-center gap-2 flex-wrap">
+                                <span>KARTU PAS KADALUARSA (EXPIRED)</span>
+                                <span class="bg-rose-600 text-white text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider">TIDAK BISA TERSCAN / DITOLAK</span>
+                            </div>
+                            <div class="text-xs text-rose-100/90 mt-1 leading-relaxed">
+                                Kartu ini sudah melewati batas masa berlaku sejak <span id="resKadaluarsaTgl" class="font-extrabold text-white underline decoration-rose-400"></span>. Pemegang kartu tidak diperkenankan memasuki area bandara sampai dilakukan perpanjangan kartu PAS.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Holder Details Cards -->
-                    <div id="resultDetails" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                    <div id="resultDetails" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs">
                         <div class="bg-black/25 p-3 rounded-xl border border-white/10">
                             <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nama Pemegang</span>
-                            <span id="resNama" class="font-extrabold text-white text-sm block mt-0.5"></span>
+                            <span id="resNama" class="font-extrabold text-white text-sm block mt-0.5 truncate"></span>
                         </div>
                         <div class="bg-black/25 p-3 rounded-xl border border-white/10">
                             <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Instansi / Perusahaan</span>
-                            <span id="resPerusahaan" class="font-extrabold text-white text-sm block mt-0.5"></span>
+                            <span id="resPerusahaan" class="font-extrabold text-white text-sm block mt-0.5 truncate"></span>
                         </div>
                         <div class="bg-black/25 p-3 rounded-xl border border-white/10">
                             <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Nomor Kartu PAS</span>
@@ -282,7 +321,15 @@
                         </div>
                         <div class="bg-black/25 p-3 rounded-xl border border-white/10">
                             <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Area Akses Terdaftar</span>
-                            <span id="resAreaAkses" class="font-bold text-blue-300 text-xs block mt-0.5"></span>
+                            <span id="resAreaAkses" class="font-bold text-blue-300 text-xs block mt-0.5 truncate"></span>
+                        </div>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Masa Berlaku Kartu</span>
+                            <span id="resMasaBerlaku" class="font-bold text-xs block mt-0.5"></span>
+                        </div>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Status Kartu</span>
+                            <span id="resStatusKartu" class="font-bold text-xs block mt-0.5"></span>
                         </div>
                     </div>
 
@@ -353,7 +400,15 @@
                                         {{ $log->status_akses }}
                                     </span>
                                 </td>
-                                <td class="px-2.5 py-2 text-slate-400 font-medium text-[11px] max-w-[200px] truncate" title="{{ $log->alasan }}">{{ $log->alasan }}</td>
+                                <td class="px-2.5 py-2 font-medium text-[11px] max-w-[200px] truncate" title="{{ $log->alasan }}">
+                                    @if(stripos($log->alasan, 'kadaluarsa') !== false)
+                                        <span class="text-rose-400 font-semibold flex items-center gap-1">
+                                            <i class="fas fa-calendar-times"></i> {{ $log->alasan }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-400">{{ $log->alasan }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-2.5 py-2 text-slate-300 font-medium italic text-[11px]" id="log-catatan-{{ $log->id }}">
                                     {{ $log->catatan ?: '-' }}
                                 </td>
@@ -396,7 +451,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Web Audio API Sound Synthesizer (Only for Granted Access)
+        // Web Audio API Sound Synthesizer
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playSuccessSound() {
@@ -414,6 +469,63 @@
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.4);
             } catch(e) {}
+        }
+
+        function playDeniedSound() {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime + 0.12); // E3
+                gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        // Camera HUD Notification Alert
+        let hudTimeout = null;
+        function showCameraHud(type, title, sub) {
+            const hudOverlay = document.getElementById('cameraHudOverlay');
+            const hudBox = document.getElementById('cameraHudBox');
+            const hudIconWrap = document.getElementById('cameraHudIconWrap');
+            const hudIcon = document.getElementById('cameraHudIcon');
+            const hudTitle = document.getElementById('cameraHudTitle');
+            const hudSub = document.getElementById('cameraHudSub');
+
+            if (!hudOverlay) return;
+
+            if (hudTimeout) clearTimeout(hudTimeout);
+
+            hudTitle.innerText = title;
+            hudSub.innerText = sub;
+
+            if (type === 'kadaluarsa') {
+                hudBox.className = 'p-3 rounded-xl backdrop-blur-md border shadow-2xl flex items-center gap-3 bg-rose-950/95 border-rose-500 text-rose-100 shadow-rose-950/80';
+                hudIconWrap.className = 'w-9 h-9 rounded-lg flex items-center justify-center text-lg font-black shrink-0 bg-rose-500/30 text-rose-300 border border-rose-400';
+                hudIcon.className = 'fas fa-calendar-xmark';
+            } else if (type === 'denied') {
+                hudBox.className = 'p-3 rounded-xl backdrop-blur-md border shadow-2xl flex items-center gap-3 bg-rose-950/95 border-rose-600 text-rose-100 shadow-rose-950/80';
+                hudIconWrap.className = 'w-9 h-9 rounded-lg flex items-center justify-center text-lg font-black shrink-0 bg-rose-600/30 text-rose-300 border border-rose-500';
+                hudIcon.className = 'fas fa-times-circle';
+            } else {
+                hudBox.className = 'p-3 rounded-xl backdrop-blur-md border shadow-2xl flex items-center gap-3 bg-emerald-950/95 border-emerald-500 text-emerald-100 shadow-emerald-950/80';
+                hudIconWrap.className = 'w-9 h-9 rounded-lg flex items-center justify-center text-lg font-black shrink-0 bg-emerald-500/30 text-emerald-300 border border-emerald-400';
+                hudIcon.className = 'fas fa-check-circle';
+            }
+
+            hudOverlay.classList.remove('opacity-0', 'translate-y-3');
+            hudOverlay.classList.add('opacity-100', 'translate-y-0');
+
+            hudTimeout = setTimeout(() => {
+                hudOverlay.classList.remove('opacity-100', 'translate-y-0');
+                hudOverlay.classList.add('opacity-0', 'translate-y-3');
+            }, 3500);
         }
 
         // Auto Focus Input Box for USB Barcode Scanners
@@ -553,7 +665,6 @@
             const lastTime = lastScanTimes[cleanCode];
 
             // Client-Side Anti-Redundancy Cooldown (60 Seconds)
-            // USER INSTRUCTION: Keep cooldown active silently, but DO NOT disrupt or change the UI!
             if (lastTime && (now - lastTime < 60000)) {
                 return;
             }
@@ -622,6 +733,8 @@
             const title = document.getElementById('resultTitle');
             const sub = document.getElementById('resultSubtitle');
             const time = document.getElementById('resultTime');
+            const kadaluarsaBox = document.getElementById('kadaluarsaAlertBox');
+            const resKadaluarsaTgl = document.getElementById('resKadaluarsaTgl');
 
             time.innerText = (res.data && res.data.waktu) ? res.data.waktu : new Date().toLocaleTimeString('id-ID');
 
@@ -641,8 +754,72 @@
             }
 
             const actType = (res.data && res.data.tipe_aktivitas) ? res.data.tipe_aktivitas.toUpperCase() : selectedScanMode.toUpperCase();
+            const isExpired = Boolean(res.is_kadaluarsa || (res.data && res.data.is_kadaluarsa) || (res.data && res.data.status_kartu === 'kadaluarsa'));
 
-            if (res.status === 'diterima') {
+            const resNama = document.getElementById('resNama');
+            const resPerusahaan = document.getElementById('resPerusahaan');
+            const resNoKartu = document.getElementById('resNoKartu');
+            const resAreaAkses = document.getElementById('resAreaAkses');
+            const resMasaBerlaku = document.getElementById('resMasaBerlaku');
+            const resStatusKartu = document.getElementById('resStatusKartu');
+
+            if (isExpired) {
+                playDeniedSound();
+
+                panel.className = 'status-kadaluarsa rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
+                iconBg.className = 'w-12 h-12 rounded-xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-2xl font-black border border-rose-400/60 shadow-inner';
+                icon.className = 'fas fa-calendar-xmark text-rose-300';
+                title.innerText = 'AKSES DITOLAK: KARTU KADALUARSA (' + actType + ')';
+                sub.innerText = 'Masa berlaku Kartu PAS telah berakhir. Tidak dapat digunakan untuk akses area!';
+
+                if (kadaluarsaBox) {
+                    kadaluarsaBox.classList.remove('hidden');
+                }
+                if (resKadaluarsaTgl) {
+                    resKadaluarsaTgl.innerText = (res.data && res.data.tanggal_berlaku) ? res.data.tanggal_berlaku : 'Tanggal yang ditentukan';
+                }
+
+                if (resNama) resNama.innerText = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
+                if (resPerusahaan) resPerusahaan.innerText = (res.data && res.data.perusahaan) ? res.data.perusahaan : '-';
+                if (resNoKartu) resNoKartu.innerText = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : '-';
+                if (resAreaAkses) resAreaAkses.innerText = (res.data && res.data.area_akses) ? res.data.area_akses : ((res.data && res.data.area_dimiliki) ? res.data.area_dimiliki : '-');
+                if (resMasaBerlaku) {
+                    resMasaBerlaku.innerHTML = `<span class="text-rose-300 font-extrabold flex items-center gap-1"><i class="fas fa-calendar-times"></i> ${res.data.tanggal_berlaku || '-'} (Habis)</span>`;
+                }
+                if (resStatusKartu) {
+                    resStatusKartu.innerHTML = `<span class="bg-rose-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm border border-rose-400">KADALUARSA</span>`;
+                }
+
+                showCameraHud('kadaluarsa', 'KARTU PAS KADALUARSA!', `${res.data.nomor_kartu} • Masa berlaku habis ${res.data.tanggal_berlaku}`);
+
+            } else if (res.status === 'ditolak') {
+                playDeniedSound();
+
+                panel.className = 'status-denied rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
+                iconBg.className = 'w-12 h-12 rounded-xl bg-rose-400/20 text-rose-300 flex items-center justify-center text-2xl font-black border border-rose-400/40 shadow-inner';
+                icon.className = 'fas fa-times-circle text-rose-400';
+                title.innerText = 'AKSES DITOLAK (' + actType + ')!';
+                sub.innerText = res.alasan || 'Tidak Diizinkan';
+
+                if (kadaluarsaBox) {
+                    kadaluarsaBox.classList.add('hidden');
+                }
+
+                if (resNama) resNama.innerText = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
+                if (resPerusahaan) resPerusahaan.innerText = (res.data && res.data.perusahaan) ? res.data.perusahaan : '-';
+                if (resNoKartu) resNoKartu.innerText = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : '-';
+                if (resAreaAkses) resAreaAkses.innerText = (res.data && res.data.area_dimiliki) ? 'Milik: ' + res.data.area_dimiliki + ' (Kamera: Area ' + res.data.area_kamera + ')' : ((res.data && res.data.area_akses) ? res.data.area_akses : '-');
+                if (resMasaBerlaku) {
+                    resMasaBerlaku.innerText = (res.data && res.data.tanggal_berlaku) ? res.data.tanggal_berlaku : '-';
+                }
+                if (resStatusKartu) {
+                    const st = (res.data && res.data.status_kartu) ? res.data.status_kartu.toUpperCase() : 'DITOLAK';
+                    resStatusKartu.innerHTML = `<span class="bg-rose-950/80 text-rose-300 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-rose-700/50">${st}</span>`;
+                }
+
+                showCameraHud('denied', 'AKSES DITOLAK (' + actType + ')!', res.alasan || 'Tidak Diizinkan');
+
+            } else {
                 playSuccessSound();
 
                 panel.className = 'status-granted rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
@@ -651,21 +828,22 @@
                 title.innerText = 'AKSES DITERIMA (' + actType + ') DI AREA ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
                 sub.innerText = 'Kartu PAS Valid & Diizinkan di Area ' + (res.data && res.data.area_kamera ? res.data.area_kamera : '{{ $device->kode_area }}');
 
-                document.getElementById('resNama').innerText = res.data.nama_pemegang || '-';
-                document.getElementById('resPerusahaan').innerText = res.data.perusahaan || '-';
-                document.getElementById('resNoKartu').innerText = res.data.nomor_kartu || '-';
-                document.getElementById('resAreaAkses').innerText = res.data.area_akses || '-';
-            } else {
-                panel.className = 'status-denied rounded-2xl p-5 transition-all duration-300 text-white relative overflow-hidden';
-                iconBg.className = 'w-12 h-12 rounded-xl bg-rose-400/20 text-rose-300 flex items-center justify-center text-2xl font-black border border-rose-400/40 shadow-inner';
-                icon.className = 'fas fa-times-circle text-rose-400';
-                title.innerText = 'AKSES DITOLAK (' + actType + ')!';
-                sub.innerText = res.alasan || 'Tidak Diizinkan';
+                if (kadaluarsaBox) {
+                    kadaluarsaBox.classList.add('hidden');
+                }
 
-                document.getElementById('resNama').innerText = (res.data && res.data.nama_pemegang) ? res.data.nama_pemegang : '-';
-                document.getElementById('resPerusahaan').innerText = (res.data && res.data.perusahaan) ? res.data.perusahaan : '-';
-                document.getElementById('resNoKartu').innerText = (res.data && res.data.nomor_kartu) ? res.data.nomor_kartu : (res.data ? res.data.nomor_kartu : '-');
-                document.getElementById('resAreaAkses').innerText = (res.data && res.data.area_dimiliki) ? 'Milik: ' + res.data.area_dimiliki + ' (Kamera: Area ' + res.data.area_kamera + ')' : '-';
+                if (resNama) resNama.innerText = res.data.nama_pemegang || '-';
+                if (resPerusahaan) resPerusahaan.innerText = res.data.perusahaan || '-';
+                if (resNoKartu) resNoKartu.innerText = res.data.nomor_kartu || '-';
+                if (resAreaAkses) resAreaAkses.innerText = res.data.area_akses || '-';
+                if (resMasaBerlaku) {
+                    resMasaBerlaku.innerHTML = `<span class="text-emerald-300 font-bold flex items-center gap-1"><i class="fas fa-calendar-check"></i> ${res.data.tanggal_berlaku || '-'}</span>`;
+                }
+                if (resStatusKartu) {
+                    resStatusKartu.innerHTML = `<span class="bg-emerald-500 text-slate-950 text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">AKTIF</span>`;
+                }
+
+                showCameraHud('granted', 'AKSES DITERIMA (' + actType + ')', `${res.data.nama_pemegang} • ${res.data.perusahaan}`);
             }
         }
 
@@ -754,6 +932,12 @@
                 ? '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-950/80 text-amber-300 border border-amber-700/50"><i class="fas fa-sign-out-alt mr-0.5"></i> keluar</span>'
                 : '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-700/50"><i class="fas fa-sign-in-alt mr-0.5"></i> masuk</span>';
 
+            const isExpired = Boolean(res.is_kadaluarsa || (res.data && res.data.is_kadaluarsa));
+            const alasanStr = res.alasan || '-';
+            const alasanHtml = isExpired 
+                ? `<span class="text-rose-400 font-semibold flex items-center gap-1"><i class="fas fa-calendar-times"></i> ${alasanStr}</span>`
+                : `<span class="text-slate-400">${alasanStr}</span>`;
+
             tr.innerHTML = `
                 <td class="px-2.5 py-2 font-mono text-[11px]">
                     <div class="text-[10px] text-slate-400 leading-tight">${dayNum} ${monthName} ${year}</div>
@@ -763,7 +947,7 @@
                 <td class="px-2.5 py-2 text-slate-200 font-bold text-[11px]">${nama}</td>
                 <td class="px-2.5 py-2 text-center">${actBadge}</td>
                 <td class="px-2.5 py-2 text-center">${statusBadge}</td>
-                <td class="px-2.5 py-2 text-slate-400 font-medium text-[11px] max-w-[200px] truncate" title="${res.alasan || '-'}">${res.alasan || '-'}</td>
+                <td class="px-2.5 py-2 font-medium text-[11px] max-w-[200px] truncate" title="${alasanStr}">${alasanHtml}</td>
                 <td class="px-2.5 py-2 text-slate-300 font-medium italic text-[11px]" id="log-catatan-${logId}">-</td>
             `;
 
