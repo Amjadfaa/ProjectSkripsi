@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\DokumenPersyaratan;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        $dokumenBaru = DokumenPersyaratan::where('kategori', 'baru')->first();
+        $dokumenPerpanjangan = DokumenPersyaratan::where('kategori', 'perpanjangan')->first();
+
+        return view('auth.login', compact('dokumenBaru', 'dokumenPerpanjangan'));
     }
 
     /**
@@ -26,9 +30,13 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-    $request->session()->regenerate();
+        $request->session()->regenerate();
 
-    return redirect()->route('administrator.dashboard');
+        if ($request->user()->role === 'operator') {
+            return redirect()->route('operator.dashboard');
+        }
+
+        return redirect()->route('administrator.dashboard');
     }
 
     /**

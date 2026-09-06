@@ -109,7 +109,7 @@
         </div>
 
         <!-- Role hidden -->
-        <input type="hidden" name="role" value="pemohon">
+        <input type="hidden" name="role" value="operator">
 
        <!-- Nama Perusahaan -->
         <div class="mb-3">

@@ -80,7 +80,6 @@ class KartuPasController extends Controller
         $areaAksesStr = is_array($request->area_akses) ? implode(', ', $request->area_akses) : $request->area_akses;
 
         KartuPas::create([
-            'permohonan_id'   => null,
             'instansi_id'     => $instansi->id,
             'perusahaan'      => $instansi->nama_instansi,
             'nomor_kartu'     => $request->nomor_kartu,

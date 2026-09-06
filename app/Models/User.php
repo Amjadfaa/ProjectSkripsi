@@ -25,21 +25,25 @@ class User extends Authenticatable
             'perusahaan',
     ];
 
-    // Helper cek role
-        public function isPemohon(): bool
-        {
-            return $this->role === 'pemohon';
-        }
+    // Helper cek role (Hanya administrator dan operator)
+    public function isAdministrator(): bool
+    {
+        return $this->role === 'administrator';
+    }
 
-        public function isAdministrator(): bool
-        {
-            return $this->role === 'administrator';
-        }
+    public function isOperator(): bool
+    {
+        return $this->role === 'operator';
+    }
 
-        public function isVerifikator(): bool
-        {
-            return $this->role === 'verifikator';
-        }
+    /**
+     * Perangkat kamera yang ditugaskan kepada user / operator ini.
+     */
+    public function cameraDevices()
+    {
+        return $this->belongsToMany(CameraDevice::class, 'camera_device_user', 'user_id', 'camera_device_id')
+            ->withTimestamps();
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -59,17 +63,5 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
-
-    // Relasi ke Permohonan (sebagai pemohon)
-public function permohonan()
-{
-    return $this->hasMany(Permohonan::class);
 }
 
-// Relasi ke Verifikasi (sebagai verifikator)
-public function verifikasi()
-{
-    return $this->hasMany(Verifikasi::class, 'verifikator_id');
-}
-
-}

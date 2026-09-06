@@ -6,18 +6,8 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function pemohon()
+    public function index()
     {
-        return view('pemohon.dashboard');
-    }
-
-    public function administrator()
-    {
-        return view('administrator.dashboard');
-    }
-
-    public function verifikator()
-    {
-        return view('verifikator.dashboard');
+        return redirect()->route('administrator.dashboard');
     }
 }

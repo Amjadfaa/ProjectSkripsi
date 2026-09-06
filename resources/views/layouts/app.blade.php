@@ -253,7 +253,33 @@
 
         <!-- Navigation -->
         <nav class="sidebar-nav">
+            @if(auth()->user()->role === 'operator')
+                <div class="nav-label">Menu Utama</div>
+                <a href="{{ route('operator.dashboard') }}"
+                   class="nav-item {{ request()->routeIs('operator.dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
 
+                <div class="nav-label">Operasional Kamera</div>
+                <a href="{{ route('operator.kamera.index') }}"
+                   class="nav-item {{ request()->routeIs('operator.kamera.index') ? 'active' : '' }}">
+                    <i class="fas fa-video"></i> Akses Kamera
+                </a>
+                <a href="{{ route('operator.kamera.scanner') }}"
+                   class="nav-item {{ request()->routeIs('operator.kamera.scanner') ? 'active' : '' }}">
+                    <i class="fas fa-qrcode"></i> Scanner QR
+                </a>
+                <a href="{{ route('operator.kamera.logs') }}"
+                   class="nav-item {{ request()->routeIs('operator.kamera.logs') ? 'active' : '' }}">
+                    <i class="fas fa-history"></i> Log Pemindaian
+                </a>
+
+                <div class="nav-label">Pengaturan Akun</div>
+                <a href="{{ route('profile.edit') }}"
+                   class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+                    <i class="fas fa-user-circle"></i> Edit Profil
+                </a>
+            @else
                 <div class="nav-label">Menu Utama</div>
                 <a href="{{ route('administrator.dashboard') }}"
                    class="nav-item {{ request()->routeIs('administrator.dashboard') ? 'active' : '' }}">
@@ -276,6 +302,14 @@
                    class="nav-item {{ request()->routeIs('administrator.perangkat-kamera.*') ? 'active' : '' }}">
                     <i class="fas fa-video"></i> Perangkat Kamera
                 </a>
+                <a href="{{ route('administrator.dokumen-persyaratan.index') }}"
+                   class="nav-item {{ request()->routeIs('administrator.dokumen-persyaratan.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-invoice"></i> Dokumen Persyaratan
+                </a>
+                <a href="{{ route('administrator.users.index') }}"
+                   class="nav-item {{ request()->routeIs('administrator.users.*') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i> Akun Operator
+                </a>
                 <div class="nav-label">Laporan</div>
                 <a href="{{ route('administrator.laporan.index') }}"
                    class="nav-item {{ request()->routeIs('administrator.laporan.index') || request()->routeIs('administrator.laporan.export*') ? 'active' : '' }}">
@@ -290,7 +324,7 @@
                    class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                     <i class="fas fa-user-circle"></i> Edit Profil
                 </a>
-
+            @endif
         </nav>
 
         <!-- User Info -->
@@ -362,6 +396,22 @@
                         @endforelse
                     </div>
                 </div>
+                @endif
+                <!-- Status Perangkat Kamera (Khusus Operator) -->
+                @if(auth()->user()->role === 'operator')
+                    @if(session('camera_device_id'))
+                        <a href="{{ route('operator.kamera.scanner') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-full text-xs font-semibold mr-4 transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            <i class="fas fa-video text-emerald-600"></i>
+                            <span>{{ session('camera_name') }} ({{ session('camera_area') }})</span>
+                        </a>
+                    @else
+                        <a href="{{ route('operator.kamera.index') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-medium mr-4 transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <i class="fas fa-video-slash text-amber-500"></i>
+                            <span>Hubungkan Kamera</span>
+                        </a>
+                    @endif
                 @endif
 
                 <!-- Waktu Realtime -->

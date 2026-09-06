@@ -28,28 +28,36 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-  public function store(Request $request): RedirectResponse
-{
-    $request->validate([
-        'name'       => ['required', 'string', 'max:255'],
-        'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-        'role'       => ['required', 'in:pemohon,administrator,verifikator'],
-        'perusahaan' => ['nullable', 'string', 'max:255', 'required_if:role,pemohon'],
-        'password'   => ['required', 'confirmed', Rules\Password::defaults()],
-    ]);
+    public function store(Request $request): RedirectResponse
+    {
+        if (!$request->has('role')) {
+            $request->merge(['role' => 'operator']);
+        }
 
-    $user = User::create([
-        'name'       => $request->name,
-        'email'      => $request->email,
-        'password'   => Hash::make($request->password),
-        'role'       => $request->role,
-        'perusahaan' => $request->role === 'pemohon' ? $request->perusahaan : null,
-    ]);
+        $request->validate([
+            'name'       => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'role'       => ['required', 'in:administrator,operator'],
+            'perusahaan' => ['nullable', 'string', 'max:255'],
+            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
 
-    event(new Registered($user));
+        $user = User::create([
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role'       => $request->role,
+            'perusahaan' => $request->perusahaan,
+        ]);
 
-    Auth::login($user);
+        event(new Registered($user));
 
-    return redirect()->route('administrator.dashboard');
+        Auth::login($user);
+
+        if ($user->role === 'operator') {
+            return redirect()->route('operator.dashboard');
+        }
+
+        return redirect()->route('administrator.dashboard');
     }
 }

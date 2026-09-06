@@ -11,6 +11,10 @@ use App\Http\Controllers\Administrator\LaporanController;
 use App\Http\Controllers\Administrator\ImportController;
 use App\Http\Controllers\Administrator\MasterOptionController;
 use App\Http\Controllers\Administrator\CameraDeviceController;
+use App\Http\Controllers\Administrator\DokumenPersyaratanController;
+use App\Http\Controllers\Administrator\UserController;
+use App\Http\Controllers\Operator\DashboardOperatorController;
+use App\Http\Controllers\Operator\KameraOperatorController;
 use App\Http\Controllers\ScanController;
 
 Route::get('/', function () {
@@ -18,6 +22,9 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    if (auth()->check() && auth()->user()->role === 'operator') {
+        return redirect()->route('operator.dashboard');
+    }
     return redirect()->route('administrator.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -85,7 +92,40 @@ Route::middleware(['auth', 'role:administrator'])->prefix('administrator')->name
     Route::post('/perangkat-kamera', [CameraDeviceController::class, 'store'])->name('perangkat-kamera.store');
     Route::put('/perangkat-kamera/{id}', [CameraDeviceController::class, 'update'])->name('perangkat-kamera.update');
     Route::delete('/perangkat-kamera/{id}', [CameraDeviceController::class, 'destroy'])->name('perangkat-kamera.destroy');
+
+    // Dokumen Persyaratan PAS Bandara (Baru & Perpanjangan)
+    Route::get('/dokumen-persyaratan', [DokumenPersyaratanController::class, 'index'])->name('dokumen-persyaratan.index');
+    Route::post('/dokumen-persyaratan/upload-batch', [DokumenPersyaratanController::class, 'uploadBatch'])->name('dokumen-persyaratan.upload-batch');
+    Route::post('/dokumen-persyaratan/upload/{kategori}', [DokumenPersyaratanController::class, 'upload'])->name('dokumen-persyaratan.upload');
+    Route::get('/dokumen-persyaratan/{id}/preview', [DokumenPersyaratanController::class, 'preview'])->name('dokumen-persyaratan.preview');
+    Route::get('/dokumen-persyaratan/{id}/download', [DokumenPersyaratanController::class, 'download'])->name('dokumen-persyaratan.download');
+    Route::delete('/dokumen-persyaratan/{id}', [DokumenPersyaratanController::class, 'destroy'])->name('dokumen-persyaratan.destroy');
+
+    // Manajemen Akun Operator & User
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{id}/assign-kamera', [UserController::class, 'assignKamera'])->name('users.assign-kamera');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 });
+
+// Operator Panel
+Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator.')->group(function () {
+    Route::get('/dashboard', [DashboardOperatorController::class, 'index'])->name('dashboard');
+    
+    // Akses Kamera & Scanner
+    Route::get('/kamera', [KameraOperatorController::class, 'index'])->name('kamera.index');
+    Route::post('/kamera/connect', [KameraOperatorController::class, 'connect'])->name('kamera.connect');
+    Route::get('/kamera/scanner', [KameraOperatorController::class, 'scanner'])->name('kamera.scanner');
+    Route::post('/kamera/disconnect', [KameraOperatorController::class, 'disconnect'])->name('kamera.disconnect');
+    Route::get('/kamera/logs', [KameraOperatorController::class, 'logs'])->name('kamera.logs');
+});
+
+// Download & Pratinjau Dokumen Persyaratan untuk Publik / Pemohon (No Auth Required)
+Route::get('/persyaratan/{id}/download', [DokumenPersyaratanController::class, 'download'])->name('dokumen-persyaratan.public-download');
+Route::get('/persyaratan/{id}/preview', [DokumenPersyaratanController::class, 'preview'])->name('dokumen-persyaratan.public-preview');
 
 // Camera Scan Login (no auth required)
 Route::get('/scan/login', [ScanController::class, 'loginForm'])->name('scan.login');

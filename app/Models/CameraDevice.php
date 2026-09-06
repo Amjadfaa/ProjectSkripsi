@@ -32,4 +32,10 @@ class CameraDevice extends Model
     {
         return $this->hasMany(ScanLog::class, 'camera_device_id');
     }
+
+    public function operators()
+    {
+        return $this->belongsToMany(User::class, 'camera_device_user', 'camera_device_id', 'user_id')
+            ->withTimestamps();
+    }
 }

@@ -10,11 +10,24 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name'       => 'Administrator',
-            'email'      => 'admin@monitoring-pas.test',
-            'password'   => Hash::make('password'),
-            'role'       => 'administrator',
-        ]);
+        // Akun Administrator
+        User::firstOrCreate(
+            ['email' => 'admin@monitoring-pas.test'],
+            [
+                'name'       => 'Administrator',
+                'password'   => Hash::make('password'),
+                'role'       => 'administrator',
+            ]
+        );
+
+        // Akun Operator
+        User::firstOrCreate(
+            ['email' => 'operator@monitoring-pas.test'],
+            [
+                'name'       => 'Petugas Operator',
+                'password'   => Hash::make('password'),
+                'role'       => 'operator',
+            ]
+        );
     }
 }

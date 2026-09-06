@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('kartu_pas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('permohonan_id')->constrained('permohonan')->onDelete('cascade');
             $table->string('nomor_kartu')->unique();
             $table->string('nama_pemegang');
             $table->string('perusahaan');

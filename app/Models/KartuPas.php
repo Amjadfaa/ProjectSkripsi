@@ -13,7 +13,6 @@ class KartuPas extends Model
 
     protected $fillable = [
         'instansi_id',
-        'permohonan_id',
         'nomor_kartu',
         'email',
         'nama_pemegang',
@@ -36,12 +35,6 @@ class KartuPas extends Model
     public function instansi()
     {
         return $this->belongsTo(Instansi::class, 'instansi_id');
-    }
-
-    // Relasi ke Permohonan
-    public function permohonan()
-    {
-        return $this->belongsTo(Permohonan::class);
     }
 
     // Cek apakah kartu sudah kadaluarsa

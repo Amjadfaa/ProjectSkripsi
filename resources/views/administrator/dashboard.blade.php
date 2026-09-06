@@ -48,9 +48,17 @@
 
             <!-- Quick Action Buttons -->
             <div class="flex flex-wrap gap-2.5 shrink-0">
+                <a href="{{ route('administrator.users.create') }}" 
+                   class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas fa-user-plus text-slate-900"></i> Tambah Operator
+                </a>
                 <a href="{{ route('administrator.kartu-pas.index') }}" 
                    class="bg-white text-blue-900 hover:bg-blue-50 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
                     <i class="fas fa-plus-circle text-blue-600"></i> Tambah Kartu PAS
+                </a>
+                <a href="{{ route('administrator.users.index') }}" 
+                   class="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-4 py-2.5 rounded-xl border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all">
+                    <i class="fas fa-users-cog text-amber-300"></i> Akun Operator
                 </a>
                 <a href="{{ route('administrator.instansi.index') }}" 
                    class="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-4 py-2.5 rounded-xl border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all">

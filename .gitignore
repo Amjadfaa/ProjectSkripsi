@@ -16,3 +16,10 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Berkas Desain Database & Skripsi
+/Design_Database_Skripsi.xlsx
+*Design_Database*
+*design_database*
+*.mwb
+*.pgerd
