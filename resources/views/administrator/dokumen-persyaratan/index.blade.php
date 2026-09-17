@@ -468,12 +468,12 @@
                                 {{-- Tombol Aksi File --}}
                                 <div class="pt-2 border-t border-slate-200 flex items-center justify-between gap-2 flex-wrap">
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('dokumen-persyaratan.preview', $dokumenBaru->id) }}" 
+                                        <a href="{{ route('administrator.dokumen-persyaratan.preview', $dokumenBaru->id) }}" 
                                            target="_blank" 
                                            class="btn-action-primary btn-preview">
                                             <i class="fas fa-eye"></i> Pratinjau
                                         </a>
-                                        <a href="{{ route('dokumen-persyaratan.download', $dokumenBaru->id) }}" 
+                                        <a href="{{ route('administrator.dokumen-persyaratan.download', $dokumenBaru->id) }}" 
                                            class="btn-action-primary btn-download">
                                             <i class="fas fa-download"></i> Unduh
                                         </a>
@@ -664,12 +664,12 @@
                                 {{-- Tombol Aksi File --}}
                                 <div class="pt-2 border-t border-slate-200 flex items-center justify-between gap-2 flex-wrap">
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('dokumen-persyaratan.preview', $dokumenPerpanjangan->id) }}" 
+                                        <a href="{{ route('administrator.dokumen-persyaratan.preview', $dokumenPerpanjangan->id) }}" 
                                            target="_blank" 
                                            class="btn-action-primary btn-preview">
                                             <i class="fas fa-eye"></i> Pratinjau
                                         </a>
-                                        <a href="{{ route('dokumen-persyaratan.download', $dokumenPerpanjangan->id) }}" 
+                                        <a href="{{ route('administrator.dokumen-persyaratan.download', $dokumenPerpanjangan->id) }}" 
                                            class="btn-action-primary btn-download">
                                             <i class="fas fa-download"></i> Unduh
                                         </a>

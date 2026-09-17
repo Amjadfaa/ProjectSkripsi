@@ -28,6 +28,34 @@ class DokumenPersyaratanTest extends TestCase
         $response->assertSee('Persyaratan Perpanjangan PAS Bandara');
     }
 
+    public function test_administrator_can_view_page_with_uploaded_files(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('role', 'administrator')->first() ?? User::factory()->create(['role' => 'administrator']);
+
+        $fileBaru = UploadedFile::fake()->create('panduan_baru.pdf', 500, 'application/pdf');
+        $filePerp = UploadedFile::fake()->create('panduan_perp.pdf', 300, 'application/pdf');
+
+        $this->actingAs($admin)->post(route('administrator.dokumen-persyaratan.upload', 'baru'), [
+            'file' => $fileBaru,
+            'deskripsi' => 'Deskripsi Baru',
+        ]);
+        $this->actingAs($admin)->post(route('administrator.dokumen-persyaratan.upload', 'perpanjangan'), [
+            'file' => $filePerp,
+            'deskripsi' => 'Deskripsi Perpanjangan',
+        ]);
+
+        $dokumenBaru = DokumenPersyaratan::where('kategori', 'baru')->first();
+        $dokumenPerp = DokumenPersyaratan::where('kategori', 'perpanjangan')->first();
+
+        $response = $this->actingAs($admin)->get(route('administrator.dokumen-persyaratan.index'));
+        $response->assertStatus(200);
+        $response->assertSee(route('administrator.dokumen-persyaratan.preview', $dokumenBaru->id));
+        $response->assertSee(route('administrator.dokumen-persyaratan.download', $dokumenBaru->id));
+        $response->assertSee(route('administrator.dokumen-persyaratan.preview', $dokumenPerp->id));
+        $response->assertSee(route('administrator.dokumen-persyaratan.download', $dokumenPerp->id));
+    }
+
     public function test_administrator_can_upload_dokumen_baru(): void
     {
         Storage::fake('public');
