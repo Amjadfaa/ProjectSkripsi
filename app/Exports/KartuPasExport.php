@@ -49,6 +49,14 @@ class KartuPasExport implements FromCollection, WithHeadings, WithMapping, WithS
             $query->where('status', $this->filters['status']);
         }
 
+        if (!empty($this->filters['tahun'])) {
+            $query->whereYear('tanggal_terbit', $this->filters['tahun']);
+        }
+
+        if (!empty($this->filters['bulan']) && $this->filters['bulan'] !== 'all') {
+            $query->whereMonth('tanggal_terbit', (int)$this->filters['bulan']);
+        }
+
         $this->dataItems = $query->get();
         return $this->dataItems;
     }

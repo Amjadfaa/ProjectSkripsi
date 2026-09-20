@@ -83,6 +83,9 @@ Route::middleware(['auth', 'role:administrator'])->prefix('administrator')->name
     Route::get('/instansi', [InstansiController::class, 'index'])->name('instansi.index');
     Route::get('/instansi/create', [InstansiController::class, 'create'])->name('instansi.create');
     Route::post('/instansi', [InstansiController::class, 'store'])->name('instansi.store');
+    Route::get('/instansi/export/excel', [InstansiController::class, 'exportExcel'])->name('instansi.export.excel');
+    Route::get('/instansi/template/excel', [InstansiController::class, 'downloadTemplate'])->name('instansi.template.excel');
+    Route::post('/instansi/import/excel', [InstansiController::class, 'importExcel'])->name('instansi.import.excel');
     Route::get('/instansi/{id}/edit', [InstansiController::class, 'edit'])->name('instansi.edit');
     Route::put('/instansi/{id}', [InstansiController::class, 'update'])->name('instansi.update');
     Route::delete('/instansi/{id}', [InstansiController::class, 'destroy'])->name('instansi.destroy');

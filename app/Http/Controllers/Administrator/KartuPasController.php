@@ -16,6 +16,9 @@ class KartuPasController extends Controller
 {
     public function index(Request $request)
     {
+        // Sinkronkan kartu PAS yang belum terhubung ke instansi_id
+        Instansi::syncUnlinkedKartuPas();
+
         // Update status kadaluarsa otomatis
         KartuPas::where('status', 'aktif')
             ->where('tanggal_berlaku', '<', now())

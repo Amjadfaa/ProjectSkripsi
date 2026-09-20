@@ -3,20 +3,77 @@
         <h2 class="font-semibold text-xl text-gray-800">Data Instansi</h2>
     </x-slot>
 
+    <style>
+        .modal-backdrop-clean {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.70);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-backdrop-clean.hidden {
+            display: none !important;
+        }
+        .modal-scroll-smooth {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        .modal-scroll-smooth::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-scroll-smooth::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-scroll-smooth::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .modal-scroll-smooth::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8;
+        }
+    </style>
+
     <div class="bg-white shadow-sm rounded-lg p-6">
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
             <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <i class="fas fa-building text-blue-600"></i> Daftar Instansi / Perusahaan
             </h3>
-            <button type="button" onclick="openModalTambahInstansi()"
-               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition">
-                <i class="fas fa-plus"></i> Tambah Instansi
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Tombol Import Excel -->
+                <button type="button" onclick="openModalImportInstansi()"
+                   class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition">
+                    <i class="fas fa-file-import"></i> Import Excel
+                </button>
+
+                <!-- Tombol Export Excel -->
+                <a href="{{ route('administrator.instansi.export.excel') }}"
+                   class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition"
+                   title="Unduh Data Instansi format Excel">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </a>
+
+                <!-- Tombol Tambah Instansi -->
+                <button type="button" onclick="openModalTambahInstansi()"
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition">
+                    <i class="fas fa-plus"></i> Tambah Instansi
+                </button>
+            </div>
         </div>
 
         @if(session('success'))
             <div class="bg-emerald-100 border border-emerald-200 text-emerald-700 p-4 rounded-lg mb-4 text-sm font-medium">
                 ✅ {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-200 text-red-700 p-4 rounded-lg mb-4 text-sm font-medium">
+                ⚠️ {{ session('error') }}
             </div>
         @endif
 
@@ -51,13 +108,22 @@
                     <tbody>
                         @foreach($instansis as $instansi)
                         @php
-                            $terpakai = $instansi->kartu_pas_count ?? $instansi->kartuPas()->count();
-                            $sisa     = $instansi->kuota - $terpakai;
+                            $terpakai = $instansi->total_kartu ?? $instansi->kartu_pas_count ?? $instansi->kartuPas()->count();
+                            $aktif    = $instansi->kartu_aktif ?? $instansi->kartuPas()->where('status', 'aktif')->count();
+                            $nonaktif = $instansi->kartu_nonaktif ?? $instansi->kartuPas()->where('status', '!=', 'aktif')->count();
+                            $sisa     = max(0, $instansi->kuota - $terpakai);
                         @endphp
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-3 font-semibold text-gray-800">{{ $instansi->nama_instansi }}</td>
                             <td class="p-3 font-medium text-blue-600">{{ $instansi->kuota }} Kartu</td>
-                            <td class="p-3 font-medium text-purple-600">{{ $terpakai }} Kartu</td>
+                            <td class="p-3 font-medium text-purple-600">
+                                <span>{{ $terpakai }} Kartu</span>
+                                @if($terpakai > 0)
+                                    <span class="block text-[11px] text-gray-400 font-normal">
+                                        ({{ $aktif }} aktif{{ $nonaktif > 0 ? ', ' . $nonaktif . ' kadaluarsa/nonaktif' : '' }})
+                                    </span>
+                                @endif
+                            </td>
                             <td class="p-3 font-medium {{ $sisa <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600' }}">
                                 {{ $sisa }} Kartu {{ $sisa <= 0 ? '[HABIS]' : '' }}
                             </td>
@@ -97,7 +163,7 @@
     </div>
 
     <!-- MODAL BESAR TAMBAH INSTANSI -->
-    <div id="modalTambahInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
+    <div id="modalTambahInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalTambahInstansi()">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -167,7 +233,7 @@
     </div>
 
     <!-- MODAL EDIT INSTANSI (SPA) -->
-    <div id="modalEditInstansi" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
+    <div id="modalEditInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalEditInstansi()">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -228,7 +294,123 @@
         </div>
     </div>
 
+    <!-- MODAL IMPORT DATA INSTANSI -->
+    <div id="modalImportInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalImportInstansi()">
+        <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+            <!-- Header Modal (Tetap di atas) -->
+            <div class="flex justify-between items-center px-6 py-3.5 border-b bg-gray-50/80 flex-shrink-0">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-file-import text-amber-500"></i> Import Data Instansi (File Excel)
+                </h3>
+                <button type="button" onclick="closeModalImportInstansi()" class="text-gray-400 hover:text-gray-600 transition p-1">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form & Konten Modal (Scroll Halus & Ringan) -->
+            <form method="POST" action="{{ route('administrator.instansi.import.excel') }}" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
+                @csrf
+                
+                <div class="flex-1 overflow-y-auto p-5 space-y-3.5 modal-scroll-smooth" style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+                    <!-- Ketentuan Duplikasi Ringkas -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2.5">
+                        <i class="fas fa-shield-alt text-amber-600 text-sm flex-shrink-0"></i>
+                        <div>
+                            <strong class="font-bold">Anti-Duplikasi:</strong>
+                            Jika instansi sudah ada di sistem, data lama <strong>tidak akan ditimpa</strong> dan baris tersebut akan <strong>dilewati (di-skip)</strong> secara otomatis.
+                        </div>
+                    </div>
+
+                    <!-- Banner Template Excel -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2">
+                        <div class="text-xs text-blue-900">
+                            <p class="font-bold flex items-center gap-1.5">
+                                <i class="fas fa-file-excel text-emerald-600"></i> Format File Excel
+                            </p>
+                            <p class="text-blue-700 text-[11px] mt-0.5">Disarankan menggunakan template resmi agar kolom sesuai.</p>
+                        </div>
+                        <a href="{{ route('administrator.instansi.template.excel') }}"
+                           class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-lg border border-blue-300 shadow-sm hover:bg-blue-50 transition">
+                            <i class="fas fa-download text-emerald-600"></i> Unduh Template (.xlsx)
+                        </a>
+                    </div>
+
+                    <!-- Detail Rincian Kolom (Collapsible / Ringan) -->
+                    <details class="text-xs text-gray-600 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                        <summary class="font-semibold text-gray-700 px-3.5 py-2 cursor-pointer hover:bg-gray-100 flex items-center justify-between select-none">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fas fa-list-ul text-blue-500"></i> Lihat Susunan Kolom Excel (7 Kolom)
+                            </span>
+                            <span class="text-gray-400 text-[11px]">Buka / Tutup ▾</span>
+                        </summary>
+                        <div class="p-3 border-t bg-white">
+                            <table class="w-full text-xs text-gray-700">
+                                <thead class="text-gray-500 border-b">
+                                    <tr>
+                                        <th class="py-1 text-left font-semibold">Kolom</th>
+                                        <th class="py-1 text-left font-semibold">Field</th>
+                                        <th class="py-1 text-left font-semibold">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom A</td><td>No</td><td class="text-gray-500">Nomor urut (Opsional)</td></tr>
+                                    <tr><td class="py-1 font-bold text-blue-600">Kolom B</td><td class="font-semibold">Nama Instansi</td><td class="text-emerald-600 font-medium">Wajib diisi</td></tr>
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom C</td><td>Kuota PAS</td><td class="text-gray-500">Default: 10</td></tr>
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom D</td><td>Email</td><td class="text-gray-500">Opsional</td></tr>
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom E</td><td>Nomor Telepon</td><td class="text-gray-500">Opsional</td></tr>
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom F</td><td>Alamat</td><td class="text-gray-500">Opsional</td></tr>
+                                    <tr><td class="py-1 font-bold text-gray-700">Kolom G</td><td>Status</td><td class="text-gray-500">Aktif / Nonaktif</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+
+                    <!-- Dropzone Pemilih File (Ringkas) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Pilih File Excel (.xlsx / .xls)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl py-4 px-5 text-center hover:border-amber-500 transition cursor-pointer bg-gray-50 hover:bg-amber-50/20"
+                             onclick="document.getElementById('import_instansi_file').click()">
+                            <input type="file" name="file" id="import_instansi_file" accept=".xlsx,.xls"
+                                   class="hidden" onchange="showModalImportInstansiFileName(this)" required>
+                            <i class="fas fa-cloud-upload-alt text-3xl text-amber-500 mb-1"></i>
+                            <p class="text-gray-700 font-medium text-xs">Klik untuk memilih file Excel dari komputer</p>
+                            <p class="text-gray-400 text-[11px] mt-0.5">Format: .xlsx atau .xls (Ukuran maks. 10MB)</p>
+                            <p id="modalImportInstansiFileName" class="text-emerald-600 text-xs mt-2 font-semibold"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Modal (Selalu terlihat di bawah, tanpa perlu scroll) -->
+                <div class="flex justify-end gap-2.5 px-6 py-3 border-t bg-gray-50 flex-shrink-0">
+                    <button type="button" onclick="closeModalImportInstansi()"
+                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="bg-amber-500 text-white px-5 py-2 rounded-lg hover:bg-amber-600 text-sm font-bold shadow-sm flex items-center gap-1.5 transition">
+                        <i class="fas fa-upload"></i> Import Sekarang
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // Modal Import Instansi
+        function openModalImportInstansi() {
+            document.getElementById('modalImportInstansiFileName').textContent = '';
+            document.getElementById('import_instansi_file').value = '';
+            document.getElementById('modalImportInstansi').classList.remove('hidden');
+        }
+
+        function closeModalImportInstansi() {
+            document.getElementById('modalImportInstansi').classList.add('hidden');
+        }
+
+        function showModalImportInstansiFileName(input) {
+            const fileName = input.files[0]?.name ?? '';
+            document.getElementById('modalImportInstansiFileName').textContent = fileName ? '✅ File Dipilih: ' + fileName : '';
+        }
         function openModalTambahInstansi() {
             document.getElementById('modalTambahInstansi').classList.remove('hidden');
         }
@@ -263,5 +445,14 @@
                 }
             });
         }
+
+        // Tutup modal jika tombol Escape ditekan
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModalImportInstansi();
+                closeModalTambahInstansi();
+                closeModalEditInstansi();
+            }
+        });
     </script>
 </x-app-layout>

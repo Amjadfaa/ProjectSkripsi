@@ -206,8 +206,8 @@
     </div>
 
     <!-- MODAL BESAR IMPORT DATA KARTU PAS -->
-    <div id="modalImportKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative max-h-[95vh] overflow-y-auto">
+    <div id="modalImportKartu" class="fixed inset-0 hidden flex items-center justify-center p-4 transition-opacity" style="background-color: rgba(15, 23, 42, 0.70); z-index: 1000;" onclick="if(event.target === this) closeModalImport()">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
             <div class="flex justify-between items-center pb-4 border-b mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <i class="fas fa-file-import text-amber-500"></i> Import Data Kartu PAS (File Excel)
@@ -719,7 +719,13 @@
                 document.getElementById('edit_email').value     = kartu.email || '';
             }
             document.getElementById('edit_nama_pemegang').value = kartu.nama_pemegang || '';
-            document.getElementById('edit_instansi_id').value   = kartu.instansi_id || '';
+
+            let editInstId = kartu.instansi_id || '';
+            if (!editInstId && kartu.perusahaan) {
+                const matched = (@json($instansiList) || []).find(i => (i.nama_instansi || '').trim().toLowerCase() === (kartu.perusahaan || '').trim().toLowerCase());
+                if (matched) editInstId = matched.id;
+            }
+            document.getElementById('edit_instansi_id').value   = editInstId;
             
             // Set checkboxes for multi-select Area Akses
             let selectedAreas = (kartu.area_akses || '').split(',').map(s => s.trim());
@@ -756,11 +762,17 @@
             const tglBisa = kartu.tanggal_berlaku ? kartu.tanggal_berlaku.substring(0, 10) : '-';
             document.getElementById('perp_lama_display').textContent    = tglBisa;
 
+            let perpInstId = kartu.instansi_id || '';
+            if (!perpInstId && kartu.perusahaan) {
+                const matched = (@json($instansiList) || []).find(i => (i.nama_instansi || '').trim().toLowerCase() === (kartu.perusahaan || '').trim().toLowerCase());
+                if (matched) perpInstId = matched.id;
+            }
+
             // Fill hidden values
             document.getElementById('perp_nomor_kartu').value   = kartu.nomor_kartu;
             document.getElementById('perp_email').value         = kartu.email || '';
             document.getElementById('perp_nama_pemegang').value = kartu.nama_pemegang;
-            document.getElementById('perp_instansi_id').value   = kartu.instansi_id;
+            document.getElementById('perp_instansi_id').value   = perpInstId;
             document.getElementById('perp_area_akses').value   = kartu.area_akses;
             document.getElementById('perp_jabatan').value      = kartu.jabatan || '';
             if (kartu.tanggal_terbit) {

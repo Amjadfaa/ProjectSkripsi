@@ -4,13 +4,29 @@ namespace App\Http\Controllers\Administrator;
 
 use App\Http\Controllers\Controller;
 use App\Models\Instansi;
+use App\Exports\InstansiExport;
+use App\Exports\InstansiTemplateExport;
+use App\Imports\InstansiImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class InstansiController extends Controller
 {
     public function index()
     {
-        $instansis = Instansi::latest()->get();
+        // Sinkronkan kartu PAS yang belum terhubung ke instansi_id
+        Instansi::syncUnlinkedKartuPas();
+
+        $instansis = Instansi::withCount([
+            'kartuPas as total_kartu',
+            'kartuPas as kartu_aktif' => function($q) {
+                $q->where('status', 'aktif');
+            },
+            'kartuPas as kartu_nonaktif' => function($q) {
+                $q->where('status', '!=', 'aktif');
+            }
+        ])->latest()->get();
+
         return view('administrator.instansi.index', compact('instansis'));
     }
 
@@ -66,5 +82,38 @@ class InstansiController extends Controller
 
         return redirect()->route('administrator.instansi.index')
             ->with('success', 'Instansi berhasil dihapus.');
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new InstansiExport, 'data-instansi-' . date('Y-m-d') . '.xlsx');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new InstansiTemplateExport, 'template-import-instansi.xlsx');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls', 'max:10240'],
+        ]);
+
+        try {
+            $import = new InstansiImport();
+            Excel::import($import, $request->file('file'));
+
+            $msg = "Import berhasil! {$import->imported} instansi baru berhasil ditambahkan.";
+            if ($import->skipped > 0) {
+                $msg .= " {$import->skipped} instansi dilewati karena sudah ada di sistem.";
+            }
+
+            return redirect()->route('administrator.instansi.index')
+                ->with('success', $msg);
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal import instansi: ' . $e->getMessage());
+        }
     }
 }

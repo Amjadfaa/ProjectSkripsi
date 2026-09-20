@@ -12,6 +12,8 @@ class MonitoringKuotaController extends Controller
 {
     public function index()
     {
+        Instansi::syncUnlinkedKartuPas();
+
         $instansis = Instansi::where('is_active', true)
             ->withCount([
                 'kartuPas as total_kartu',

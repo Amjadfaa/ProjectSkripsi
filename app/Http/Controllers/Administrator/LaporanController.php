@@ -14,10 +14,12 @@ class LaporanController extends Controller
 {
     public function index(Request $request)
     {
-        $tahun = $request->tahun ?? date('Y');
+        $tahun = $request->input('tahun', date('Y'));
+        $bulan = $request->input('bulan', 'all');
 
         // Daftar tahun yang tersedia dari data Kartu PAS
-        $tahunList = KartuPas::selectRaw('YEAR(created_at) as tahun')
+        $tahunList = KartuPas::selectRaw('YEAR(tanggal_terbit) as tahun')
+            ->whereNotNull('tanggal_terbit')
             ->distinct()
             ->orderByDesc('tahun')
             ->pluck('tahun');
@@ -26,40 +28,103 @@ class LaporanController extends Controller
             $tahunList = collect([date('Y')]);
         }
 
+        // Laporan bulanan untuk tabel ringkasan & grafik tren
         $laporanKartu = $this->getLaporanKartuPas($tahun);
 
-        // Ringkasan KPI Total
-        $totalKartuTerbit   = KartuPas::whereYear('tanggal_terbit', $tahun)->count();
-        $totalKartuAktif    = KartuPas::where('status', 'aktif')->count();
-        $totalKadaluarsa    = KartuPas::where('status', 'kadaluarsa')->count();
-        $totalNonaktif      = KartuPas::where('status', 'nonaktif')->count();
+        // Ringkasan KPI Total (disinkronkan dengan filter tahun dan bulan)
+        $kpiQuery = KartuPas::whereYear('tanggal_terbit', $tahun);
+        if ($bulan !== 'all' && !empty($bulan)) {
+            $kpiQuery->whereMonth('tanggal_terbit', (int)$bulan);
+        }
+
+        $totalKartuTerbit   = (clone $kpiQuery)->count();
+        $totalKartuAktif    = (clone $kpiQuery)->where('status', 'aktif')->count();
+        $totalKadaluarsa    = (clone $kpiQuery)->where('status', 'kadaluarsa')->count();
+        $totalNonaktif      = (clone $kpiQuery)->whereIn('status', ['nonaktif', 'tidak_aktif'])->count();
 
         // Distribusi Kartu per Instansi untuk Chart
-        $distribusiInstansi = Instansi::withCount(['kartuPas' => function($q) use ($tahun) {
+        $distribusiInstansiQuery = Instansi::withCount(['kartuPas' => function($q) use ($tahun, $bulan) {
             $q->whereYear('tanggal_terbit', $tahun);
-        }])->get();
+            if ($bulan !== 'all' && !empty($bulan)) {
+                $q->whereMonth('tanggal_terbit', (int)$bulan);
+            }
+        }])->having('kartu_pas_count', '>', 0)->get();
+
+        if ($distribusiInstansiQuery->isEmpty()) {
+            $distribusiInstansi = Instansi::withCount(['kartuPas' => function($q) use ($tahun) {
+                $q->whereYear('tanggal_terbit', $tahun);
+            }])->limit(10)->get();
+        } else {
+            $distribusiInstansi = $distribusiInstansiQuery;
+        }
+
+        // Jika filter bulan spesifik dipilih, ambil daftar kartu pas detail untuk bulan tersebut
+        $detailKartuPas = null;
+        if ($bulan !== 'all' && !empty($bulan)) {
+            $detailKartuPas = KartuPas::whereYear('tanggal_terbit', $tahun)
+                ->whereMonth('tanggal_terbit', (int)$bulan)
+                ->with('instansi')
+                ->latest('id')
+                ->paginate(50)
+                ->withQueryString();
+        }
+
+        $namaBulanList = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
 
         return view('administrator.laporan.index', compact(
-            'laporanKartu', 'tahun', 'tahunList',
+            'laporanKartu', 'tahun', 'bulan', 'tahunList', 'namaBulanList',
             'totalKartuTerbit', 'totalKartuAktif', 'totalKadaluarsa', 'totalNonaktif',
-            'distribusiInstansi'
+            'distribusiInstansi', 'detailKartuPas'
         ));
     }
 
     public function exportPdf(Request $request)
     {
-        $tahun        = $request->tahun ?? date('Y');
+        $tahun        = $request->input('tahun', date('Y'));
+        $bulan        = $request->input('bulan', 'all');
         $laporanKartu = $this->getLaporanKartuPas($tahun);
 
-        $pdf = Pdf::loadView('administrator.laporan.pdf', compact('laporanKartu', 'tahun'))
+        $detailKartu = null;
+        if ($bulan !== 'all' && !empty($bulan)) {
+            $detailKartu = KartuPas::whereYear('tanggal_terbit', $tahun)
+                ->whereMonth('tanggal_terbit', (int)$bulan)
+                ->with('instansi')
+                ->latest('id')
+                ->get();
+        }
+
+        $namaBulanList = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $namaBulan = ($bulan !== 'all' && !empty($bulan) && isset($namaBulanList[(int)$bulan])) ? $namaBulanList[(int)$bulan] : null;
+
+        $pdf = Pdf::loadView('administrator.laporan.pdf', compact('laporanKartu', 'tahun', 'bulan', 'namaBulan', 'detailKartu'))
             ->setPaper('a4', 'landscape');
 
-        return $pdf->download('laporan-kartu-pas-' . $tahun . '.pdf');
+        $filename = 'laporan-kartu-pas-' . $tahun . ($namaBulan ? '-' . strtolower($namaBulan) : '') . '.pdf';
+        return $pdf->download($filename);
     }
 
     public function exportExcel(Request $request)
     {
-        return Excel::download(new KartuPasExport, 'laporan-kartu-pas.xlsx');
+        $tahun = $request->input('tahun', date('Y'));
+        $bulan = $request->input('bulan', 'all');
+
+        $filters = [
+            'tahun' => $tahun,
+        ];
+        if ($bulan !== 'all' && !empty($bulan)) {
+            $filters['bulan'] = $bulan;
+        }
+
+        $filename = 'laporan-kartu-pas-' . $tahun . ($bulan !== 'all' ? '-bulan-' . $bulan : '') . '.xlsx';
+        return Excel::download(new KartuPasExport($filters), $filename);
     }
 
     private function getLaporanKartuPas($tahun)
@@ -67,10 +132,25 @@ class LaporanController extends Controller
         $laporanBulanan = collect();
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
-            $kartuBaru         = KartuPas::whereYear('tanggal_terbit', $tahun)->whereMonth('tanggal_terbit', $bulan)->count();
-            $kartuKadaluarsa   = KartuPas::whereYear('tanggal_berlaku', $tahun)->whereMonth('tanggal_berlaku', $bulan)->where('status', 'kadaluarsa')->count();
-            $kartuDiperpanjang = KartuPas::whereYear('updated_at', $tahun)->whereMonth('updated_at', $bulan)->where('status', 'aktif')->whereYear('tanggal_terbit', '!=', $tahun)->count();
-            $totalTerbitBulan  = $kartuBaru + $kartuDiperpanjang;
+            $baseQuery = KartuPas::whereYear('tanggal_terbit', $tahun)->whereMonth('tanggal_terbit', $bulan);
+
+            $kartuBaru = (clone $baseQuery)
+                ->where(function($q) {
+                    $q->where('tipe_permohonan', 'baru')
+                      ->orWhereNull('tipe_permohonan');
+                })
+                ->count();
+
+            $kartuDiperpanjang = (clone $baseQuery)
+                ->where('tipe_permohonan', 'perpanjangan')
+                ->count();
+
+            // Kadaluarsa: kartu yang diterbitkan pada bulan ini dan statusnya kadaluarsa
+            $kartuKadaluarsa = (clone $baseQuery)
+                ->where('status', 'kadaluarsa')
+                ->count();
+
+            $totalTerbitBulan = $kartuBaru + $kartuDiperpanjang;
 
             $laporanBulanan->push((object)[
                 'bulan'              => $bulan,

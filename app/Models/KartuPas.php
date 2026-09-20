@@ -22,6 +22,7 @@ class KartuPas extends Model
         'tanggal_terbit',
         'tanggal_berlaku',
         'status',
+        'tipe_permohonan',
         'keterangan_nonaktif',
         'catatan_nonaktif',
     ];
@@ -30,6 +31,26 @@ class KartuPas extends Model
         'tanggal_terbit'  => 'date',
         'tanggal_berlaku' => 'date',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($kartu) {
+            // Sinkronisasi otomatis instansi_id berdasarkan perusahaan
+            if (empty($kartu->instansi_id) && !empty($kartu->perusahaan)) {
+                $instansi = Instansi::whereRaw('TRIM(LOWER(nama_instansi)) = ?', [strtolower(trim($kartu->perusahaan))])->first();
+                if ($instansi) {
+                    $kartu->instansi_id = $instansi->id;
+                }
+            }
+            // Sinkronisasi otomatis perusahaan berdasarkan instansi_id
+            if (!empty($kartu->instansi_id) && empty($kartu->perusahaan)) {
+                $instansi = Instansi::find($kartu->instansi_id);
+                if ($instansi) {
+                    $kartu->perusahaan = $instansi->nama_instansi;
+                }
+            }
+        });
+    }
 
     // Relasi ke Instansi
     public function instansi()
