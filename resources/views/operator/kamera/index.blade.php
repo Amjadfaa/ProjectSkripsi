@@ -3,58 +3,129 @@
         Akses & Koneksi Kamera Scanner
     </x-slot>
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6">
         <!-- Flash Alert Messages -->
         @if(session('success'))
-            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
-                <i class="fas fa-check-circle text-emerald-600 text-lg flex-shrink-0"></i>
-                <div class="text-sm font-medium">{{ session('success') }}</div>
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between gap-3 shadow-sm animate-fade-in">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shrink-0 shadow-xs">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="text-sm font-semibold">{{ session('success') }}</div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 text-xs p-1">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
-                <i class="fas fa-exclamation-circle text-red-600 text-lg flex-shrink-0"></i>
-                <div class="text-sm font-medium">{{ session('error') }}</div>
+            <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center justify-between gap-3 shadow-sm animate-fade-in">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center text-sm shrink-0 shadow-xs">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="text-sm font-semibold">{{ session('error') }}</div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 text-xs p-1">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         @endif
 
-        <!-- Card Kamera Sedang Terhubung (Jika Ada) -->
-        @if($connectedDevice)
-            <div class="bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-700 rounded-2xl p-6 text-white shadow-md">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-2xl flex-shrink-0">
-                            <i class="fas fa-video"></i>
+        <!-- Hero Header Banner -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#112948] text-white p-6 sm:p-8 shadow-xl border border-slate-700/60">
+            <!-- Background Glow & Radar Visuals -->
+            <div class="absolute -right-10 -top-10 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute right-12 bottom-0 opacity-10 pointer-events-none">
+                <i class="fas fa-video text-9xl"></i>
+            </div>
+            <div class="absolute right-48 -bottom-10 opacity-5 pointer-events-none">
+                <i class="fas fa-shield-halved text-8xl"></i>
+            </div>
+
+            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div class="space-y-2.5 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                        <i class="fas fa-shield-halved text-amber-400"></i> Terminal Akses Pos Scanner
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                        Koneksi & Akses Perangkat Kamera
+                    </h1>
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                        Pilih pos gerbang pemeriksaan bandara yang telah ditugaskan kepada Anda atau hubungkan manual menggunakan kode otorisasi resmi untuk memulai pemindaian QR PAS Bandara.
+                    </p>
+                </div>
+
+                <!-- Operator Card Status Pill -->
+                <div class="flex items-center gap-3.5 bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-2xl shrink-0 shadow-inner">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-md shrink-0">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                    </div>
+                    <div class="min-w-[150px]">
+                        <div class="text-[11px] text-amber-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Petugas Aktif
                         </div>
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-xs font-semibold uppercase tracking-wider mb-1">
-                                <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
-                                Kamera Aktif Terhubung
-                            </div>
-                            <h2 class="text-xl font-bold">{{ $connectedDevice->nama_kamera }}</h2>
-                            <p class="text-emerald-100 text-xs mt-0.5">
-                                Kode Area: <strong>{{ $connectedDevice->kode_area }}</strong>
-                                @if($connectedDevice->areaAkses)
-                                    — {{ $connectedDevice->areaAkses->nama_area }}
-                                @endif
-                                &bull; Tipe Scan: <strong>{{ strtoupper($connectedDevice->tipe_scan) }}</strong>
-                                &bull; Kode Akses: <span class="font-mono bg-white/20 px-1.5 py-0.5 rounded">{{ $connectedDevice->kode_akses }}</span>
-                            </p>
+                        <div class="text-sm font-bold text-white leading-tight truncate">{{ auth()->user()->name }}</div>
+                        <div class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1">
+                            <i class="fas fa-id-badge text-slate-400 text-[10px]"></i>
+                            <span>{{ $availableDevices->count() }} Pos Kamera Diizinkan</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Kamera Sedang Terhubung (Active Session Console) -->
+        @if($connectedDevice)
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-950/90 via-teal-900/85 to-[#064e3b] p-6 text-white shadow-xl border border-emerald-500/30 backdrop-blur-xl">
+                <!-- Glowing corner effect -->
+                <div class="absolute -right-8 -top-8 w-48 h-48 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-2xl shrink-0 shadow-lg shadow-emerald-900/40 border border-white/20">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-bold uppercase tracking-wider">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                                </span>
+                                Sesi Kamera Sedang Aktif
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-white">{{ $connectedDevice->nama_kamera }}</h2>
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-emerald-200 pt-0.5">
+                                <span class="bg-white/15 px-2.5 py-0.5 rounded-lg font-bold border border-white/20">
+                                    <i class="fas fa-map-marker-alt text-amber-400 mr-1"></i> Area {{ $connectedDevice->kode_area }}
+                                    @if($connectedDevice->areaAkses)
+                                        — {{ $connectedDevice->areaAkses->nama_area }}
+                                    @endif
+                                </span>
+                                <span class="bg-white/15 px-2.5 py-0.5 rounded-lg font-bold uppercase border border-white/20">
+                                    <i class="fas fa-arrows-split-up-and-left text-teal-300 mr-1"></i> {{ strtoupper(str_replace('_', ' ', $connectedDevice->tipe_scan)) }}
+                                </span>
+                                <span class="bg-white/10 px-2 py-0.5 rounded-lg font-mono text-[11px] border border-white/10">
+                                    KODE: <strong>{{ $connectedDevice->kode_akses }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 shrink-0">
                         <a href="{{ route('operator.kamera.scanner') }}"
-                           class="bg-white text-emerald-800 hover:bg-emerald-50 font-bold px-5 py-2.5 rounded-xl text-sm shadow transition-all hover:scale-[1.02] flex items-center gap-2">
-                            <i class="fas fa-qrcode text-emerald-600"></i>
+                           class="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold px-6 py-3 rounded-2xl text-sm shadow-lg shadow-amber-500/30 transition-all hover:scale-[1.03] flex items-center gap-2.5">
+                            <i class="fas fa-qrcode text-base"></i>
                             <span>Buka Live Scanner</span>
                         </a>
-                        <form action="{{ route('operator.kamera.disconnect') }}" method="POST" onsubmit="return confirm('Yakin ingin memutuskan koneksi kamera ini?');">
+                        <form action="{{ route('operator.kamera.disconnect') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan sesi kamera ini?');">
                             @csrf
                             <button type="submit"
-                                    class="bg-emerald-800/60 hover:bg-red-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-colors border border-white/20 flex items-center gap-1.5"
-                                    title="Putuskan Kamera">
-                                <i class="fas fa-unlink"></i> Putuskan
+                                    class="bg-white/10 hover:bg-rose-600/80 text-white font-semibold px-4 py-3 rounded-2xl text-sm transition-all border border-white/20 hover:border-rose-400/40 flex items-center gap-2"
+                                    title="Putuskan Sesi Kamera">
+                                <i class="fas fa-unlink text-xs"></i>
+                                <span>Putuskan</span>
                             </button>
                         </form>
                     </div>
@@ -62,164 +133,245 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Form Input Kode Akses (Kolom Kiri) -->
-            <div class="lg:col-span-5">
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-7">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-lg">
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Kolom Kiri: Daftar Kamera Ditugaskan (8 Kolom) -->
+            <div class="lg:col-span-8 space-y-4">
+                <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 sm:p-7">
+                    <!-- Section Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-5 border-b border-slate-100 gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center text-lg shrink-0">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-base sm:text-lg text-slate-800">
+                                    Pos Kamera Ditugaskan untuk Anda
+                                </h3>
+                                <p class="text-xs text-slate-500">Pilih pos pemeriksaan untuk terhubung langsung ke live scanner</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 self-start sm:self-auto">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                <i class="fas fa-check-shield text-[10px]"></i> {{ $availableDevices->count() }} Pos Siap Pakai
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Grid Kartu Kamera -->
+                    @if($availableDevices->isNotEmpty())
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($availableDevices as $dev)
+                                @php
+                                    $isCurrent = $connectedDevice && $connectedDevice->id === $dev->id;
+                                @endphp
+                                <div class="relative group rounded-2xl border transition-all duration-200 p-5 flex flex-col justify-between gap-4 {{ $isCurrent ? 'bg-gradient-to-br from-emerald-50/70 to-teal-50/40 border-emerald-300 ring-2 ring-emerald-500/40 shadow-sm' : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-md' }}">
+                                    <!-- Status Active Indicator Top Right -->
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-10 h-10 rounded-xl {{ $isCurrent ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-700' }} flex items-center justify-center text-base transition-colors shrink-0">
+                                                <i class="fas fa-camera"></i>
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider bg-slate-900 text-white uppercase">
+                                                        AREA {{ $dev->kode_area }}
+                                                    </span>
+                                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
+                                                        {{ str_replace('_', ' ', $dev->tipe_scan) }}
+                                                    </span>
+                                                </div>
+                                                <h4 class="font-extrabold text-slate-900 text-sm mt-1 leading-snug group-hover:text-blue-700 transition-colors">
+                                                    {{ $dev->nama_kamera }}
+                                                </h4>
+                                            </div>
+                                        </div>
+
+                                        @if($isCurrent)
+                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white flex items-center gap-1 shadow-xs shrink-0">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> Aktif
+                                            </span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 flex items-center gap-1 shrink-0">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Siaga
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <!-- Area & Lokasi Details -->
+                                    <div class="space-y-1.5 text-xs text-slate-500 pt-1 border-t border-slate-100">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Lokasi:</span>
+                                            <span class="font-semibold text-slate-700 text-right truncate max-w-[180px]">
+                                                {{ optional($dev->areaAkses)->nama_area ?? 'Area Akses Bandara' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Kode Akses:</span>
+                                            <div class="flex items-center gap-1.5">
+                                                <code class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200">
+                                                    {{ $dev->kode_akses }}
+                                                </code>
+                                                <button type="button" onclick="salinKodeAkses('{{ $dev->kode_akses }}')"
+                                                        class="text-slate-400 hover:text-blue-600 p-1 transition"
+                                                        title="Salin Kode Akses">
+                                                    <i class="far fa-copy text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom Action -->
+                                    <div class="pt-2">
+                                        @if($isCurrent)
+                                            <a href="{{ route('operator.kamera.scanner') }}"
+                                               class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition hover:shadow-md">
+                                                <i class="fas fa-qrcode"></i> Buka Live Scanner
+                                            </a>
+                                        @else
+                                            <form action="{{ route('operator.kamera.connect') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="kode_akses" value="{{ $dev->kode_akses }}">
+                                                <button type="submit"
+                                                        class="w-full bg-[#1e3a5f] hover:bg-[#284c7b] text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition hover:shadow-md hover:scale-[1.01]">
+                                                    <i class="fas fa-plug text-amber-400 text-xs"></i>
+                                                    <span>Hubungkan Pos Ini</span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <!-- State Kosong yang Ramah & Menarik -->
+                        <div class="p-8 sm:p-12 text-center rounded-2xl bg-gradient-to-b from-slate-50 to-white border-2 border-dashed border-slate-200">
+                            <div class="w-16 h-16 rounded-3xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm">
+                                <i class="fas fa-shield-cat"></i>
+                            </div>
+                            <h4 class="text-base font-bold text-slate-800">Belum Ada Penugasan Pos Kamera</h4>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">
+                                Akun Anda (<strong>{{ auth()->user()->name }}</strong>) belum diberikan otorisasi pos kamera scanner oleh Administrator sistem.
+                            </p>
+
+                            <!-- Panduan Otorisasi -->
+                            <div class="mt-6 max-w-lg mx-auto bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-left">
+                                <div class="flex items-center gap-2 text-xs font-bold text-amber-900 mb-2">
+                                    <i class="fas fa-circle-info text-amber-600"></i>
+                                    <span>Langkah Aktivasi Pos Scanner:</span>
+                                </div>
+                                <ol class="text-xs text-amber-950 space-y-1.5 list-decimal list-inside leading-relaxed">
+                                    <li>Hubungi Administrator atau Supervisor Keamanan Bandara.</li>
+                                    <li>Administrator akan membuka menu <strong>Manajemen Pengguna</strong>.</li>
+                                    <li>Pilih nama akun Anda lalu centang pos kamera scanner yang ditugaskan.</li>
+                                    <li>Setelah disimpan, pos kamera akan seketika tampil di halaman ini.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Form Hubungkan Manual & Panduan Petugas (4 Kolom) -->
+            <div class="lg:col-span-4 space-y-6">
+
+                <!-- Form Hubungkan Kamera (Manual Kode Akses) -->
+                <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6">
+                    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-base shrink-0">
                             <i class="fas fa-key"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-gray-800">Hubungkan Kamera</h3>
-                            <p class="text-xs text-gray-500">Masukkan kode akses perangkat kamera</p>
+                            <h3 class="font-extrabold text-base text-slate-800">Hubungkan Kamera</h3>
+                            <p class="text-xs text-slate-500">Hubungkan manual via kode akses pos</p>
                         </div>
                     </div>
 
                     <form action="{{ route('operator.kamera.connect') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
-                            <label for="kode_akses" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                                Kode Akses Kamera <span class="text-red-500">*</span>
+                            <label for="kode_akses" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                Kode Akses Kamera <span class="text-rose-500">*</span>
                             </label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
-                                    <i class="fas fa-shield-alt"></i>
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                    <i class="fas fa-shield-halved"></i>
                                 </span>
                                 <input type="text"
                                        name="kode_akses"
                                        id="kode_akses"
                                        value="{{ old('kode_akses') }}"
                                        required
-                                       placeholder="Contoh: CAM-GATE-01"
-                                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/20 font-mono text-sm tracking-wider uppercase text-gray-900 transition-all @error('kode_akses') border-red-500 @enderror"
-                                       autocomplete="off"
-                                       autofocus>
+                                       placeholder="Contoh: CAM-AREA-A"
+                                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/20 font-mono text-sm tracking-wider uppercase text-slate-900 transition-all @error('kode_akses') border-rose-500 @enderror"
+                                       autocomplete="off">
                             </div>
                             @error('kode_akses')
-                                <p class="text-red-600 text-xs mt-1.5 flex items-center gap-1">
+                                <p class="text-rose-600 text-xs mt-1.5 flex items-center gap-1 font-medium">
                                     <i class="fas fa-exclamation-circle text-[11px]"></i> {{ $message }}
                                 </p>
                             @enderror
-                        </div>
-
-                        <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 text-xs text-blue-800 space-y-1">
-                            <div class="font-bold flex items-center gap-1.5 text-blue-900">
-                                <i class="fas fa-info-circle text-blue-600"></i> Panduan Otorisasi Akses:
-                            </div>
-                            <p class="text-blue-700 leading-relaxed">
-                                Anda hanya dapat menghubungkan perangkat kamera yang telah <strong>ditugaskan oleh Administrator</strong> kepada akun Anda. Pilih dari daftar tugas di samping atau ketik kode akses resmi Anda.
-                            </p>
+                            <p class="text-[11px] text-slate-400 mt-1">Masukkan kode identifikasi unik perangkat kamera pos</p>
                         </div>
 
                         <button type="submit"
-                                class="w-full bg-[#1e3a5f] hover:bg-[#284c7b] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm">
+                                class="w-full bg-[#1e3a5f] hover:bg-[#284c7b] text-white font-extrabold py-3 px-4 rounded-xl shadow-md transition-all hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-2 text-sm">
                             <i class="fas fa-plug text-amber-400"></i>
                             <span>Hubungkan & Buka Scanner</span>
                         </button>
                     </form>
                 </div>
-            </div>
 
-            <!-- Daftar Perangkat Kamera Ditugaskan (Kolom Kanan) -->
-            <div class="lg:col-span-7">
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-video text-blue-600"></i>
-                            <h3 class="font-bold text-gray-800 text-sm">Kamera & Kode Akses Ditugaskan untuk Anda</h3>
-                        </div>
-                        <span class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">
-                            {{ $availableDevices->count() }} Diizinkan
-                        </span>
+                <!-- Card Panduan Operasional Keamanan -->
+                <div class="bg-gradient-to-br from-slate-900 to-[#1e3a5f] text-white rounded-3xl p-6 shadow-md border border-slate-700/50 space-y-4">
+                    <div class="flex items-center gap-2.5 pb-3 border-b border-white/10">
+                        <i class="fas fa-clipboard-check text-amber-400 text-base"></i>
+                        <h4 class="font-extrabold text-sm tracking-wide text-white">SOP Verifikasi Petugas</h4>
                     </div>
 
-                    <div class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
-                        @forelse($availableDevices as $dev)
-                            @php
-                                $isCurrent = $connectedDevice && $connectedDevice->id === $dev->id;
-                            @endphp
-                            <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors {{ $isCurrent ? 'bg-emerald-50/30' : '' }}">
-                                <div class="space-y-1.5">
-                                    <div class="flex items-center gap-2">
-                                        <h4 class="font-bold text-gray-900 text-sm">{{ $dev->nama_kamera }}</h4>
-                                        @if($isCurrent)
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                                                <i class="fas fa-check text-[9px]"></i> Aktif Saat Ini
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[11px] font-semibold border border-blue-100">
-                                            <i class="fas fa-map-marker-alt text-blue-500"></i>
-                                            Area {{ $dev->kode_area }}
-                                            @if($dev->areaAkses)
-                                                ({{ $dev->areaAkses->keterangan }})
-                                            @endif
-                                        </span>
-                                        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-[11px] font-medium uppercase">
-                                            {{ str_replace('_', ' ', $dev->tipe_scan) }}
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-xs text-gray-600 pt-1">
-                                        <span>Kode Akses:</span>
-                                        <code class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded font-mono font-bold border border-purple-200">{{ $dev->kode_akses }}</code>
-                                        <button type="button" onclick="salinKodeAkses('{{ $dev->kode_akses }}')"
-                                                class="text-gray-400 hover:text-purple-600 transition-colors text-xs"
-                                                title="Salin Kode Akses & Masukkan ke Form">
-                                            <i class="far fa-copy"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="flex-shrink-0 flex items-center gap-2">
-                                    @if($isCurrent)
-                                        <a href="{{ route('operator.kamera.scanner') }}"
-                                           class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
-                                            <i class="fas fa-qrcode"></i> Buka Scanner
-                                        </a>
-                                    @else
-                                        <form action="{{ route('operator.kamera.connect') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="kode_akses" value="{{ $dev->kode_akses }}">
-                                            <button type="submit"
-                                                    class="bg-[#1e3a5f] hover:bg-[#284c7b] text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
-                                                <i class="fas fa-plug text-amber-400"></i> Hubungkan
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
-                            <div class="p-8 text-center text-gray-400">
-                                <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto mb-3 border border-amber-200">
-                                    <i class="fas fa-key"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-gray-700">Belum Ada Penugasan Kamera</h4>
-                                <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
-                                    Akun Anda belum memiliki izin akses titik kamera dari Administrator. Silakan hubungi Administrator sistem untuk mendapatkan penugasan pos kamera scanner.
-                                </p>
-                            </div>
-                        @endforelse
+                    <div class="space-y-3 text-xs leading-relaxed text-slate-300">
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">1</span>
+                            <p><strong class="text-white">Pilih Pos Gerbang</strong>: Pastikan Anda terhubung ke titik pos kamera sesuai jadwal tugas Anda.</p>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</span>
+                            <p><strong class="text-white">Arah Scan Sesuai</strong>: Atur mode <span class="text-amber-300 font-semibold">MASUK</span> atau <span class="text-amber-300 font-semibold">KELUAR</span> pada terminal scanner.</p>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">3</span>
+                            <p><strong class="text-white">Pencocokan Visual</strong>: Cocokkan foto wajah dan data pemegang kartu di layar dengan pembawa kartu PAS fisik.</p>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">4</span>
+                            <p><strong class="text-white">Waspada Status Merah</strong>: Tahan pembawa kartu jika QR menghasilkan status <span class="text-rose-400 font-semibold">Ditolak / Kadaluwarsa</span>.</p>
+                        </div>
                     </div>
                 </div>
+
             </div>
+
         </div>
     </div>
 
+    <!-- Script Salin Kode Akses -->
     <script>
         function salinKodeAkses(kode) {
             const input = document.getElementById('kode_akses');
             if (input) {
                 input.value = kode;
                 input.focus();
+                // Highlight input briefly
+                input.classList.add('ring-2', 'ring-amber-400');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-amber-400'), 1500);
             }
             navigator.clipboard.writeText(kode).then(() => {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Kode Disalin!',
-                        text: `Kode akses [${kode}] telah disalin dan dimasukkan ke formulir koneksi.`,
+                        title: 'Kode Akses Disalin!',
+                        text: `Kode pos [${kode}] telah disalin dan dimasukkan ke formulir koneksi.`,
                         timer: 2000,
                         showConfirmButton: false,
                         toast: true,

@@ -6,259 +6,404 @@
     <!-- html5-qrcode library for webcam QR scanning -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+    <style>
+        @keyframes scanline {
+            0% { top: 5%; opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { top: 95%; opacity: 0.4; }
+        }
+        .scanline-beam {
+            animation: scanline 2.2s ease-in-out infinite alternate;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
+        }
+        .valid-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes deniedGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+        }
+        .denied-glow {
+            animation: deniedGlow 2s infinite;
+        }
+    </style>
+
     <div class="space-y-6">
-        <!-- Device Info & Action Header Bar -->
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-xl bg-[#1e3a5f] text-white flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
+
+        <!-- Top Device Flight-Control Bar -->
+        <div class="relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 shadow-sm p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#1e3a5f] to-[#0f2744] text-white flex items-center justify-center text-xl shrink-0 shadow-md">
                     <i class="fas fa-video"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <h2 class="text-lg font-extrabold text-gray-900">{{ $device->nama_kamera }}</h2>
-                        <span class="bg-[#1e3a5f] text-white text-xs px-2.5 py-0.5 rounded-full font-bold">
+                        <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">{{ $device->nama_kamera }}</h2>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-black tracking-wider bg-slate-900 text-white uppercase shadow-xs">
                             AREA {{ $device->kode_area }}
                         </span>
-                        <span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-200">
                             {{ str_replace('_', ' ', $device->tipe_scan) }}
                         </span>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE
                         </span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
-                        Lokasi Area: <strong>{{ optional($device->areaAkses)->nama_area ?? 'Area Bandara' }}</strong>
-                        &bull; Kode Akses: <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ $device->kode_akses }}</span>
+                    <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span><i class="fas fa-map-marker-alt text-amber-500"></i> Lokasi: <strong>{{ optional($device->areaAkses)->nama_area ?? 'Area Bandara' }}</strong></span>
+                        <span class="text-slate-300">&bull;</span>
+                        <span>Kode Akses: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-700">{{ $device->kode_akses }}</code></span>
                     </p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap justify-end">
                 <!-- Arah Scan Switcher jika tipe masuk_keluar -->
                 @if($device->tipe_scan === 'masuk_keluar')
-                    <div class="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
+                    <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner">
                         <button type="button" id="btnModeMasuk" onclick="setScanMode('masuk')"
-                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm">
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm">
                             <i class="fas fa-sign-in-alt"></i> MASUK
                         </button>
                         <button type="button" id="btnModeKeluar" onclick="setScanMode('keluar')"
-                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900">
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
                             <i class="fas fa-sign-out-alt"></i> KELUAR
                         </button>
                     </div>
                 @else
-                    <div class="px-3 py-1.5 rounded-xl bg-gray-100 border border-gray-200 text-xs font-bold uppercase text-gray-700">
-                        <i class="fas {{ $device->tipe_scan === 'masuk' ? 'fa-sign-in-alt text-emerald-600' : 'fa-sign-out-alt text-amber-600' }} mr-1"></i>
-                        MODE {{ strtoupper($device->tipe_scan) }}
+                    <div class="px-3.5 py-2 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-black uppercase text-slate-800 flex items-center gap-1.5">
+                        <i class="fas {{ $device->tipe_scan === 'masuk' ? 'fa-sign-in-alt text-emerald-600' : 'fa-sign-out-alt text-amber-600' }}"></i>
+                        <span>MODE {{ strtoupper($device->tipe_scan) }}</span>
                     </div>
                 @endif
 
                 <!-- Audio Toggle -->
                 <button type="button" id="btnAudioToggle" onclick="toggleAudio()"
-                        class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-200 transition flex items-center gap-1.5">
-                    <i class="fas fa-volume-up" id="audioIcon"></i>
+                        class="px-3 py-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition flex items-center gap-1.5">
+                    <i class="fas fa-volume-up text-amber-500" id="audioIcon"></i>
                     <span id="audioText">Suara: ON</span>
                 </button>
 
                 <!-- Ganti Kamera -->
                 <a href="{{ route('operator.kamera.index') }}"
-                   class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-200 transition flex items-center gap-1.5">
-                    <i class="fas fa-exchange-alt"></i> Ganti Kamera
+                   class="px-3 py-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition flex items-center gap-1.5">
+                    <i class="fas fa-exchange-alt text-blue-500"></i>
+                    <span>Ganti Pos</span>
                 </a>
 
                 <!-- Putuskan -->
-                <form action="{{ route('operator.kamera.disconnect') }}" method="POST" onsubmit="return confirm('Putuskan sesi kamera ini?');">
+                <form action="{{ route('operator.kamera.disconnect') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memutuskan sesi kamera ini?');">
                     @csrf
                     <button type="submit"
-                            class="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold border border-red-200 transition flex items-center gap-1.5">
-                        <i class="fas fa-power-off"></i> Keluar Sesi
+                            class="px-3 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition flex items-center gap-1.5">
+                        <i class="fas fa-power-off"></i>
+                        <span>Keluar Sesi</span>
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Scanner Grid: Kamera (Kiri) & Hasil Verifikasi (Kanan) -->
+        <!-- Scanner Grid: Kamera Live (Kiri) & Tampilan Kartu PAS Pengguna (Kanan) -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            <!-- Kolom Kiri: Kamera Scanner & Input Barcode -->
-            <div class="lg:col-span-6 space-y-4">
-                <!-- Webcam Frame Card -->
-                <div class="bg-gray-900 rounded-2xl border border-gray-800 p-4 shadow-xl overflow-hidden">
-                    <div class="flex items-center justify-between mb-3 text-white">
+
+            <!-- Kolom Kiri: Kamera Scanner & Input Barcode (5 Kolom) -->
+            <div class="lg:col-span-5 space-y-4">
+
+                <!-- Webcam Card -->
+                <div class="bg-slate-950 rounded-3xl border border-slate-800 p-4 sm:p-5 shadow-2xl overflow-hidden text-white">
+                    <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300">Live Camera Stream</h3>
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Live Camera Stream</h3>
                         </div>
                         <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
-                                class="text-xs bg-[#f0b429] hover:bg-amber-400 text-[#1e3a5f] px-3.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shadow">
+                                class="text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 shadow-md">
                             <i class="fas fa-camera"></i> <span id="btnText">Nyalakan Kamera</span>
                         </button>
                     </div>
 
                     <!-- Viewfinder Area -->
-                    <div class="relative rounded-xl bg-black min-h-[340px] flex items-center justify-center overflow-hidden border border-gray-800">
-                        <!-- Corner brackets -->
-                        <div class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-400 rounded-tl pointer-events-none z-10"></div>
-                        <div class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-400 rounded-tr pointer-events-none z-10"></div>
-                        <div class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-400 rounded-bl pointer-events-none z-10"></div>
-                        <div class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-amber-400 rounded-br pointer-events-none z-10"></div>
+                    <div class="relative rounded-2xl bg-black min-h-[350px] flex items-center justify-center overflow-hidden border border-slate-800">
+                        <!-- HUD Corner brackets -->
+                        <div class="absolute top-3 left-3 w-7 h-7 border-t-2 border-l-2 border-amber-400 rounded-tl pointer-events-none z-10 shadow-sm"></div>
+                        <div class="absolute top-3 right-3 w-7 h-7 border-t-2 border-r-2 border-amber-400 rounded-tr pointer-events-none z-10 shadow-sm"></div>
+                        <div class="absolute bottom-3 left-3 w-7 h-7 border-b-2 border-l-2 border-amber-400 rounded-bl pointer-events-none z-10 shadow-sm"></div>
+                        <div class="absolute bottom-3 right-3 w-7 h-7 border-b-2 border-r-2 border-amber-400 rounded-br pointer-events-none z-10 shadow-sm"></div>
 
-                        <!-- Webcam element -->
+                        <!-- Animated Scanline Laser Beam (active when webcam running) -->
+                        <div id="scanlineBeam" class="hidden absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_#34d399] z-20 scanline-beam pointer-events-none"></div>
+
+                        <!-- HTML5 Webcam Element -->
                         <div id="reader" class="hidden w-full h-full"></div>
 
                         <!-- Placeholder jika kamera belum aktif -->
-                        <div id="scannerPlaceholder" onclick="toggleWebcam()" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer w-full h-full hover:bg-gray-800/40 transition">
-                            <div class="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-[#f0b429] flex items-center justify-center text-2xl mb-3">
+                        <div id="scannerPlaceholder" onclick="toggleWebcam()" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer w-full h-full hover:bg-slate-900/60 transition group">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center text-3xl mb-3 shadow-inner group-hover:scale-110 transition-transform">
                                 <i class="fas fa-camera-retro"></i>
                             </div>
-                            <h4 class="text-sm font-bold text-gray-200 mb-1">Klik untuk Menyalakan Kamera</h4>
-                            <p class="text-xs text-gray-400 max-w-xs">Atau gunakan scanner barcode / QR scanner USB untuk verifikasi otomatis</p>
+                            <h4 class="text-sm font-extrabold text-white mb-1">Klik untuk Menyalakan Kamera</h4>
+                            <p class="text-xs text-slate-400 max-w-xs leading-relaxed">
+                                Arahkan QR Code Kartu PAS ke kamera webcam atau scan dengan scanner barcode USB
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Manual Input / Hardware USB Scanner -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="qrInput" class="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+                <!-- Hardware USB Barcode Scanner / Manual Card Number Input -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="qrInput" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                             <i class="fas fa-barcode text-amber-500"></i> Scanner Barcode USB / Input No. Kartu
                         </label>
-                        <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-                            Auto Focus Ready
+                        <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Auto-Focus Ready
                         </span>
                     </div>
 
                     <form id="scanForm" onsubmit="handleManualSubmit(event)" class="relative">
-                        <input type="text" id="qrInput" autocomplete="off" placeholder="Scan Barcode atau ketik Nomor Kartu PAS..."
-                               class="w-full bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400 rounded-xl pl-4 pr-28 py-3 text-sm font-mono font-bold focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/20 transition-all">
+                        <input type="text" id="qrInput" autocomplete="off"
+                               placeholder="Scan Barcode atau ketik Nomor Kartu PAS..."
+                               class="w-full bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 rounded-2xl pl-4 pr-28 py-3.5 text-sm font-mono font-bold focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/20 transition-all">
                         <button type="submit"
-                                class="absolute right-1.5 top-1.5 bottom-1.5 bg-[#1e3a5f] hover:bg-[#284c7b] text-white px-4 rounded-lg text-xs font-bold tracking-wide transition shadow">
+                                class="absolute right-1.5 top-1.5 bottom-1.5 bg-[#1e3a5f] hover:bg-[#284c7b] text-white px-5 rounded-xl text-xs font-black tracking-wider transition shadow-sm hover:shadow">
                             VERIFIKASI
                         </button>
                     </form>
+                    <p class="text-[11px] text-slate-400">Tekan <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono text-[10px]">Enter</kbd> untuk verifikasi otomatis setelah scan barcode USB</p>
                 </div>
+
             </div>
 
-            <!-- Kolom Kanan: Hasil Verifikasi Realtime & Detail Kartu -->
-            <div class="lg:col-span-6 space-y-4">
-                <div id="resultCard" class="bg-white rounded-2xl border border-gray-200 shadow-md p-6 min-h-[440px] flex flex-col justify-between transition-all">
-                    
-                    <!-- State: Menunggu Pemindaian -->
-                    <div id="idleState" class="flex flex-col items-center justify-center my-auto py-12 text-center text-gray-400">
-                        <div class="w-20 h-20 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center text-3xl text-gray-300 mb-4 animate-pulse">
-                            <i class="fas fa-qrcode"></i>
+            <!-- Kolom Kanan: Hasil Verifikasi & Tampilan Kartu PAS Template (7 Kolom) -->
+            <div class="lg:col-span-7 space-y-4">
+                <div id="resultCard" class="bg-white rounded-3xl border border-slate-200/90 shadow-md p-6 sm:p-7 min-h-[480px] flex flex-col justify-between transition-all">
+
+                    <!-- State: Menunggu Pemindaian (IDLE) -->
+                    <div id="idleState" class="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-4">
+                        <div class="relative">
+                            <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-slate-100 to-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center text-4xl text-slate-400 shadow-inner">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <span class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-xs font-bold shadow-md">
+                                <i class="fas fa-qrcode"></i>
+                            </span>
                         </div>
-                        <h3 class="text-base font-bold text-gray-700">Siap Melakukan Pemindaian</h3>
-                        <p class="text-xs text-gray-400 mt-1 max-w-sm">
-                            Arahkan QR Code Kartu PAS ke kamera atau scan menggunakan barcode scanner USB.
-                        </p>
+                        <div class="space-y-1 max-w-sm">
+                            <h3 class="text-base font-extrabold text-slate-800">Siap Melakukan Pemindaian</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                Arahkan QR Code Kartu PAS ke kamera webcam atau scan menggunakan perangkat scanner USB.
+                            </p>
+                        </div>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Pos Siaga: Area {{ $device->kode_area }} ({{ optional($device->areaAkses)->nama_area ?? 'Pos Keamanan' }})</span>
+                        </div>
                     </div>
 
-                    <!-- State: Hasil Pemindaian (Hidden by default) -->
-                    <div id="resultContent" class="hidden space-y-5">
+                    <!-- State: Hasil Pemindaian & Kartu PAS (RESULT CONTENT) -->
+                    <div id="resultContent" class="hidden space-y-6 animate-fade-in">
+
                         <!-- Status Banner Header -->
-                        <div id="statusBanner" class="p-4 rounded-xl flex items-center justify-between text-white shadow-md">
-                            <div class="flex items-center gap-3">
-                                <div id="statusIconWrap" class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-white/20">
+                        <div id="statusBanner" class="p-4 sm:p-5 rounded-2xl flex items-center justify-between text-white shadow-lg transition-all">
+                            <div class="flex items-center gap-3.5">
+                                <div id="statusIconWrap" class="w-13 h-13 rounded-2xl flex items-center justify-center text-2xl shrink-0 bg-white/20 shadow-inner">
                                     <i id="statusIcon" class="fas fa-check-circle"></i>
                                 </div>
                                 <div>
-                                    <h3 id="statusTitle" class="text-lg font-black tracking-wide uppercase">AKSES DIIZINKAN</h3>
-                                    <p id="statusMessage" class="text-xs opacity-90">Kartu PAS sah dan terdaftar</p>
+                                    <h3 id="statusTitle" class="text-lg sm:text-xl font-black tracking-wide uppercase">AKSES DIIZINKAN (VALID)</h3>
+                                    <p id="statusMessage" class="text-xs opacity-95 mt-0.5">Kartu PAS sah dan diizinkan masuk</p>
                                 </div>
                             </div>
-                            <div id="statusArahBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase bg-white/20">
+                            <div id="statusArahBadge" class="px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-white/25 border border-white/30 shadow-sm shrink-0">
                                 MASUK
                             </div>
                         </div>
 
-                        <!-- Card Detail Pemegang PAS -->
-                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <!-- Foto Pemegang (Jika ada) -->
-                            <div class="sm:col-span-4 flex flex-col items-center justify-center text-center">
-                                <div id="fotoWrapper" class="w-28 h-36 rounded-xl bg-gray-200 border-2 border-gray-300 overflow-hidden shadow-inner flex items-center justify-center mb-2">
-                                    <img id="pemegangFoto" src="" alt="Foto Pemegang" class="w-full h-full object-cover hidden">
-                                    <i id="fotoPlaceholderIcon" class="fas fa-user text-4xl text-gray-400"></i>
+                        <!-- Main Split: Visual Digital Card (Kiri) & Dossier Data (Kanan) -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+                            <!-- Visual Digital PAS Card Display (5 Kolom di desktop) -->
+                            <div class="md:col-span-6 flex flex-col items-center">
+                                <div class="w-full max-w-[310px]">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                            <i class="fas fa-id-card text-amber-500"></i> Kartu PAS Pengguna
+                                        </span>
+                                        <span id="cardTemplateBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                            PAS Template
+                                        </span>
+                                    </div>
+
+                                    <!-- REAL DIGITAL CARD CONTAINER -->
+                                    <div id="digitalCardMockup"
+                                         class="relative w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-300 select-none aspect-[1/1.58] transition-all bg-slate-800">
+
+                                        <!-- Background Template Image -->
+                                        <img id="cardBgImage" src="" alt="Template Background"
+                                             class="absolute inset-0 w-full h-full object-cover">
+
+                                        <!-- 1. Pas Foto Pemegang -->
+                                        <div id="cardElFoto"
+                                             class="absolute rounded-xl overflow-hidden border-2 border-black/40 shadow-sm bg-white/40 flex items-center justify-center z-10">
+                                            <img id="cardFotoImg" src="" alt="Foto Pemegang" class="w-full h-full object-cover hidden">
+                                            <div id="cardFotoPlaceholder" class="flex flex-col items-center justify-center text-slate-800 p-2 text-center">
+                                                <i class="fas fa-user text-3xl opacity-70 mb-1"></i>
+                                                <span class="text-[8px] font-black uppercase tracking-wider opacity-80">Pas Foto</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 2. Masa Berlaku -->
+                                        <div id="cardElMasaBerlaku"
+                                             class="absolute font-mono font-black tracking-tight text-center z-10 drop-shadow-sm leading-none">
+                                            --
+                                        </div>
+
+                                        <!-- 3. Area Akses -->
+                                        <div id="cardElAreaAkses"
+                                             class="absolute font-mono font-black z-10 drop-shadow-sm flex flex-col items-center justify-center leading-none">
+                                            <!-- Injected via JS -->
+                                        </div>
+
+                                        <!-- 4. Nama Pemegang -->
+                                        <div id="cardElNama"
+                                             class="absolute z-10 leading-tight drop-shadow-sm truncate font-black">
+                                            --
+                                        </div>
+
+                                        <!-- 5. Jabatan -->
+                                        <div id="cardElJabatan"
+                                             class="absolute z-10 leading-tight drop-shadow-sm truncate font-semibold">
+                                            --
+                                        </div>
+
+                                        <!-- 6. Instansi / Perusahaan -->
+                                        <div id="cardElInstansi"
+                                             class="absolute z-10 leading-tight drop-shadow-sm truncate font-semibold">
+                                            --
+                                        </div>
+
+                                        <!-- 7. No Registrasi -->
+                                        <div id="cardElNoRegistrasi"
+                                             class="absolute font-mono z-10 leading-tight drop-shadow-sm truncate font-bold">
+                                            --
+                                        </div>
+
+                                        <!-- 8. QR Code SVG on Card -->
+                                        <div id="cardElQrCode"
+                                             class="absolute rounded-lg bg-white p-1 shadow-md z-10 border border-black/30 flex items-center justify-center overflow-hidden">
+                                            <svg class="w-full h-full text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3zm2-3h3v3h-3v-3zm-7-2h2v2h-2v-2z"/>
+                                            </svg>
+                                        </div>
+
+                                        <!-- OVERLAY STAMPS / WATERMARKS (Shown for Expired or Denied) -->
+                                        <div id="cardStampOverlay" class="hidden absolute inset-0 z-30 flex items-center justify-center p-4">
+                                            <div id="cardStampBadge" class="transform -rotate-12 border-4 px-4 py-2 uppercase font-black tracking-widest text-sm rounded-xl shadow-2xl text-center">
+                                                KADALUWARSA
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="text-[11px] text-center text-slate-400 mt-2 font-mono">
+                                        Render Template Kartu PAS &bull; Rasio 1 : 1.58
+                                    </div>
                                 </div>
-                                <span class="text-[11px] font-semibold text-gray-500">Pas Foto PAS</span>
                             </div>
 
-                            <!-- Biodata Kartu -->
-                            <div class="sm:col-span-8 space-y-2 text-xs">
-                                <div>
-                                    <span class="text-gray-400 uppercase text-[10px] font-bold block">Nomor Kartu PAS</span>
-                                    <span id="resNomorKartu" class="font-mono text-base font-black text-gray-900">--</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400 uppercase text-[10px] font-bold block">Nama Lengkap</span>
-                                    <span id="resNama" class="text-sm font-bold text-gray-800">--</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <span class="text-gray-400 uppercase text-[10px] font-bold block">Instansi / Perusahaan</span>
-                                        <span id="resPerusahaan" class="font-semibold text-gray-700">--</span>
+                            <!-- Dossier Rincian Verifikasi Petugas (6 Kolom di desktop) -->
+                            <div class="md:col-span-6 space-y-3.5">
+                                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 text-xs">
+                                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                                        <div>
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Nomor Kartu PAS</span>
+                                            <span id="resNomorKartu" class="font-mono text-base font-black text-slate-900">--</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Masa Berlaku</span>
+                                            <span id="resTglBerlaku" class="font-semibold text-slate-800">--</span>
+                                        </div>
                                     </div>
+
                                     <div>
-                                        <span class="text-gray-400 uppercase text-[10px] font-bold block">Jabatan</span>
-                                        <span id="resJabatan" class="font-semibold text-gray-700">--</span>
+                                        <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Nama Lengkap Pemegang</span>
+                                        <span id="resNama" class="text-sm font-extrabold text-slate-900 block">--</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Perusahaan / Instansi</span>
+                                            <span id="resPerusahaan" class="font-bold text-slate-800 block truncate">--</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Jabatan</span>
+                                            <span id="resJabatan" class="font-bold text-slate-800 block truncate">--</span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Izin Area Akses Pemegang</span>
+                                        <div id="resAreaList" class="flex flex-wrap gap-1.5 mt-1.5">
+                                            <!-- Area badges -->
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Status Masa Berlaku</span>
+                                        <div id="resStatusMasa" class="mt-0.5 font-bold">--</div>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <span class="text-gray-400 uppercase text-[10px] font-bold block">Masa Berlaku</span>
-                                        <span id="resTglBerlaku" class="font-semibold text-gray-700">--</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-400 uppercase text-[10px] font-bold block">Status Masa Berlaku</span>
-                                        <span id="resStatusMasa" class="font-bold">--</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400 uppercase text-[10px] font-bold block">Izin Area Akses Kartu</span>
-                                    <div id="resAreaList" class="flex flex-wrap gap-1 mt-1">
-                                        <!-- Area badges -->
+
+                                <!-- Catatan Sistem / Alasan Penolakan -->
+                                <div id="catatanBox" class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                                    <i class="fas fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
+                                    <div class="flex-1 leading-snug">
+                                        <strong>Catatan Verifikasi:</strong>
+                                        <span id="resCatatanText" class="ml-1 text-slate-700">--</span>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
-                        <!-- Catatan Petugas / Quick Remark -->
-                        <div id="catatanBox" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-start gap-2">
-                            <i class="fas fa-info-circle text-amber-600 mt-0.5"></i>
-                            <div class="flex-1">
-                                <strong>Catatan Sistem:</strong>
-                                <span id="resCatatanText" class="ml-1">--</span>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Footer / Scanner Status indicator -->
-                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+                    <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                         <span id="scanTimestamp">Menunggu verifikasi...</span>
-                        <span class="flex items-center gap-1.5 font-medium text-emerald-600">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Siap Pindai
+                        <span class="flex items-center gap-1.5 font-bold text-emerald-600">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Scanner Aktif Siaga
                         </span>
                     </div>
+
                 </div>
             </div>
+
         </div>
 
         <!-- Tabel 10 Pemindaian Terkini Perangkat Ini -->
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-history text-gray-400"></i>
-                    <h3 class="font-bold text-gray-800 text-sm">Pemindaian Terkini di Perangkat Ini</h3>
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm">Riwayat Pemindaian Terkini di Pos Ini</h3>
+                        <p class="text-[11px] text-slate-400">Daftar kartu PAS yang baru saja diverifikasi</p>
+                    </div>
                 </div>
-                <a href="{{ route('operator.kamera.logs') }}" class="text-xs text-blue-600 font-semibold hover:underline">
-                    Lihat Riwayat Lengkap &rarr;
+                <a href="{{ route('operator.kamera.logs') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
+                    <span>Lihat Riwayat Lengkap</span>
+                    <i class="fas fa-arrow-right text-[10px]"></i>
                 </a>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-xs font-semibold uppercase text-gray-500 border-b border-gray-100">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-500 border-b border-slate-100">
                         <tr>
                             <th class="px-5 py-3">Waktu</th>
                             <th class="px-5 py-3">Nomor Kartu</th>
@@ -269,44 +414,44 @@
                             <th class="px-5 py-3">Keterangan</th>
                         </tr>
                     </thead>
-                    <tbody id="recentLogsTableBody" class="divide-y divide-gray-100">
+                    <tbody id="recentLogsTableBody" class="divide-y divide-slate-100">
                         @forelse($recentLogs as $log)
-                            <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="px-5 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">
                                     {{ \Carbon\Carbon::parse($log->waktu_scan)->format('H:i:s') }}
                                 </td>
-                                <td class="px-5 py-3 font-mono font-semibold text-gray-900 whitespace-nowrap">
+                                <td class="px-5 py-3 font-mono font-bold text-slate-900 whitespace-nowrap">
                                     {{ $log->nomor_kartu ?? '-' }}
                                 </td>
-                                <td class="px-5 py-3 font-medium text-gray-900">
+                                <td class="px-5 py-3 font-bold text-slate-900">
                                     {{ $log->nama_pemegang ?? '-' }}
                                 </td>
-                                <td class="px-5 py-3 text-gray-600 text-xs">
+                                <td class="px-5 py-3 text-slate-600 text-xs">
                                     {{ $log->perusahaan ?? '-' }}
                                 </td>
                                 <td class="px-5 py-3 text-center whitespace-nowrap">
-                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase {{ ($log->tipe_aktivitas ?? 'masuk') === 'masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase {{ ($log->tipe_aktivitas ?? 'masuk') === 'masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                         {{ $log->tipe_aktivitas ?? 'masuk' }}
                                     </span>
                                 </td>
                                 <td class="px-5 py-3 text-center whitespace-nowrap">
                                     @if($log->status_akses === 'diterima')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                             <i class="fas fa-check-circle text-[10px]"></i> VALID
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                             <i class="fas fa-times-circle text-[10px]"></i> DITOLAK
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3 text-xs text-gray-600 max-w-xs truncate" title="{{ $log->alasan ?? $log->catatan }}">
+                                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs truncate" title="{{ $log->alasan ?? $log->catatan }}">
                                     {{ $log->alasan ?? $log->catatan ?? '-' }}
                                 </td>
                             </tr>
                         @empty
                             <tr id="noDataRow">
-                                <td colspan="7" class="px-5 py-8 text-center text-gray-400 text-xs">
+                                <td colspan="7" class="px-5 py-8 text-center text-slate-400 text-xs">
                                     Belum ada catatan pemindaian pada sesi ini.
                                 </td>
                             </tr>
@@ -315,6 +460,7 @@
                 </table>
             </div>
         </div>
+
     </div>
 
     <!-- Scanner Script Logic -->
@@ -371,10 +517,10 @@
             const icon = document.getElementById('audioIcon');
             const text = document.getElementById('audioText');
             if (audioEnabled) {
-                icon.className = 'fas fa-volume-up';
+                icon.className = 'fas fa-volume-up text-amber-500';
                 text.innerText = 'Suara: ON';
             } else {
-                icon.className = 'fas fa-volume-mute';
+                icon.className = 'fas fa-volume-mute text-slate-400';
                 text.innerText = 'Suara: OFF';
             }
         }
@@ -386,22 +532,22 @@
             if (!btnMasuk || !btnKeluar) return;
 
             if (mode === 'masuk') {
-                btnMasuk.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm';
-                btnKeluar.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900';
+                btnMasuk.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-sm';
+                btnKeluar.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
             } else {
-                btnKeluar.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-amber-600 text-white shadow-sm';
-                btnMasuk.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900';
+                btnKeluar.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 bg-amber-600 text-white shadow-sm';
+                btnMasuk.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
             }
         }
 
         // Auto Focus Input Box for USB Barcode Scanners
         const qrInput = document.getElementById('qrInput');
         document.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'INPUT') {
-                qrInput.focus();
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'INPUT' && !e.target.closest('button')) {
+                qrInput?.focus();
             }
         });
-        window.addEventListener('load', () => qrInput.focus());
+        window.addEventListener('load', () => qrInput?.focus());
 
         function handleManualSubmit(e) {
             e.preventDefault();
@@ -416,6 +562,7 @@
             const btnText = document.getElementById('btnText');
             const placeholder = document.getElementById('scannerPlaceholder');
             const readerEl = document.getElementById('reader');
+            const scanline = document.getElementById('scanlineBeam');
 
             if (isWebcamRunning) {
                 if (html5QrcodeScanner) {
@@ -424,16 +571,18 @@
                         btnText.innerText = 'Nyalakan Kamera';
                         readerEl.classList.add('hidden');
                         placeholder.classList.remove('hidden');
+                        scanline.classList.add('hidden');
                     }).catch(err => console.error(err));
                 }
             } else {
                 placeholder.classList.add('hidden');
                 readerEl.classList.remove('hidden');
+                scanline.classList.remove('hidden');
 
                 html5QrcodeScanner = new Html5Qrcode("reader");
                 const scanConfig = { 
                     fps: 30, 
-                    qrbox: (w, h) => ({ width: Math.floor(w * 0.9), height: Math.floor(h * 0.9) })
+                    qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.85) })
                 };
 
                 html5QrcodeScanner.start(
@@ -449,9 +598,10 @@
                     isWebcamRunning = true;
                     btnText.innerText = 'Matikan Kamera';
                 }).catch(err => {
-                    alert('Gagal membuka webcam: ' + err);
+                    alert('Gagal membuka kamera webcam: ' + err);
                     readerEl.classList.add('hidden');
                     placeholder.classList.remove('hidden');
+                    scanline.classList.add('hidden');
                 });
             }
         }
@@ -484,7 +634,7 @@
             } finally {
                 setTimeout(() => {
                     isProcessing = false;
-                    qrInput.focus();
+                    qrInput?.focus();
                 }, 1500);
             }
         }
@@ -508,8 +658,25 @@
             const resCatatanText = document.getElementById('resCatatanText');
             const scanTimestamp = document.getElementById('scanTimestamp');
 
-            const pemegangFoto = document.getElementById('pemegangFoto');
-            const fotoPlaceholderIcon = document.getElementById('fotoPlaceholderIcon');
+            // Card Mockup Elements
+            const digitalCardMockup = document.getElementById('digitalCardMockup');
+            const cardBgImage = document.getElementById('cardBgImage');
+            const cardTemplateBadge = document.getElementById('cardTemplateBadge');
+
+            const cardElFoto = document.getElementById('cardElFoto');
+            const cardFotoImg = document.getElementById('cardFotoImg');
+            const cardFotoPlaceholder = document.getElementById('cardFotoPlaceholder');
+
+            const cardElMasaBerlaku = document.getElementById('cardElMasaBerlaku');
+            const cardElAreaAkses = document.getElementById('cardElAreaAkses');
+            const cardElNama = document.getElementById('cardElNama');
+            const cardElJabatan = document.getElementById('cardElJabatan');
+            const cardElInstansi = document.getElementById('cardElInstansi');
+            const cardElNoRegistrasi = document.getElementById('cardElNoRegistrasi');
+            const cardElQrCode = document.getElementById('cardElQrCode');
+
+            const cardStampOverlay = document.getElementById('cardStampOverlay');
+            const cardStampBadge = document.getElementById('cardStampBadge');
 
             idleState.classList.add('hidden');
             resultContent.classList.remove('hidden');
@@ -517,57 +684,81 @@
             const isValid = (data.success === true) || (data.status === 'diterima') || (data.status_izin === 'valid');
             const isKadaluarsa = Boolean(data.is_kadaluarsa);
             const isCooldown = data.status === 'cooldown';
+            const c = data.data || data.kartu || {};
+            const tpl = c.template || null;
 
+            // Reset Card Glows & Classes
+            digitalCardMockup.classList.remove('valid-glow', 'denied-glow', 'ring-4', 'ring-emerald-500', 'ring-rose-600', 'ring-amber-500');
+
+            // Sound & Status Styles
             if (isValid) {
                 playSuccessSound();
-                statusBanner.className = 'p-4 rounded-xl flex items-center justify-between text-white shadow-md bg-gradient-to-r from-emerald-600 to-teal-700';
+                statusBanner.className = 'p-4 sm:p-5 rounded-2xl flex items-center justify-between text-white shadow-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700';
                 statusIcon.className = 'fas fa-check-circle';
                 statusTitle.innerText = 'AKSES DIIZINKAN (VALID)';
+                digitalCardMockup.classList.add('valid-glow', 'ring-4', 'ring-emerald-500');
+                cardStampOverlay.classList.add('hidden');
             } else if (isKadaluarsa) {
                 playDeniedSound();
-                statusBanner.className = 'p-4 rounded-xl flex items-center justify-between text-white shadow-md bg-gradient-to-r from-rose-700 to-red-800';
+                statusBanner.className = 'p-4 sm:p-5 rounded-2xl flex items-center justify-between text-white shadow-lg bg-gradient-to-r from-rose-700 via-red-700 to-rose-900';
                 statusIcon.className = 'fas fa-calendar-times';
                 statusTitle.innerText = 'KARTU SUDAH KADALUARSA';
+                digitalCardMockup.classList.add('denied-glow', 'ring-4', 'ring-rose-600');
+
+                // Tampilkan Stamp Merah Kadaluarsa di atas Kartu
+                cardStampOverlay.classList.remove('hidden');
+                cardStampOverlay.className = 'absolute inset-0 z-30 flex items-center justify-center p-4 bg-red-950/60 backdrop-blur-[2px]';
+                cardStampBadge.className = 'transform -rotate-12 border-4 border-rose-400 bg-rose-600/95 text-white font-black text-sm tracking-widest px-4 py-2 uppercase rounded-xl shadow-2xl';
+                cardStampBadge.innerHTML = '<i class="fas fa-ban mr-1.5"></i> KADALUWARSA';
             } else if (isCooldown) {
                 playDeniedSound();
-                statusBanner.className = 'p-4 rounded-xl flex items-center justify-between text-white shadow-md bg-gradient-to-r from-amber-600 to-orange-700';
+                statusBanner.className = 'p-4 sm:p-5 rounded-2xl flex items-center justify-between text-white shadow-lg bg-gradient-to-r from-amber-600 to-orange-700';
                 statusIcon.className = 'fas fa-clock';
                 statusTitle.innerText = 'JEDA SCAN (ANTI-REDUNDANSI)';
+                digitalCardMockup.classList.add('ring-4', 'ring-amber-500');
+                cardStampOverlay.classList.add('hidden');
             } else {
                 playDeniedSound();
-                statusBanner.className = 'p-4 rounded-xl flex items-center justify-between text-white shadow-md bg-gradient-to-r from-red-600 to-red-800';
+                statusBanner.className = 'p-4 sm:p-5 rounded-2xl flex items-center justify-between text-white shadow-lg bg-gradient-to-r from-red-600 to-red-800';
                 statusIcon.className = 'fas fa-times-circle';
                 statusTitle.innerText = 'AKSES DITOLAK';
+                digitalCardMockup.classList.add('denied-glow', 'ring-4', 'ring-rose-600');
+
+                // Tampilkan Stamp Ditolak
+                cardStampOverlay.classList.remove('hidden');
+                cardStampOverlay.className = 'absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-[2px]';
+                cardStampBadge.className = 'transform -rotate-12 border-4 border-amber-400 bg-amber-600/95 text-white font-black text-xs tracking-wider px-3.5 py-2 uppercase rounded-xl shadow-2xl';
+                cardStampBadge.innerHTML = `<i class="fas fa-triangle-exclamation mr-1.5"></i> DITOLAK DI AREA {{ $device->kode_area }}`;
             }
 
             statusMessage.innerText = data.message || data.pesan || data.alasan || '';
-            const c = data.data || data.kartu || {};
             statusArahBadge.innerText = (c.tipe_aktivitas || currentScanMode).toUpperCase();
 
-            // Populate Card Data
-            resNomorKartu.innerText = c.nomor_kartu || qrInput.value || '-';
+            // Populate Dossier Text
+            resNomorKartu.innerText = c.nomor_kartu || qrInput?.value || '-';
             resNama.innerText = c.nama_pemegang || '-';
             resPerusahaan.innerText = c.perusahaan || '-';
             resJabatan.innerText = c.jabatan || '-';
-            resTglBerlaku.innerText = c.tanggal_berlaku || c.tanggal_berlaku_formatted || '-';
+            resTglBerlaku.innerText = c.tanggal_berlaku || c.tanggal_berlaku_short || '-';
 
             if (isKadaluarsa) {
-                resStatusMasa.innerHTML = '<span class="text-red-600">Kadaluarsa</span>';
+                resStatusMasa.innerHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300">Kadaluarsa</span>';
             } else if (isValid) {
-                resStatusMasa.innerHTML = '<span class="text-emerald-600">Masih Berlaku</span>';
+                resStatusMasa.innerHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">Masih Berlaku</span>';
             } else {
-                resStatusMasa.innerHTML = '<span class="text-gray-500">-</span>';
+                resStatusMasa.innerHTML = '<span class="text-slate-400">-</span>';
             }
 
-            // Render area izin
+            // Render area list di Dossier
             resAreaList.innerHTML = '';
-            if (c.area_akses && Array.isArray(c.area_akses)) {
-                c.area_akses.forEach(area => {
+            const areaArray = Array.isArray(c.area_akses) ? c.area_akses : (typeof c.area_akses === 'string' ? c.area_akses.split(',').map(s=>s.trim()) : []);
+            if (areaArray.length > 0) {
+                areaArray.forEach(area => {
                     const isMatch = area === '{{ $device->kode_area }}';
                     const badge = document.createElement('span');
                     badge.className = isMatch 
-                        ? 'px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : 'px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200';
+                        ? 'px-2.5 py-0.5 rounded-md text-xs font-black bg-emerald-600 text-white shadow-xs border border-emerald-700'
+                        : 'px-2 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200';
                     badge.innerText = area;
                     resAreaList.appendChild(badge);
                 });
@@ -575,20 +766,157 @@
                 resAreaList.innerText = '-';
             }
 
-            // Foto Pemegang
-            if (c.foto_url) {
-                pemegangFoto.src = c.foto_url;
-                pemegangFoto.classList.remove('hidden');
-                fotoPlaceholderIcon.classList.add('hidden');
-            } else {
-                pemegangFoto.classList.add('hidden');
-                fotoPlaceholderIcon.classList.remove('hidden');
-            }
-
             resCatatanText.innerText = data.alasan || data.keterangan || '-';
             scanTimestamp.innerText = 'Waktu Scan: ' + new Date().toLocaleTimeString('id-ID');
 
-            // Tambahkan ke tabel pemindaian terkini
+            // ========================================================
+            // RENDER THE VISUAL DIGITAL PAS CARD WITH TEMPLATE
+            // ========================================================
+            if (tpl) {
+                cardTemplateBadge.innerText = tpl.nama_template || 'Template PAS';
+                digitalCardMockup.style.backgroundColor = tpl.warna_hex || '#2563EB';
+
+                if (tpl.gambar_url) {
+                    cardBgImage.src = tpl.gambar_url;
+                    cardBgImage.classList.remove('hidden');
+                } else {
+                    cardBgImage.classList.add('hidden');
+                }
+
+                const pos = tpl.posisi || {};
+                const textColor = tpl.warna_teks || '#FFFFFF';
+
+                // 1. Foto
+                if (pos.foto && pos.foto.visible !== false) {
+                    cardElFoto.style.top = (pos.foto.top ?? 28) + '%';
+                    cardElFoto.style.left = (pos.foto.left ?? 49.5) + '%';
+                    cardElFoto.style.width = (pos.foto.width ?? 43.5) + '%';
+                    cardElFoto.style.height = (pos.foto.height ?? 30.5) + '%';
+                    cardElFoto.classList.remove('hidden');
+
+                    const fotoSrc = c.foto_url || c.foto;
+                    if (fotoSrc) {
+                        cardFotoImg.src = fotoSrc;
+                        cardFotoImg.classList.remove('hidden');
+                        cardFotoPlaceholder.classList.add('hidden');
+                    } else {
+                        cardFotoImg.classList.add('hidden');
+                        cardFotoPlaceholder.classList.remove('hidden');
+                    }
+                } else {
+                    cardElFoto.classList.add('hidden');
+                }
+
+                // 2. Masa Berlaku
+                if (pos.masa_berlaku && pos.masa_berlaku.visible !== false) {
+                    cardElMasaBerlaku.style.top = (pos.masa_berlaku.top ?? 22.5) + '%';
+                    cardElMasaBerlaku.style.left = (pos.masa_berlaku.left ?? 49.5) + '%';
+                    cardElMasaBerlaku.style.width = (pos.masa_berlaku.width ?? 43.5) + '%';
+                    cardElMasaBerlaku.style.fontSize = (pos.masa_berlaku.font_size ?? 11) + 'px';
+                    cardElMasaBerlaku.style.color = pos.masa_berlaku.color || textColor;
+                    cardElMasaBerlaku.innerText = c.tanggal_berlaku || c.tanggal_berlaku_short || '--';
+                    cardElMasaBerlaku.classList.remove('hidden');
+                } else {
+                    cardElMasaBerlaku.classList.add('hidden');
+                }
+
+                // 3. Area Akses
+                if (pos.area_akses && pos.area_akses.visible !== false) {
+                    cardElAreaAkses.style.top = (pos.area_akses.top ?? 27) + '%';
+                    cardElAreaAkses.style.left = (pos.area_akses.left ?? 12) + '%';
+                    cardElAreaAkses.style.width = (pos.area_akses.width ?? 28) + '%';
+                    cardElAreaAkses.style.fontSize = (pos.area_akses.font_size ?? 20) + 'px';
+                    cardElAreaAkses.style.color = pos.area_akses.color || textColor;
+
+                    if ((pos.area_akses.direction ?? 'vertical') === 'horizontal') {
+                        cardElAreaAkses.className = 'absolute font-mono font-black z-10 drop-shadow-sm flex flex-row gap-1.5 items-center justify-center leading-none';
+                    } else {
+                        cardElAreaAkses.className = 'absolute font-mono font-black z-10 drop-shadow-sm flex flex-col gap-1 items-center justify-center leading-none';
+                    }
+
+                    cardElAreaAkses.innerHTML = '';
+                    areaArray.forEach(code => {
+                        const span = document.createElement('span');
+                        span.className = 'block leading-tight drop-shadow-sm';
+                        span.innerText = code;
+                        cardElAreaAkses.appendChild(span);
+                    });
+                    cardElAreaAkses.classList.remove('hidden');
+                } else {
+                    cardElAreaAkses.classList.add('hidden');
+                }
+
+                // 4. Nama Pemegang
+                if (pos.nama_pemegang && pos.nama_pemegang.visible !== false) {
+                    cardElNama.style.top = (pos.nama_pemegang.top ?? 67.5) + '%';
+                    cardElNama.style.left = (pos.nama_pemegang.left ?? 7) + '%';
+                    cardElNama.style.width = (pos.nama_pemegang.width ?? 58) + '%';
+                    cardElNama.style.fontSize = (pos.nama_pemegang.font_size ?? 11) + 'px';
+                    cardElNama.style.color = pos.nama_pemegang.color || textColor;
+                    cardElNama.innerText = c.nama_pemegang ? (pos.nama_pemegang.uppercase ? c.nama_pemegang.toUpperCase() : c.nama_pemegang) : '--';
+                    cardElNama.classList.remove('hidden');
+                } else {
+                    cardElNama.classList.add('hidden');
+                }
+
+                // 5. Jabatan
+                if (pos.jabatan && pos.jabatan.visible !== false) {
+                    cardElJabatan.style.top = (pos.jabatan.top ?? 72.5) + '%';
+                    cardElJabatan.style.left = (pos.jabatan.left ?? 7) + '%';
+                    cardElJabatan.style.width = (pos.jabatan.width ?? 58) + '%';
+                    cardElJabatan.style.fontSize = (pos.jabatan.font_size ?? 9) + 'px';
+                    cardElJabatan.style.color = pos.jabatan.color || textColor;
+                    cardElJabatan.innerText = c.jabatan ? (pos.jabatan.uppercase ? c.jabatan.toUpperCase() : c.jabatan) : '--';
+                    cardElJabatan.classList.remove('hidden');
+                } else {
+                    cardElJabatan.classList.add('hidden');
+                }
+
+                // 6. Instansi
+                if (pos.instansi && pos.instansi.visible !== false) {
+                    cardElInstansi.style.top = (pos.instansi.top ?? 77) + '%';
+                    cardElInstansi.style.left = (pos.instansi.left ?? 7) + '%';
+                    cardElInstansi.style.width = (pos.instansi.width ?? 58) + '%';
+                    cardElInstansi.style.fontSize = (pos.instansi.font_size ?? 9) + 'px';
+                    cardElInstansi.style.color = pos.instansi.color || textColor;
+                    cardElInstansi.innerText = c.perusahaan ? (pos.instansi.uppercase ? c.perusahaan.toUpperCase() : c.perusahaan) : '--';
+                    cardElInstansi.classList.remove('hidden');
+                } else {
+                    cardElInstansi.classList.add('hidden');
+                }
+
+                // 7. No Registrasi
+                if (pos.no_registrasi && pos.no_registrasi.visible !== false) {
+                    cardElNoRegistrasi.style.top = (pos.no_registrasi.top ?? 81.5) + '%';
+                    cardElNoRegistrasi.style.left = (pos.no_registrasi.left ?? 7) + '%';
+                    cardElNoRegistrasi.style.width = (pos.no_registrasi.width ?? 58) + '%';
+                    cardElNoRegistrasi.style.fontSize = (pos.no_registrasi.font_size ?? 8.5) + 'px';
+                    cardElNoRegistrasi.style.color = pos.no_registrasi.color || textColor;
+                    cardElNoRegistrasi.innerText = c.nomor_kartu || '--';
+                    cardElNoRegistrasi.classList.remove('hidden');
+                } else {
+                    cardElNoRegistrasi.classList.add('hidden');
+                }
+
+                // 8. QR Code
+                if (pos.qr_code && pos.qr_code.visible !== false) {
+                    cardElQrCode.style.top = (pos.qr_code.top ?? 68) + '%';
+                    cardElQrCode.style.left = (pos.qr_code.left ?? 68) + '%';
+                    cardElQrCode.style.width = (pos.qr_code.width ?? 24) + '%';
+                    cardElQrCode.style.height = (pos.qr_code.height ?? 24) + '%';
+                    cardElQrCode.classList.remove('hidden');
+                } else {
+                    cardElQrCode.classList.add('hidden');
+                }
+
+            } else {
+                // Fallback jika tidak ada template
+                cardTemplateBadge.innerText = 'Standar';
+                digitalCardMockup.style.backgroundColor = '#1e3a5f';
+                cardBgImage.classList.add('hidden');
+            }
+
+            // Tambahkan ke riwayat tabel scan
             addLogRow(data);
         }
 
@@ -598,7 +926,7 @@
             if (noData) noData.remove();
 
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-gray-50/80 transition-colors animate-fade-in';
+            tr.className = 'hover:bg-slate-50/80 transition-colors animate-fade-in';
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID');
@@ -606,22 +934,22 @@
             const c = data.data || data.kartu || {};
 
             tr.innerHTML = `
-                <td class="px-5 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">${timeStr}</td>
-                <td class="px-5 py-3 font-mono font-semibold text-gray-900 whitespace-nowrap">${c.nomor_kartu || '-'}</td>
-                <td class="px-5 py-3 font-medium text-gray-900">${c.nama_pemegang || '-'}</td>
-                <td class="px-5 py-3 text-gray-600 text-xs">${c.perusahaan || '-'}</td>
+                <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${timeStr}</td>
+                <td class="px-5 py-3 font-mono font-bold text-slate-900 whitespace-nowrap">${c.nomor_kartu || '-'}</td>
+                <td class="px-5 py-3 font-bold text-slate-900">${c.nama_pemegang || '-'}</td>
+                <td class="px-5 py-3 text-slate-600 text-xs">${c.perusahaan || '-'}</td>
                 <td class="px-5 py-3 text-center whitespace-nowrap">
-                    <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase ${currentScanMode === 'masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${currentScanMode === 'masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                         ${c.tipe_aktivitas || currentScanMode}
                     </span>
                 </td>
                 <td class="px-5 py-3 text-center whitespace-nowrap">
                     ${isValid 
-                        ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fas fa-check-circle text-[10px]"></i> VALID</span>'
-                        : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200"><i class="fas fa-times-circle text-[10px]"></i> DITOLAK</span>'
+                        ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fas fa-check-circle text-[10px]"></i> VALID</span>'
+                        : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><i class="fas fa-times-circle text-[10px]"></i> DITOLAK</span>'
                     }
                 </td>
-                <td class="px-5 py-3 text-xs text-gray-600 max-w-xs truncate" title="${data.alasan || data.message || ''}">
+                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs truncate" title="${data.alasan || data.message || ''}">
                     ${data.alasan || data.message || '-'}
                 </td>
             `;

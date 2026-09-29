@@ -46,5 +46,11 @@ class CameraDeviceSeeder extends Seeder
                 $d
             );
         }
+
+        // Pastikan akun operator default memiliki penugasan kamera jika belum ada
+        $operator = \App\Models\User::where('role', 'operator')->first();
+        if ($operator && $operator->cameraDevices()->count() === 0) {
+            $operator->cameraDevices()->sync(CameraDevice::pluck('id'));
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CameraDevice;
 use App\Models\KartuPas;
 use App\Models\ScanLog;
+use App\Models\TemplateKartu;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -193,19 +194,7 @@ class ScanController extends Controller
                 'is_kadaluarsa' => true,
                 'message'       => 'AKSES DITOLAK: Kartu PAS Sudah Kadaluarsa (Expired)!',
                 'alasan'        => 'Kartu PAS Kadaluarsa sejak ' . $formattedTanggalBerlaku,
-                'data'          => [
-                    'id'               => $log->id,
-                    'nomor_kartu'      => $kartu->nomor_kartu,
-                    'nama_pemegang'    => $kartu->nama_pemegang,
-                    'perusahaan'       => $kartu->perusahaan,
-                    'jabatan'          => $kartu->jabatan,
-                    'area_akses'       => $kartu->area_akses,
-                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
-                    'status_kartu'     => 'kadaluarsa',
-                    'is_kadaluarsa'    => true,
-                    'tipe_aktivitas'   => $tipeAktivitas,
-                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
-                ]
+                'data'          => $this->formatKartuPayload($kartu, $device, $log, $tipeAktivitas, $formattedTanggalBerlaku, $formattedTanggalBerlakuShort, true, $waktuNow),
             ]);
         }
 
@@ -232,19 +221,7 @@ class ScanController extends Controller
                 'is_kadaluarsa' => false,
                 'message'       => 'AKSES DITOLAK: Status Kartu PAS ' . $statusLabel . '!',
                 'alasan'        => $alasanNonaktif,
-                'data'          => [
-                    'id'               => $log->id,
-                    'nomor_kartu'      => $kartu->nomor_kartu,
-                    'nama_pemegang'    => $kartu->nama_pemegang,
-                    'perusahaan'       => $kartu->perusahaan,
-                    'jabatan'          => $kartu->jabatan,
-                    'area_akses'       => $kartu->area_akses,
-                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
-                    'status_kartu'     => $kartu->status,
-                    'is_kadaluarsa'    => false,
-                    'tipe_aktivitas'   => $tipeAktivitas,
-                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
-                ]
+                'data'          => $this->formatKartuPayload($kartu, $device, $log, $tipeAktivitas, $formattedTanggalBerlaku, $formattedTanggalBerlakuShort, false, $waktuNow),
             ]);
         }
 
@@ -271,20 +248,7 @@ class ScanController extends Controller
                 'is_kadaluarsa' => false,
                 'message'       => 'AKSES DITOLAK: Pemegang kartu tidak memiliki izin akses di Area ' . $device->kode_area . '!',
                 'alasan'        => $alasanTolakArea,
-                'data'          => [
-                    'id'               => $log->id,
-                    'nomor_kartu'      => $kartu->nomor_kartu,
-                    'nama_pemegang'    => $kartu->nama_pemegang,
-                    'perusahaan'       => $kartu->perusahaan,
-                    'jabatan'          => $kartu->jabatan,
-                    'area_dimiliki'    => $kartu->area_akses,
-                    'area_kamera'      => $device->kode_area,
-                    'tanggal_berlaku'  => $formattedTanggalBerlaku,
-                    'status_kartu'     => $kartu->status,
-                    'is_kadaluarsa'    => false,
-                    'tipe_aktivitas'   => $tipeAktivitas,
-                    'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
-                ]
+                'data'          => $this->formatKartuPayload($kartu, $device, $log, $tipeAktivitas, $formattedTanggalBerlaku, $formattedTanggalBerlakuShort, false, $waktuNow),
             ]);
         }
 
@@ -307,22 +271,51 @@ class ScanController extends Controller
             'is_kadaluarsa' => false,
             'message'       => 'AKSES DITERIMA (' . strtoupper($tipeAktivitas) . ') DI AREA ' . $device->kode_area,
             'alasan'        => 'Valid & Diizinkan di Area ' . $device->kode_area,
-            'data'          => [
-                'id'               => $log->id,
-                'nomor_kartu'      => $kartu->nomor_kartu,
-                'nama_pemegang'    => $kartu->nama_pemegang,
-                'perusahaan'       => $kartu->perusahaan,
-                'jabatan'          => $kartu->jabatan,
-                'area_akses'       => $kartu->area_akses,
-                'area_kamera'      => $device->kode_area,
-                'tanggal_berlaku'  => $formattedTanggalBerlaku,
-                'status_kartu'     => $kartu->status,
-                'is_kadaluarsa'    => false,
-                'tipe_aktivitas'   => $tipeAktivitas,
-                'foto'             => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
-                'waktu'            => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
-            ]
+            'data'          => $this->formatKartuPayload($kartu, $device, $log, $tipeAktivitas, $formattedTanggalBerlaku, $formattedTanggalBerlakuShort, false, $waktuNow),
         ]);
+    }
+
+    /**
+     * Format payload data kartu lengkap dengan konfigurasi template visual
+     */
+    private function formatKartuPayload($kartu, $device, $log, $tipeAktivitas, $formattedTanggalBerlaku, $formattedTanggalBerlakuShort, $isExpired, $waktuNow): array
+    {
+        $template = TemplateKartu::resolveTemplateForKartu($kartu);
+        $templateData = null;
+        if ($template) {
+            $templateData = [
+                'id'            => $template->id,
+                'nama_template' => $template->nama_template,
+                'kode_warna'    => $template->kode_warna,
+                'warna_label'   => $template->warna_label,
+                'warna_hex'     => $template->warna_hex,
+                'warna_teks'    => $template->warna_teks,
+                'gambar_url'    => $template->gambar_url,
+                'posisi'        => $template->posisi,
+            ];
+        }
+
+        $userAreas = array_values(array_filter(array_map('trim', explode(',', $kartu->area_akses ?? ''))));
+
+        return [
+            'id'                    => $log->id,
+            'nomor_kartu'           => $kartu->nomor_kartu,
+            'nama_pemegang'         => $kartu->nama_pemegang,
+            'perusahaan'            => $kartu->perusahaan,
+            'jabatan'               => $kartu->jabatan,
+            'area_akses'            => $userAreas,
+            'area_dimiliki'         => $kartu->area_akses,
+            'area_kamera'           => $device->kode_area,
+            'tanggal_berlaku'       => $formattedTanggalBerlaku,
+            'tanggal_berlaku_short' => $formattedTanggalBerlakuShort,
+            'status_kartu'          => $kartu->status,
+            'is_kadaluarsa'         => $isExpired,
+            'tipe_aktivitas'        => $tipeAktivitas,
+            'foto'                  => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
+            'foto_url'              => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
+            'template'              => $templateData,
+            'waktu'                 => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
+        ];
     }
 
     public function updateCatatan(Request $request, $id)

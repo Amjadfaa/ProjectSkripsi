@@ -139,11 +139,24 @@ class KameraOperatorController extends Controller
     public function logs(Request $request)
     {
         $deviceId = session('camera_device_id');
-        $query = ScanLog::with('cameraDevice');
+        $query = ScanLog::with(['cameraDevice.areaAkses', 'kartuPas']);
 
         if ($deviceId) {
             $query->where('camera_device_id', $deviceId);
         }
+
+        // Hitung statistik untuk KPI Cards
+        $statsBase = ScanLog::query();
+        if ($deviceId) {
+            $statsBase->where('camera_device_id', $deviceId);
+        }
+
+        $stats = [
+            'total'    => (clone $statsBase)->count(),
+            'valid'    => (clone $statsBase)->where('status_akses', 'diterima')->count(),
+            'ditolak'  => (clone $statsBase)->where('status_akses', 'ditolak')->count(),
+            'hari_ini' => (clone $statsBase)->whereDate('waktu_scan', Carbon::today())->count(),
+        ];
 
         if ($request->filled('tanggal')) {
             $query->whereDate('waktu_scan', $request->tanggal);
@@ -157,6 +170,10 @@ class KameraOperatorController extends Controller
             }
         }
 
+        if ($request->filled('tipe_aktivitas') && in_array($request->tipe_aktivitas, ['masuk', 'keluar'])) {
+            $query->where('tipe_aktivitas', $request->tipe_aktivitas);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
@@ -167,8 +184,8 @@ class KameraOperatorController extends Controller
         }
 
         $logs = $query->latest('waktu_scan')->paginate(15)->withQueryString();
-        $connectedDevice = $deviceId ? CameraDevice::find($deviceId) : null;
+        $connectedDevice = $deviceId ? CameraDevice::with('areaAkses')->find($deviceId) : null;
 
-        return view('operator.kamera.logs', compact('logs', 'connectedDevice'));
+        return view('operator.kamera.logs', compact('logs', 'connectedDevice', 'stats'));
     }
 }

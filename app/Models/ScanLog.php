@@ -32,4 +32,9 @@ class ScanLog extends Model
     {
         return $this->belongsTo(CameraDevice::class, 'camera_device_id');
     }
+
+    public function kartuPas()
+    {
+        return $this->belongsTo(KartuPas::class, 'nomor_kartu', 'nomor_kartu');
+    }
 }

@@ -41,6 +41,7 @@ class DashboardOperatorController extends Controller
 
         // Riwayat scan terbaru
         $recentLogs = (clone $logQuery)
+            ->with(['cameraDevice', 'kartuPas'])
             ->latest('waktu_scan')
             ->take(8)
             ->get();
