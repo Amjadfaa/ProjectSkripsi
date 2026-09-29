@@ -58,17 +58,23 @@ class Instansi extends Model
         return $this->hasMany(\App\Models\KartuPas::class, 'instansi_id');
     }
 
+    public function getKartuTerpakaiAttribute(): int
+    {
+        // Kuota terpakai adalah semua kartu yang belum dinonaktifkan (kartu aktif & kadaluarsa tetap terhitung)
+        $terpakai = $this->kartuPas()->where('status', '!=', 'tidak_aktif')->count();
+        if ($this->id) {
+            $terpakaiByName = KartuPas::whereNull('instansi_id')
+                ->whereRaw('TRIM(LOWER(perusahaan)) = ?', [strtolower(trim($this->nama_instansi))])
+                ->where('status', '!=', 'tidak_aktif')
+                ->count();
+            $terpakai += $terpakaiByName;
+        }
+        return $terpakai;
+    }
+
     public function getSisaKuotaAttribute(): int
     {
-        $aktif = $this->kartuPas()->where('status', 'aktif')->count();
-        if ($this->id) {
-            $aktifByName = KartuPas::whereNull('instansi_id')
-                ->whereRaw('TRIM(LOWER(perusahaan)) = ?', [strtolower(trim($this->nama_instansi))])
-                ->where('status', 'aktif')
-                ->count();
-            $aktif += $aktifByName;
-        }
-        return max(0, $this->kuota - $aktif);
+        return max(0, $this->kuota - $this->kartu_terpakai);
     }
 }
 

@@ -38,6 +38,8 @@ class OperatorPanelTest extends TestCase
             'kode_akses' => 'GATE-01-SEC',
             'is_active' => true,
         ]);
+
+        $this->operatorUser->cameraDevices()->attach($this->cameraDevice->id);
     }
 
     public function test_operator_is_redirected_to_operator_dashboard_after_login(): void

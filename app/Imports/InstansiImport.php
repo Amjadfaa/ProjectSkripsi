@@ -29,11 +29,15 @@ class InstansiImport implements ToCollection
         $alamatCol  = null;
         $statusCol  = null;
         $headerRowIdx = null;
+        $isDataPasFormat = false;
 
         foreach ($rows as $rIdx => $row) {
             $rowArr = is_array($row) ? $row : $row->toArray();
             foreach ($rowArr as $cIdx => $val) {
                 $v = strtoupper(trim((string)$val));
+                if (str_contains($v, 'TERPAKAI') || str_contains($v, 'SISA')) {
+                    $isDataPasFormat = true;
+                }
                 if (str_contains($v, 'NAMA INSTANSI') || str_contains($v, 'NAMA PERUSAHAAN') || $v === 'INSTANSI' || $v === 'NAMA') {
                     $nameCol = $cIdx;
                     $headerRowIdx = $rIdx;
@@ -160,12 +164,11 @@ class InstansiImport implements ToCollection
             }
 
             // JIKA SUDAH ADA DI DATABASE:
-            // Pertahankan data kontak yang ada, namun perbarui kuota jika ada kuota resmi di file
             if (isset($existingMap[$normalizedKey])) {
-                $instansiId = $existingMap[$normalizedKey];
-                $existing = Instansi::find($instansiId);
-                if ($existing) {
-                    if (is_numeric($kuotaRaw) && (int)$kuotaRaw > 0 && $existing->kuota != $kuota) {
+                if ($isDataPasFormat) {
+                    $instansiId = $existingMap[$normalizedKey];
+                    $existing = Instansi::find($instansiId);
+                    if ($existing && is_numeric($kuotaRaw) && (int)$kuotaRaw > 0 && $existing->kuota != $kuota) {
                         $existing->update(['kuota' => $kuota]);
                     }
                 }

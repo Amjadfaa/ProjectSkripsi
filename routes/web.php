@@ -12,6 +12,7 @@ use App\Http\Controllers\Administrator\ImportController;
 use App\Http\Controllers\Administrator\MasterOptionController;
 use App\Http\Controllers\Administrator\CameraDeviceController;
 use App\Http\Controllers\Administrator\DokumenPersyaratanController;
+use App\Http\Controllers\Administrator\TemplateKartuController;
 use App\Http\Controllers\Administrator\UserController;
 use App\Http\Controllers\Operator\DashboardOperatorController;
 use App\Http\Controllers\Operator\KameraOperatorController;
@@ -48,6 +49,8 @@ Route::middleware(['auth', 'role:administrator'])->prefix('administrator')->name
     Route::get('/kartu-pas/{id}/qrcode', [KartuPasController::class, 'downloadQrCode'])->name('kartu-pas.qrcode');
     Route::get('/kartu-pas/{id}/edit', [KartuPasController::class, 'edit'])->name('kartu-pas.edit');
     Route::put('/kartu-pas/{id}', [KartuPasController::class, 'update'])->name('kartu-pas.update');
+    Route::post('/kartu-pas/{id}/nonaktifkan', [KartuPasController::class, 'nonaktifkan'])->name('kartu-pas.nonaktifkan');
+    Route::post('/kartu-pas/{id}/aktifkan', [KartuPasController::class, 'aktifkan'])->name('kartu-pas.aktifkan');
     Route::delete('/kartu-pas/{id}', [KartuPasController::class, 'destroy'])->name('kartu-pas.destroy');
     Route::delete('/kartu-pas-destroy-all', [KartuPasController::class, 'destroyAll'])->name('kartu-pas.destroy-all');
     Route::delete('/kartu-pas-destroy-selected', [KartuPasController::class, 'destroySelected'])->name('kartu-pas.destroy-selected');
@@ -103,6 +106,20 @@ Route::middleware(['auth', 'role:administrator'])->prefix('administrator')->name
     Route::get('/dokumen-persyaratan/{id}/preview', [DokumenPersyaratanController::class, 'preview'])->name('dokumen-persyaratan.preview');
     Route::get('/dokumen-persyaratan/{id}/download', [DokumenPersyaratanController::class, 'download'])->name('dokumen-persyaratan.download');
     Route::delete('/dokumen-persyaratan/{id}', [DokumenPersyaratanController::class, 'destroy'])->name('dokumen-persyaratan.destroy');
+
+    // Template Kartu PAS (Atur & Upload Template per Area)
+    Route::get('/template-kartu', [TemplateKartuController::class, 'index'])->name('template-kartu.index');
+    Route::get('/template-kartu/create', [TemplateKartuController::class, 'create'])->name('template-kartu.create');
+    Route::post('/template-kartu', [TemplateKartuController::class, 'store'])->name('template-kartu.store');
+    Route::get('/template-kartu/{id}/edit', [TemplateKartuController::class, 'edit'])->name('template-kartu.edit');
+    Route::put('/template-kartu/{id}', [TemplateKartuController::class, 'update'])->name('template-kartu.update');
+    Route::delete('/template-kartu/{id}', [TemplateKartuController::class, 'destroy'])->name('template-kartu.destroy');
+    Route::patch('/template-kartu/{id}/toggle-status', [TemplateKartuController::class, 'toggleStatus'])->name('template-kartu.toggle-status');
+    Route::patch('/template-kartu/{id}/set-default', [TemplateKartuController::class, 'setDefault'])->name('template-kartu.set-default');
+    Route::get('/template-kartu/{id}/preview', [TemplateKartuController::class, 'preview'])->name('template-kartu.preview');
+    Route::get('/template-kartu/{id}/designer', [TemplateKartuController::class, 'designer'])->name('template-kartu.designer');
+    Route::post('/template-kartu/{id}/designer', [TemplateKartuController::class, 'saveDesigner'])->name('template-kartu.designer.save');
+    Route::post('/template-kartu/{id}/designer/reset', [TemplateKartuController::class, 'resetDesigner'])->name('template-kartu.designer.reset');
 
     // Manajemen Akun Operator & User
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

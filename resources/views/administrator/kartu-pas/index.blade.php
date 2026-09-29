@@ -1,105 +1,157 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Data Kartu PAS</h2>
-    </x-slot>
-
-    <div class="bg-white rounded-lg shadow mb-4">
-        <div class="bg-blue-500 rounded-t-lg px-6 py-4 flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-white font-bold text-lg">🪪 Data Kartu PAS</h3>
-            <div class="flex gap-2 flex-wrap items-center">
-                <!-- Tombol Import Data (Modal) -->
-                <button type="button" onclick="openModalImport()"
-                        class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-1.5 transition cursor-pointer">
-                    <i class="fas fa-file-import"></i> Import Data
-                </button>
-
-                <!-- Dropdown Unduh Data Kartu PAS (Excel / PDF) -->
-                <div class="relative inline-block text-left" id="downloadDropdownContainer">
-                    <button type="button" onclick="toggleDownloadDropdown(event)"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-1.5 transition cursor-pointer">
-                        <i class="fas fa-download"></i> Unduh Data <i class="fas fa-chevron-down text-xs ml-0.5"></i>
-                    </button>
-                    <div id="downloadDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-50 divide-y divide-gray-100 overflow-hidden">
-                        <div class="py-1">
-                            <a href="{{ route('administrator.kartu-pas.export.excel', request()->query()) }}"
-                               class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                                <i class="fas fa-file-excel text-emerald-600 text-base"></i> Unduh Format Excel (.xlsx)
-                            </a>
-                            <a href="{{ route('administrator.kartu-pas.export.pdf', request()->query()) }}"
-                               class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-700 transition">
-                                <i class="fas fa-file-pdf text-rose-600 text-base"></i> Unduh Format PDF (.pdf)
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tombol Tambah Kartu PAS (Modal) -->
-                <button type="button" onclick="openModalTambahKartu()"
-                        class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50 shadow-sm cursor-pointer flex items-center gap-1.5 transition">
-                    <i class="fas fa-plus"></i> Tambah Kartu PAS
-                </button>
+        <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm shadow-xs border border-blue-100">
+                <i class="fas fa-id-card"></i>
+            </span>
+            <div>
+                <h1 class="font-bold text-base sm:text-lg text-slate-800 tracking-tight leading-tight">
+                    Data Kartu PAS Bandara
+                </h1>
+                <p class="text-[11px] text-slate-500 font-normal leading-none mt-0.5 hidden sm:block">Kelola izin masuk, masa berlaku, dan hak akses area terbatas bandara</p>
             </div>
         </div>
+    </x-slot>
 
-        <!-- Filter -->
-        <div class="px-6 py-4 border-b">
-            <form method="GET" action="{{ route('administrator.kartu-pas.index') }}">
-                <div class="flex gap-4 items-end flex-wrap">
-                    <div class="flex-1" style="min-width:200px;">
+    <!-- ======================================================================== -->
+    <!-- REUSABLE TABLE CARD CONTAINER                                            -->
+    <!-- ======================================================================== -->
+    <x-table-card title="Database Kartu PAS"
+                  subtitle="Pencatatan dan monitoring status seluruh kartu PAS bandara"
+                  icon="fas fa-id-card"
+                  iconColor="bg-blue-50 text-blue-600">
+        
+        <!-- Header Actions Slot -->
+        <x-slot name="actions">
+            <!-- Tombol Import Data (Modal) -->
+            <button type="button" onclick="openModal('modalImportKartu')"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                <i class="fas fa-file-import"></i>
+                <span>Import Data</span>
+            </button>
+
+            <!-- Dropdown Unduh Data Kartu PAS (Excel / PDF) -->
+            <div class="relative inline-block text-left" id="downloadDropdownContainer">
+                <button type="button" onclick="toggleDownloadDropdown(event)"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                    <i class="fas fa-download"></i>
+                    <span>Unduh Data</span>
+                    <i class="fas fa-chevron-down text-[10px] ml-0.5"></i>
+                </button>
+                <div id="downloadDropdownMenu" 
+                     class="hidden absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl bg-white border border-slate-100 ring-1 ring-black ring-opacity-5 z-50 divide-y divide-slate-100 overflow-hidden animate-dropdown-fade-in">
+                    <div class="py-1">
+                        <a id="btnExportExcel" href="{{ route('administrator.kartu-pas.export.excel', request()->query()) }}"
+                           class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                            <i class="fas fa-file-excel text-emerald-600 text-sm"></i>
+                            <span>Unduh Format Excel (.xlsx)</span>
+                        </a>
+                        <a id="btnExportPdf" href="{{ route('administrator.kartu-pas.export.pdf', request()->query()) }}"
+                           class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition">
+                            <i class="fas fa-file-pdf text-rose-600 text-sm"></i>
+                            <span>Unduh Format PDF (.pdf)</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Tambah Kartu PAS (Modal) -->
+            <button type="button" onclick="openModalTambahKartu()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                <i class="fas fa-plus-circle"></i>
+                <span>Tambah Kartu PAS</span>
+            </button>
+        </x-slot>
+
+        <!-- Filter Slot -->
+        <x-slot name="filters">
+            <form id="filterForm" method="GET" action="{{ route('administrator.kartu-pas.index') }}">
+                <div class="flex flex-wrap items-end gap-3">
+                    <!-- Search Input -->
+                    <div class="flex-1 min-w-[220px]">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pencarian</label>
                         <div class="relative">
-                            <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
-                            <input type="text" name="search" value="{{ request('search') }}"
-                                   placeholder="Cari nama, nomor kartu..."
-                                   class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm">
+                            <span class="absolute left-3 top-2.5 text-slate-400 text-xs">
+                                <i class="fas fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
+                                   placeholder="Cari nama pemegang, nomor registrasi..."
+                                   class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-2xs">
+                            @if(request('search'))
+                                <button type="button" onclick="clearSearchInput()" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                    <i class="fas fa-circle-xmark text-xs"></i>
+                                </button>
+                            @endif
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Filter Instansi</label>
-                        <select name="instansi" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                            <option value="">Semua Instansi</option>
-                            @foreach($instansiList as $instansi)
-                                <option value="{{ $instansi->nama_instansi }}" {{ request('instansi') == $instansi->nama_instansi ? 'selected' : '' }}>
-                                    {{ $instansi->nama_instansi }}
-                                </option>
-                            @endforeach
-                        </select>
+
+                    <!-- Filter Instansi -->
+                    <div class="min-w-[180px]">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Instansi</label>
+                        <div class="relative">
+                            <select id="filterInstansi" name="instansi" 
+                                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-2xs cursor-pointer">
+                                <option value="">Semua Instansi</option>
+                                @foreach($instansiList as $instansi)
+                                    <option value="{{ $instansi->nama_instansi }}" {{ request('instansi') == $instansi->nama_instansi ? 'selected' : '' }}>
+                                        {{ $instansi->nama_instansi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Filter Status</label>
-                        <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+
+                    <!-- Filter Status -->
+                    <div class="min-w-[140px]">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Status</label>
+                        <select id="filterStatus" name="status" 
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-2xs cursor-pointer">
                             <option value="">Semua Status</option>
                             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                            <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                             <option value="kadaluarsa" {{ request('status') == 'kadaluarsa' ? 'selected' : '' }}>Kadaluarsa</option>
+                            <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                         </select>
                     </div>
-                    <div class="flex gap-2">
-                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600">Filter</button>
-                        <a href="{{ route('administrator.kartu-pas.index') }}"
-                           class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-400">Reset</a>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                            <i class="fas fa-filter text-[11px]"></i>
+                            <span>Filter</span>
+                        </button>
+                        <button type="button" onclick="resetFilter(event)"
+                                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                                title="Reset Filter">
+                            <i class="fas fa-rotate-left mr-1"></i> Reset
+                        </button>
                     </div>
                 </div>
             </form>
-        </div>
+        </x-slot>
 
-        <!-- Aksi Massal -->
-        <div class="px-6 py-3 bg-gray-50 border-b flex items-center justify-between flex-wrap gap-2">
-            <div class="flex items-center gap-3">
-                <input type="checkbox" id="checkAll" class="w-4 h-4"
-                       onchange="toggleCheckAll(this)">
-                <label for="checkAll" class="text-sm text-gray-600">Pilih Semua</label>
-                <span id="selectedCount" class="text-xs text-gray-400"></span>
+        <!-- Bulk Action Slot -->
+        <x-slot name="bulkActions">
+            <div class="flex items-center gap-2.5">
+                <span class="font-bold text-blue-900 flex items-center gap-1.5">
+                    <i class="fas fa-check-double text-blue-600"></i>
+                    <span>Tindakan Massal</span>
+                </span>
+                <span id="selectedCountBadge" class="hidden px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-600 text-white shadow-2xs">
+                    0 dipilih
+                </span>
             </div>
-            <div class="flex gap-2">
+
+            <div class="flex items-center gap-2">
                 <!-- Hapus yang dipilih -->
-                <form id="formDeleteSelected" method="POST"
-                      action="{{ route('administrator.kartu-pas.destroy-selected') }}">
+                <form id="formDeleteSelected" method="POST" action="{{ route('administrator.kartu-pas.destroy-selected') }}">
                     @csrf @method('DELETE')
                     <div id="selectedInputs"></div>
                     <button type="button" onclick="confirmDeleteSelected()"
-                            class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-orange-600 hidden flex items-center gap-1 shadow-sm"
-                            id="btnDeleteSelected">
-                        <i class="fas fa-trash"></i> Hapus Dipilih
+                            id="btnDeleteSelected"
+                            class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition cursor-pointer">
+                        <i class="fas fa-trash-can"></i>
+                        <span>Hapus Dipilih</span>
                     </button>
                 </form>
 
@@ -107,569 +159,592 @@
                 <form id="formDeleteAll" method="POST" action="{{ route('administrator.kartu-pas.destroy-all') }}">
                     @csrf @method('DELETE')
                     <button type="button" onclick="confirmDeleteAll()"
-                            class="bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-700 flex items-center gap-1 shadow-sm">
-                        <i class="fas fa-trash-alt"></i> Hapus Semua
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition cursor-pointer">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Hapus Seluruh Data</span>
                     </button>
                 </form>
             </div>
-        </div>
+        </x-slot>
 
-        <!-- Tabel -->
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b bg-gray-50">
-                        <th class="px-4 py-3 text-center w-10"></th>
-                        <th class="px-4 py-3 text-left text-gray-600">No.Registrasi</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Nama Pemegang</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Instansi</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Area Akses</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Jabatan</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Masa Berlaku</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Status</th>
-                        <th class="px-4 py-3 text-center text-gray-600">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($kartuPas as $kartu)
-                    <tr class="border-b hover:bg-gray-50 {{ $kartu->status === 'kadaluarsa' ? 'bg-red-50' : '' }}">
-                        <td class="px-4 py-3 text-center">
-                            <input type="checkbox" class="kartu-checkbox w-4 h-4"
-                                   value="{{ $kartu->id }}" onchange="updateSelectedCount()">
-                        </td>
-                        <td class="px-4 py-3 font-medium text-gray-700">{{ $kartu->nomor_kartu }}</td>
-                        <td class="px-4 py-3">{{ $kartu->nama_pemegang }}</td>
-                        <td class="px-4 py-3">{{ $kartu->perusahaan }}</td>
-                        <td class="px-4 py-3">{{ $kartu->area_akses }}</td>
-                        <td class="px-4 py-3">{{ $kartu->jabatan ?? '-' }}</td>
-                        <td class="px-4 py-3">{{ $kartu->tanggal_berlaku->format('d M Y') }}</td>
-                        <td class="px-4 py-3">
-                            @php
-                                $badge = [
-                                    'aktif'       => 'bg-green-100 text-green-700',
-                                    'tidak_aktif' => 'bg-gray-100 text-gray-700',
-                                    'kadaluarsa'  => 'bg-red-100 text-red-700',
-                                ];
-                            @endphp
-                            <span class="px-2 py-1 rounded text-xs font-medium {{ $badge[$kartu->status] }}">
-                                {{ ucfirst(str_replace('_', ' ', $kartu->status)) }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-center">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <!-- Tombol Download QR Code (Icon) -->
-                                <a href="{{ route('administrator.kartu-pas.qrcode', $kartu->id) }}"
-                                   class="bg-indigo-600 hover:bg-indigo-700 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                   title="Unduh QR Code (No. Reg: {{ $kartu->nomor_kartu }})">
-                                    <i class="fas fa-qrcode"></i>
-                                </a>
-
-                                <!-- Tombol Perpanjangan (Icon) -->
-                                <button type="button" onclick='openModalPerpanjangan(@json($kartu))'
-                                        class="bg-emerald-600 hover:bg-emerald-700 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                        title="Perpanjang Masa Berlaku Kartu PAS">
-                                    <i class="fas fa-calendar-plus"></i>
-                                </button>
-                                
-                                <!-- Tombol Edit (Icon) -->
-                                <button type="button" onclick='openModalEditKartu(@json($kartu))'
-                                        class="bg-amber-500 hover:bg-amber-600 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                        title="Edit Data Kartu PAS">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-
-                                <!-- Tombol Hapus (Icon) -->
-                                <form id="formDeleteItem-{{ $kartu->id }}" method="POST" action="{{ route('administrator.kartu-pas.destroy', $kartu->id) }}" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button type="button" onclick="confirmSingleDelete({{ $kartu->id }}, '{{ $kartu->nomor_kartu }}')"
-                                            class="bg-rose-600 hover:bg-rose-700 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                            title="Hapus Kartu PAS">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="9" class="px-4 py-8 text-center text-gray-500">Belum ada data kartu PAS.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="px-6 py-4">
-            {{ $kartuPas->links() }}
-        </div>
-    </div>
-
-    <!-- MODAL BESAR IMPORT DATA KARTU PAS -->
-    <div id="modalImportKartu" class="fixed inset-0 hidden flex items-center justify-center p-4 transition-opacity" style="background-color: rgba(15, 23, 42, 0.70); z-index: 1000;" onclick="if(event.target === this) closeModalImport()">
-        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-file-import text-amber-500"></i> Import Data Kartu PAS (File Excel)
-                </h3>
-                <button type="button" onclick="closeModalImport()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+        <!-- Table Viewport with Persistent Loading Overlay (SPA Replaced via AJAX) -->
+        <div class="relative">
+            <!-- Shimmer Loading Overlay (persistent across SPA table updates) -->
+            <div id="tableLoadingOverlay" class="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-20 hidden items-center justify-center transition-all duration-200">
+                <div class="flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-900/90 text-white shadow-2xl text-xs font-bold border border-slate-700 backdrop-blur-md">
+                    <i class="fas fa-circle-notch fa-spin text-blue-400 text-base"></i>
+                    <span>Memperbarui data kartu PAS...</span>
+                </div>
             </div>
 
-            <p class="text-sm text-gray-600 mb-4">
-                Upload file Excel data kartu PAS. Sistem akan otomatis membaca data dari setiap sheet bulan.
+            <!-- Table Container (SPA HTML injected here) -->
+            <div id="tableContainer" class="transition-opacity duration-200">
+                @include('administrator.kartu-pas.partials.table')
+            </div>
+        </div>
+
+    </x-table-card>
+
+    <!-- ======================================================================== -->
+    {{-- REUSABLE MODALS (USING x-modal)                                        --}}
+    <!-- ======================================================================== -->
+
+    <!-- 1. MODAL IMPORT EXCEL -->
+    <x-modal id="modalImportKartu" 
+             title="Import Data Kartu PAS"
+             subtitle="Upload file Excel (.xlsx / .xls) untuk import data massal"
+             icon="fas fa-file-import"
+             iconColor="bg-amber-50 text-amber-600 border-amber-200"
+             maxWidth="max-w-2xl">
+        <p class="text-xs text-slate-500 mb-4">
+            Sistem otomatis memetakan kolom dari file Excel Anda. Pastikan susunan kolom sesuai dengan petunjuk berikut:
+        </p>
+
+        <!-- Format Info Box -->
+        <div class="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5 mb-4">
+            <p class="font-bold text-blue-800 text-[11px] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <i class="fas fa-circle-info"></i> Format Kolom Excel:
             </p>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs text-blue-950 font-medium">
+                <div class="bg-white p-2 rounded-lg border border-blue-100">
+                    <span class="block font-black text-blue-600">Kolom D</span> Nama Pemegang
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-blue-100">
+                    <span class="block font-black text-blue-600">Kolom E</span> No. Registrasi
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-blue-100">
+                    <span class="block font-black text-blue-600">Kolom F</span> Kode Area Akses
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-blue-100">
+                    <span class="block font-black text-blue-600">Kolom G</span> Jabatan
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-blue-100">
+                    <span class="block font-black text-blue-600">Kolom H</span> Masa Berlaku
+                </div>
+            </div>
+        </div>
 
-            <!-- Format Info Box -->
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                <p class="font-semibold text-blue-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <i class="fas fa-info-circle"></i> Format Kolom yang Didukung:
-                </p>
-                <table class="w-full text-xs text-blue-900">
-                    <thead>
-                        <tr class="border-b border-blue-200 font-semibold">
-                            <th class="py-1 text-left">Kolom Excel</th>
-                            <th class="py-1 text-left">Deskripsi Field</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-blue-100">
-                        <tr><td class="py-1 font-bold">Kolom D</td><td>Nama Pemegang</td></tr>
-                        <tr><td class="py-1 font-bold">Kolom E</td><td>No. Registrasi / Nomor Kartu PAS</td></tr>
-                        <tr><td class="py-1 font-bold">Kolom F</td><td>Kode Area Akses (Contoh: A, B, C)</td></tr>
-                        <tr><td class="py-1 font-bold">Kolom G</td><td>Jabatan</td></tr>
-                        <tr><td class="py-1 font-bold">Kolom H</td><td>Masa Berlaku (Contoh: 30 MEI 2026)</td></tr>
-                    </tbody>
-                </table>
+        <form method="POST" action="{{ route('administrator.import.kartu-pas') }}" enctype="multipart/form-data">
+            @csrf
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih File Spreadsheet</label>
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-amber-500 transition cursor-pointer bg-slate-50 hover:bg-amber-50/20"
+                     onclick="document.getElementById('import_file_input').click()">
+                    <input type="file" name="file" id="import_file_input" accept=".xlsx,.xls"
+                           class="hidden" onchange="showModalImportFileName(this)" required>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 mx-auto flex items-center justify-center text-xl mb-2">
+                        <i class="fas fa-cloud-arrow-up"></i>
+                    </div>
+                    <p class="text-slate-700 font-semibold text-xs">Klik di sini untuk memilih file Excel</p>
+                    <p class="text-slate-400 text-[11px] mt-0.5">Format file yang didukung: .xlsx atau .xls (Maks. 10MB)</p>
+                    <p id="modalImportFileName" class="text-emerald-600 text-xs mt-2.5 font-bold"></p>
+                </div>
+                @error('file') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <form method="POST" action="{{ route('administrator.import.kartu-pas') }}" enctype="multipart/form-data">
-                @csrf
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih File Excel (.xlsx / .xls)</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-amber-500 transition cursor-pointer bg-gray-50 hover:bg-amber-50/30"
-                         onclick="document.getElementById('import_file_input').click()">
-                        <input type="file" name="file" id="import_file_input" accept=".xlsx,.xls"
-                               class="hidden" onchange="showModalImportFileName(this)" required>
-                        <i class="fas fa-cloud-upload-alt text-4xl text-amber-500 mb-2"></i>
-                        <p class="text-gray-700 font-medium text-sm">Klik untuk memilih file Excel</p>
-                        <p class="text-gray-400 text-xs mt-1">Format file: .xlsx atau .xls (Ukuran maks. 10MB)</p>
-                        <p id="modalImportFileName" class="text-emerald-600 text-sm mt-3 font-semibold"></p>
-                    </div>
-                    @error('file') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModalImport()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 text-sm font-bold shadow-md flex items-center gap-1.5">
-                        <i class="fas fa-upload"></i> Import Sekarang
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL BESAR TAMBAH KARTU PAS -->
-    <div id="modalTambahKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 relative max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-id-card text-blue-600"></i> Form Tambah Kartu PAS Baru
-                </h3>
-                <button type="button" onclick="closeModalTambahKartu()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalImportKartu')"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-upload"></i>
+                    <span>Proses Import</span>
                 </button>
             </div>
+        </form>
+    </x-modal>
 
-            @if($errors->any())
-                <div class="bg-red-100 border border-red-200 text-red-700 p-4 rounded-lg mb-4 text-sm">
-                    <strong class="font-bold">Gagal Menyimpan Data!</strong>
-                    <ul class="mt-1 list-disc list-inside">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+    <!-- 2. MODAL TAMBAH KARTU PAS -->
+    <x-modal id="modalTambahKartu"
+             title="Tambah Kartu PAS Baru"
+             subtitle="Isi rincian data pemegang dan masa berlaku kartu izin masuk"
+             icon="fas fa-id-card"
+             iconColor="bg-blue-50 text-blue-600 border-blue-200"
+             maxWidth="max-w-3xl">
+        <form id="formTambahKartu" method="POST" action="{{ route('administrator.kartu-pas.simpan') }}">
+            @csrf
+            <input type="hidden" name="_form_source" value="tambah">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Registrasi / No. Kartu <span class="text-rose-500">*</span></label>
+                    <input type="text" id="tambah_nomor_kartu" name="nomor_kartu" value="{{ old('_form_source') === 'tambah' ? old('nomor_kartu') : '' }}"
+                           placeholder="Contoh: B.MPH.MKQ.000532"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-blue-500" required>
+                    @if(old('_form_source') === 'tambah') @error('nomor_kartu') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
-            @endif
-
-            <form method="POST" action="{{ route('administrator.kartu-pas.simpan') }}">
-                @csrf
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Registrasi</label>
-                        <input type="text" name="nomor_kartu" value="{{ old('nomor_kartu') }}"
-                               placeholder="Contoh: PAS-2026-001"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        @error('nomor_kartu') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap Pemegang</label>
-                        <input type="text" name="nama_pemegang" value="{{ old('nama_pemegang') }}"
-                               placeholder="Nama lengkap pemegang"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        @error('nama_pemegang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Pemegang <span class="text-rose-500">*</span></label>
+                    <input type="text" id="tambah_nama_pemegang" name="nama_pemegang" value="{{ old('_form_source') === 'tambah' ? old('nama_pemegang') : '' }}"
+                           placeholder="Nama lengkap sesuai identitas"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500" required>
+                    @if(old('_form_source') === 'tambah') @error('nama_pemegang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
-
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
-                    <select name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        <option value="">-- Pilih Instansi --</option>
-                        @foreach($instansiList as $instansi)
-                            @php $sisa = $instansi->sisa_kuota; @endphp
-                            <option value="{{ $instansi->id }}"
-                                {{ old('instansi_id') == $instansi->id ? 'selected' : '' }}
-                                {{ $sisa <= 0 ? 'disabled' : '' }}>
-                                {{ $instansi->nama_instansi }} &mdash; (Sisa Kuota: {{ $sisa }} / Total: {{ $instansi->kuota }}) {{ $sisa <= 0 ? '[KUOTA HABIS]' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('instansi_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <!-- Area Akses Multi-Select -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-sm font-semibold text-gray-700">
-                                Area Akses <span class="text-xs font-normal text-blue-600">(Pilih >1 Area)</span>
-                            </label>
-                            <button type="button" onclick="openModalArea()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-0.5 rounded text-xs shadow-sm" title="Kelola / Tambah Area Akses">
-                                <i class="fas fa-plus"></i> Tambah
-                            </button>
-                        </div>
-                        <div class="border border-gray-300 rounded-lg p-2 max-h-40 overflow-y-auto bg-gray-50/50 space-y-1" id="container_area_tambah">
-                            @foreach($areaAksesList as $area)
-                                @php $labelFormatted = $area->kode . ': ' . $area->keterangan; @endphp
-                                <label class="flex items-center gap-2 p-1.5 rounded hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer text-xs font-medium text-gray-700 transition" title="{{ $labelFormatted }}">
-                                    <input type="checkbox" name="area_akses[]" value="{{ $area->kode }}"
-                                           class="rounded text-blue-600 focus:ring-blue-500 checkbox-area-tambah"
-                                           {{ is_array(old('area_akses')) && in_array($area->kode, old('area_akses')) ? 'checked' : '' }}>
-                                    <span class="font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded shrink-0">{{ $area->kode }}</span>
-                                    <span class="truncate">{{ $area->keterangan }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('area_akses') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <!-- Jabatan -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Jabatan</label>
-                        <div class="flex gap-1.5">
-                            <select name="jabatan" id="select_jabatan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                                <option value="">-- Pilih Jabatan --</option>
-                                @foreach($jabatanList as $jbt)
-                                    <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ old('jabatan') == $jbt->nama_jabatan ? 'selected' : '' }}>
-                                        {{ $jbt->nama_jabatan }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" onclick="openModalJabatan()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded-lg text-sm flex items-center justify-center shrink-0 shadow-sm" title="Kelola / Tambah Jabatan">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <button type="button" onclick="deleteSelectedJabatan()" class="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-2 rounded-lg text-sm flex items-center justify-center shrink-0 shadow-sm" title="Hapus Jabatan Yang Dipilih">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                        @error('jabatan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Terbit</label>
-                        <input type="date" name="tanggal_terbit" value="{{ old('tanggal_terbit', date('Y-m-d')) }}"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        @error('tanggal_terbit') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Berlaku (Kadaluarsa)</label>
-                        <input type="date" name="tanggal_berlaku" value="{{ old('tanggal_berlaku') }}"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        @error('tanggal_berlaku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModalTambahKartu()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-bold shadow-md">
-                        Simpan Kartu PAS
-                    </button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL EDIT KARTU PAS (SPA) -->
-    <div id="modalEditKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 relative max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-edit text-amber-500"></i> Edit Data Kartu PAS
-                </h3>
-                <button type="button" onclick="closeModalEditKartu()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
             </div>
 
-            <form id="formEditKartu" method="POST" action="">
-                @csrf @method('PUT')
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Instansi / Perusahaan <span class="text-rose-500">*</span></label>
+                <select id="tambah_instansi_id" name="instansi_id" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">-- Pilih Instansi --</option>
+                    @foreach($instansiList as $instansi)
+                        @php $sisa = $instansi->sisa_kuota; @endphp
+                        <option value="{{ $instansi->id }}"
+                            {{ old('_form_source') === 'tambah' && old('instansi_id') == $instansi->id ? 'selected' : '' }}
+                            {{ $sisa <= 0 ? 'disabled' : '' }}>
+                            {{ $instansi->nama_instansi }} &mdash; (Sisa: {{ $sisa }} / Kuota: {{ $instansi->kuota }}) {{ $sisa <= 0 ? '[HABIS]' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                @if(old('_form_source') === 'tambah') @error('instansi_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
+            </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Registrasi</label>
-                        <input type="text" id="edit_nomor_kartu" name="nomor_kartu" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <!-- Area Akses -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-700">
+                            Hak Akses Area <span class="text-[11px] font-normal text-blue-600">(Pilih Area)</span>
+                        </label>
+                        <button type="button" onclick="openModal('modalAreaAkses')" 
+                                class="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <i class="fas fa-plus-circle"></i> Tambah Area
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemegang</label>
-                        <input type="text" id="edit_nama_pemegang" name="nama_pemegang" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Instansi / Perusahaan</label>
-                    <select id="edit_instansi_id" name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        <option value="">-- Pilih Instansi --</option>
-                        @foreach($instansiList as $instansi)
-                            <option value="{{ $instansi->id }}">
-                                {{ $instansi->nama_instansi }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <!-- Area Akses Multi-Select Edit -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-sm font-semibold text-gray-700">
-                                Area Akses <span class="text-xs font-normal text-amber-600">(Pilih >1 Area)</span>
+                    <div class="border border-slate-200 rounded-xl p-2.5 max-h-36 overflow-y-auto bg-slate-50/60 space-y-1.5 custom-scrollbar" id="container_area_tambah">
+                        @foreach($areaAksesList as $area)
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 cursor-pointer text-xs font-medium text-slate-700 transition">
+                                <input type="checkbox" name="area_akses[]" value="{{ $area->kode }}"
+                                       class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 checkbox-area-tambah"
+                                       {{ old('_form_source') === 'tambah' && is_array(old('area_akses')) && in_array($area->kode, old('area_akses')) ? 'checked' : '' }}>
+                                <span class="font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded text-[10px]">{{ $area->kode }}</span>
+                                <span class="truncate">{{ $area->keterangan }}</span>
                             </label>
-                        </div>
-                        <div class="border border-gray-300 rounded-lg p-2 max-h-40 overflow-y-auto bg-gray-50/50 space-y-1" id="container_area_edit">
-                            @foreach($areaAksesList as $area)
-                                @php $labelFormatted = $area->kode . ': ' . $area->keterangan; @endphp
-                                <label class="flex items-center gap-2 p-1.5 rounded hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer text-xs font-medium text-gray-700 transition" title="{{ $labelFormatted }}">
-                                    <input type="checkbox" name="area_akses[]" value="{{ $area->kode }}"
-                                           class="rounded text-amber-600 focus:ring-amber-500 checkbox-area-edit">
-                                    <span class="font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded shrink-0">{{ $area->kode }}</span>
-                                    <span class="truncate">{{ $area->keterangan }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                        @endforeach
                     </div>
+                    @if(old('_form_source') === 'tambah') @error('area_akses') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
+                </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Jabatan</label>
-                        <select id="edit_jabatan" name="jabatan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                <!-- Jabatan -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-700">Jabatan</label>
+                        <button type="button" onclick="openModal('modalJabatan')" 
+                                class="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                            <i class="fas fa-plus-circle"></i> Tambah Jabatan
+                        </button>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <select name="jabatan" id="select_jabatan" 
+                                class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500">
                             <option value="">-- Pilih Jabatan --</option>
                             @foreach($jabatanList as $jbt)
-                                <option value="{{ $jbt->nama_jabatan }}">{{ $jbt->nama_jabatan }}</option>
+                                <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ old('_form_source') === 'tambah' && old('jabatan') == $jbt->nama_jabatan ? 'selected' : '' }}>
+                                    {{ $jbt->nama_jabatan }}
+                                </option>
                             @endforeach
                         </select>
+                        <button type="button" onclick="deleteSelectedJabatan()" 
+                                class="px-2.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition" 
+                                title="Hapus Jabatan Terpilih">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
                     </div>
+                    @if(old('_form_source') === 'tambah') @error('jabatan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
+            </div>
 
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Terbit</label>
-                        <input type="date" id="edit_tanggal_terbit" name="tanggal_terbit" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Berlaku</label>
-                        <input type="date" id="edit_tanggal_berlaku" name="tanggal_berlaku" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
-                        <select id="edit_status" name="status" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                            <option value="aktif">Aktif</option>
-                            <option value="tidak_aktif">Tidak Aktif</option>
-                            <option value="kadaluarsa">Kadaluarsa</option>
-                        </select>
-                    </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Terbit <span class="text-rose-500">*</span></label>
+                    <input type="date" id="tambah_tanggal_terbit" name="tanggal_terbit" value="{{ old('_form_source') === 'tambah' ? old('tanggal_terbit', date('Y-m-d')) : date('Y-m-d') }}"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 font-mono" required>
+                    @if(old('_form_source') === 'tambah') @error('tanggal_terbit') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModalEditKartu()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 text-sm font-bold shadow-md">
-                        Simpan Perubahan
-                    </button>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berlaku / Kadaluarsa <span class="text-rose-500">*</span></label>
+                    <input type="date" id="tambah_tanggal_berlaku" name="tanggal_berlaku" value="{{ old('_form_source') === 'tambah' ? old('tanggal_berlaku') : '' }}"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 font-mono" required>
+                    @if(old('_form_source') === 'tambah') @error('tanggal_berlaku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
 
-    <!-- MODAL PERPANJANGAN KARTU PAS (SPA) -->
-    <div id="modalPerpanjanganKartu" class="fixed inset-0 z-50 hidden bg-gray-900/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-calendar-plus text-emerald-600"></i> Perpanjangan Masa Berlaku Kartu PAS
-                </h3>
-                <button type="button" onclick="closeModalPerpanjangan()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalTambahKartu')"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-check"></i>
+                    <span>Simpan Kartu PAS</span>
                 </button>
             </div>
+        </form>
+    </x-modal>
 
-            <!-- Ringkasan Kartu -->
-            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm space-y-1.5">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Nomor Registrasi:</span>
-                    <span id="perp_nomor_display" class="font-bold text-gray-800"></span>
+    <!-- 3. MODAL EDIT KARTU PAS -->
+    <x-modal id="modalEditKartu"
+             title="Edit Data Kartu PAS"
+             subtitle="Perbarui identitas pemegang atau masa berlaku kartu izin masuk"
+             icon="fas fa-pen-to-square"
+             iconColor="bg-amber-50 text-amber-600 border-amber-200"
+             maxWidth="max-w-3xl">
+        <form id="formEditKartu" method="POST" action="">
+            @csrf @method('PUT')
+            <input type="hidden" name="_form_source" value="edit">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Registrasi</label>
+                    <input type="text" id="edit_nomor_kartu" name="nomor_kartu" 
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500" required>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Nama Pemegang:</span>
-                    <span id="perp_nama_display" class="font-semibold text-gray-800"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Instansi:</span>
-                    <span id="perp_instansi_display" class="font-medium text-gray-700"></span>
-                </div>
-                <div class="flex justify-between border-t pt-1.5 mt-1.5">
-                    <span class="text-gray-500">Kadaluarsa Saat Ini:</span>
-                    <span id="perp_lama_display" class="font-bold text-rose-600"></span>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pemegang</label>
+                    <input type="text" id="edit_nama_pemegang" name="nama_pemegang" 
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-amber-500" required>
                 </div>
             </div>
 
-            <form id="formPerpanjanganKartu" method="POST" action="">
-                @csrf @method('PUT')
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Instansi / Perusahaan</label>
+                <select id="edit_instansi_id" name="instansi_id" 
+                        class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-amber-500" required>
+                    <option value="">-- Pilih Instansi --</option>
+                    @foreach($instansiList as $instansi)
+                        <option value="{{ $instansi->id }}">{{ $instansi->nama_instansi }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-                <!-- Hidden Input Fields to Preserve Existing Card Data -->
-                <input type="hidden" id="perp_nomor_kartu" name="nomor_kartu">
-                <input type="hidden" id="perp_email" name="email">
-                <input type="hidden" id="perp_nama_pemegang" name="nama_pemegang">
-                <input type="hidden" id="perp_instansi_id" name="instansi_id">
-                <input type="hidden" id="perp_area_akses" name="area_akses">
-                <input type="hidden" id="perp_jabatan" name="jabatan">
-                <input type="hidden" id="perp_tanggal_terbit" name="tanggal_terbit">
-                <input type="hidden" name="status" value="aktif">
-
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Berlaku Baru (Masa Kadaluarsa)</label>
-                    <input type="date" id="perp_tanggal_berlaku" name="tanggal_berlaku" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                    <div class="flex gap-2 mt-2">
-                        <button type="button" onclick="setPerpanjangTahun(1)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-semibold border">
-                            + 1 Tahun
-                        </button>
-                        <button type="button" onclick="setPerpanjangTahun(2)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-semibold border">
-                            + 2 Tahun
-                        </button>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Area Akses Terpilih</label>
+                    <div class="border border-slate-200 rounded-xl p-2.5 max-h-36 overflow-y-auto bg-slate-50/60 space-y-1 custom-scrollbar" id="container_area_edit">
+                        @foreach($areaAksesList as $area)
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 cursor-pointer text-xs font-medium text-slate-700 transition">
+                                <input type="checkbox" name="area_akses[]" value="{{ $area->kode }}"
+                                       class="rounded border-slate-300 text-amber-600 focus:ring-amber-500 checkbox-area-edit">
+                                <span class="font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">{{ $area->kode }}</span>
+                                <span class="truncate">{{ $area->keterangan }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t mt-4">
-                    <button type="button" onclick="closeModalPerpanjangan()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 text-sm font-bold shadow-md">
-                        Proses Perpanjangan
-                    </button>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan</label>
+                    <select id="edit_jabatan" name="jabatan" 
+                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-amber-500">
+                        <option value="">-- Pilih Jabatan --</option>
+                        @foreach($jabatanList as $jbt)
+                            <option value="{{ $jbt->nama_jabatan }}">{{ $jbt->nama_jabatan }}</option>
+                        @endforeach
+                    </select>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL KELOLA / TAMBAH AREA AKSES -->
-    <div id="modalAreaAkses" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center pb-3 border-b mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-layer-group text-blue-600"></i> Kelola & Tambah Area Akses
-                </h3>
-                <button type="button" onclick="closeModalArea()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
             </div>
 
-            <form id="formAreaAkses" onsubmit="submitAreaAkses(event)" class="mb-4">
-                <div class="grid grid-cols-3 gap-2 mb-2">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Terbit</label>
+                    <input type="date" id="edit_tanggal_terbit" name="tanggal_terbit" 
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berlaku</label>
+                    <input type="date" id="edit_tanggal_berlaku" name="tanggal_berlaku" 
+                           class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Status Kartu</label>
+                    <select id="edit_status" name="status" 
+                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-amber-500 font-semibold" required>
+                        <option value="aktif">Aktif</option>
+                        <option value="kadaluarsa">Kadaluarsa</option>
+                        <option value="tidak_aktif">Tidak Aktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalEditKartu')"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-check"></i>
+                    <span>Simpan Perubahan</span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    <!-- 4. MODAL PERPANJANGAN KARTU PAS -->
+    <x-modal id="modalPerpanjanganKartu"
+             title="Perpanjang Masa Berlaku Kartu"
+             subtitle="Perpanjang tanggal kadaluarsa kartu izin PAS"
+             icon="fas fa-calendar-plus"
+             iconColor="bg-emerald-50 text-emerald-600 border-emerald-200"
+             maxWidth="max-w-lg">
+        <!-- Kartu Ringkasan Data -->
+        <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 mb-4 text-xs space-y-1.5">
+            <div class="flex justify-between">
+                <span class="text-slate-500">Nomor Registrasi:</span>
+                <span id="perp_nomor_display" class="font-bold font-mono text-slate-800"></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Nama Pemegang:</span>
+                <span id="perp_nama_display" class="font-bold text-slate-800"></span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Instansi:</span>
+                <span id="perp_instansi_display" class="font-medium text-slate-700"></span>
+            </div>
+            <div class="flex justify-between border-t border-emerald-200/60 pt-2 mt-2">
+                <span class="text-slate-500">Kadaluarsa Saat Ini:</span>
+                <span id="perp_lama_display" class="font-bold text-rose-600 font-mono"></span>
+            </div>
+        </div>
+
+        <form id="formPerpanjanganKartu" method="POST" action="">
+            @csrf @method('PUT')
+
+            <!-- Hidden Input Fields -->
+            <input type="hidden" id="perp_nomor_kartu" name="nomor_kartu">
+            <input type="hidden" id="perp_email" name="email">
+            <input type="hidden" id="perp_nama_pemegang" name="nama_pemegang">
+            <input type="hidden" id="perp_instansi_id" name="instansi_id">
+            <input type="hidden" id="perp_area_akses" name="area_akses">
+            <input type="hidden" id="perp_jabatan" name="jabatan">
+            <input type="hidden" id="perp_tanggal_terbit" name="tanggal_terbit">
+            <input type="hidden" name="status" value="aktif">
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Masa Berlaku Baru (Tanggal Kadaluarsa) <span class="text-rose-500">*</span></label>
+                <input type="date" id="perp_tanggal_berlaku" name="tanggal_berlaku" 
+                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-emerald-500" required>
+                
+                <!-- Tombol Shortcut Tambah Waktu -->
+                <div class="flex gap-2 mt-2">
+                    <button type="button" onclick="setPerpanjangTahun(1)" 
+                            class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+                        + 1 Tahun
+                    </button>
+                    <button type="button" onclick="setPerpanjangTahun(2)" 
+                            class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+                        + 2 Tahun
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalPerpanjanganKartu')"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-check"></i>
+                    <span>Simpan Perpanjangan</span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    <!-- 5. MODAL AREA AKSES -->
+    <x-modal id="modalAreaAkses"
+             title="Kelola & Tambah Area Akses"
+             subtitle="Daftar zona / area terbatas bandara yang dapat diakses"
+             icon="fas fa-layer-group"
+             iconColor="bg-blue-50 text-blue-600 border-blue-200"
+             maxWidth="max-w-lg"
+             zIndex="z-[70]">
+        <form id="formAreaAkses" onsubmit="submitAreaAkses(event)" class="mb-4">
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Kode Area</label>
+                    <input type="text" id="modal_kode_akses" 
+                           class="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs text-slate-800 font-bold uppercase focus:ring-2 focus:ring-blue-500" 
+                           placeholder="Contoh: W" required>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Keterangan Wilayah Area</label>
+                    <input type="text" id="modal_keterangan_akses" 
+                           class="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500" 
+                           placeholder="Contoh: Ruang VIP / Apron" required>
+                </div>
+            </div>
+            <div id="areaAksesError" class="text-rose-600 text-[11px] mb-2 hidden font-semibold"></div>
+            <div class="flex justify-end">
+                <button type="submit" 
+                        class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition">
+                    <i class="fas fa-plus mr-1"></i> Tambah Area
+                </button>
+            </div>
+        </form>
+
+        <hr class="border-slate-100 my-3">
+
+        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Daftar Area Terdaftar</h4>
+        <div class="overflow-y-auto max-h-48 border border-slate-200 rounded-xl p-2 space-y-1.5 custom-scrollbar" id="modal_area_list">
+            @foreach($areaAksesList as $area)
+                <div class="flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/70 text-xs transition" id="item-area-{{ $area->id }}">
+                    <span class="font-semibold text-slate-800">
+                        <strong class="text-blue-600 font-bold">{{ $area->kode }}:</strong> {{ $area->keterangan }}
+                    </span>
+                    <button type="button" onclick="deleteAreaById({{ $area->id }}, '{{ $area->kode }}')" 
+                            class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="Hapus Area">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-slate-100 mt-4">
+            <button type="button" onclick="closeModal('modalAreaAkses')" 
+                    class="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
+                Selesai
+            </button>
+        </div>
+    </x-modal>
+
+    <!-- 6. MODAL JABATAN -->
+    <x-modal id="modalJabatan"
+             title="Kelola & Tambah Jabatan"
+             subtitle="Daftar referensi posisi/jabatan personil penerima kartu PAS"
+             icon="fas fa-briefcase"
+             iconColor="bg-emerald-50 text-emerald-600 border-emerald-200"
+             maxWidth="max-w-lg"
+             zIndex="z-[70]">
+        <form id="formJabatan" onsubmit="submitJabatan(event)" class="mb-4">
+            <div class="mb-2">
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Jabatan Baru</label>
+                <input type="text" id="modal_nama_jabatan" 
+                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500" 
+                       placeholder="Contoh: Aviation Security Officer" required>
+            </div>
+            <div id="jabatanError" class="text-rose-600 text-[11px] mb-2 hidden font-semibold"></div>
+            <div class="flex justify-end">
+                <button type="submit" 
+                        class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition">
+                    <i class="fas fa-plus mr-1"></i> Tambah Jabatan
+                </button>
+            </div>
+        </form>
+
+        <hr class="border-slate-100 my-3">
+
+        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Daftar Jabatan Terdaftar</h4>
+        <div class="overflow-y-auto max-h-48 border border-slate-200 rounded-xl p-2 space-y-1.5 custom-scrollbar" id="modal_jabatan_list">
+            @foreach($jabatanList as $jbt)
+                <div class="flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/70 text-xs transition" id="item-jabatan-{{ $jbt->id }}">
+                    <span class="font-semibold text-slate-800">{{ $jbt->nama_jabatan }}</span>
+                    <button type="button" onclick="deleteJabatanById({{ $jbt->id }}, '{{ $jbt->nama_jabatan }}')" 
+                            class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="Hapus Jabatan">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-slate-100 mt-4">
+            <button type="button" onclick="closeModal('modalJabatan')" 
+                    class="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
+                Selesai
+            </button>
+        </div>
+    </x-modal>
+
+    <!-- 7. MODAL NONAKTIFKAN KARTU PAS -->
+    <x-modal id="modalNonaktifkanKartu"
+             title="Nonaktifkan Kartu PAS"
+             subtitle="Nonaktifkan kartu pemegang yang pensiun / resign untuk membebaskan kuota"
+             icon="fas fa-user-slash"
+             iconColor="bg-rose-50 text-rose-600 border-rose-200"
+             maxWidth="max-w-md">
+        <form id="formNonaktifkanKartu" method="POST" action="">
+            @csrf
+            <div class="p-3 bg-amber-50 border border-amber-200/80 rounded-xl mb-4 text-xs text-amber-900 leading-relaxed">
+                <div class="flex items-start gap-2.5">
+                    <i class="fas fa-circle-exclamation text-amber-600 mt-0.5 shrink-0 text-sm"></i>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Kode (Contoh: W)</label>
-                        <input type="text" id="modal_kode_akses" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" placeholder="Kode" required>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Keterangan Area</label>
-                        <input type="text" id="modal_keterangan_akses" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" placeholder="Contoh: Daerah VIP" required>
+                        Menonaktifkan kartu untuk <span class="font-bold text-slate-900" id="nonaktif_nama_pemegang">-</span> (<span class="font-mono font-bold text-slate-900" id="nonaktif_nomor_kartu">-</span>) dari <span class="font-bold text-slate-900" id="nonaktif_instansi">-</span> akan mengubah status menjadi <strong>Tidak Aktif</strong> dan <strong>mengembalikan 1 slot kuota</strong> ke instansi tersebut.
                     </div>
                 </div>
-                <div id="areaAksesError" class="text-red-600 text-xs mb-2 hidden"></div>
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 font-medium">
-                        <i class="fas fa-plus mr-1"></i> Tambah Area
-                    </button>
-                </div>
-            </form>
-
-            <hr class="mb-3">
-
-            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Area Akses Saat Ini</h4>
-            <div class="overflow-y-auto max-h-56 border rounded-lg p-2 space-y-1.5" id="modal_area_list">
-                @foreach($areaAksesList as $area)
-                    <div class="flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border text-sm" id="item-area-{{ $area->id }}">
-                        <span class="font-medium text-gray-800">{{ $area->kode }}: {{ $area->keterangan }}</span>
-                        <button type="button" onclick="deleteAreaById({{ $area->id }}, '{{ $area->kode }}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Hapus Area Ini">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                @endforeach
             </div>
 
-            <div class="flex justify-end pt-4 border-t mt-4">
-                <button type="button" onclick="closeModalArea()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">Selesai</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL KELOLA / TAMBAH JABATAN -->
-    <div id="modalJabatan" class="fixed inset-0 z-[70] hidden bg-gray-900/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center pb-3 border-b mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-briefcase text-green-600"></i> Kelola & Tambah Jabatan
-                </h3>
-                <button type="button" onclick="closeModalJabatan()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Alasan Penonaktifan <span class="text-rose-500">*</span>
+                </label>
+                <select name="keterangan_nonaktif" id="nonaktif_keterangan" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-rose-500" required>
+                    <option value="">-- Pilih Alasan --</option>
+                    <option value="resign">Resign / Berhenti Bekerja</option>
+                    <option value="pensiun">Pensiun / Masa Tugas Selesai</option>
+                    <option value="meninggal">Meninggal Dunia</option>
+                    <option value="lainnya">Lainnya / Tidak Digunakan</option>
+                </select>
             </div>
 
-            <form id="formJabatan" onsubmit="submitJabatan(event)" class="mb-4">
-                <div class="mb-2">
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama Jabatan Baru</label>
-                    <input type="text" id="modal_nama_jabatan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" placeholder="Contoh: General Manager" required>
-                </div>
-                <div id="jabatanError" class="text-red-600 text-xs mb-2 hidden"></div>
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-green-700 font-medium">
-                        <i class="fas fa-plus mr-1"></i> Tambah Jabatan
-                    </button>
-                </div>
-            </form>
-
-            <hr class="mb-3">
-
-            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Jabatan Saat Ini</h4>
-            <div class="overflow-y-auto max-h-56 border rounded-lg p-2 space-y-1.5" id="modal_jabatan_list">
-                @foreach($jabatanList as $jbt)
-                    <div class="flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border text-sm" id="item-jabatan-{{ $jbt->id }}">
-                        <span class="font-medium text-gray-800">{{ $jbt->nama_jabatan }}</span>
-                        <button type="button" onclick="deleteJabatanById({{ $jbt->id }}, '{{ $jbt->nama_jabatan }}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Hapus Jabatan Ini">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                @endforeach
+            <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Catatan Tambahan (Opsional)
+                </label>
+                <input type="text" name="catatan_nonaktif" id="nonaktif_catatan"
+                       placeholder="Contoh: SK Pensiun No. 042 / Pindah ke unit luar"
+                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-rose-500">
             </div>
 
-            <div class="flex justify-end pt-4 border-t mt-4">
-                <button type="button" onclick="closeModalJabatan()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-300">Selesai</button>
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modalNonaktifkanKartu')"
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fas fa-user-slash"></i>
+                    <span>Nonaktifkan Kartu</span>
+                </button>
             </div>
-        </div>
-    </div>
+        </form>
+    </x-modal>
 
+    <!-- FORM AKTIFKAN KEMBALI KARTU (POST) -->
+    <form id="formAktifkanKembaliKartu" method="POST" action="" class="hidden">
+        @csrf
+    </form>
+
+    <!-- ======================================================================== -->
+    <!-- SPA JAVASCRIPT & EVENT HANDLERS                                          -->
+    <!-- ======================================================================== -->
     <script>
+        // Modal Helpers (Vanilla JS - 60fps instant toggle)
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Escape Key Modal Listener
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openModals = document.querySelectorAll('[id^="modal"]:not(.hidden)');
+                openModals.forEach(m => closeModal(m.id));
+            }
+        });
+
         // Dropdown Unduh Data Handler
         function toggleDownloadDropdown(e) {
             e.stopPropagation();
@@ -684,40 +759,276 @@
             }
         });
 
-        // Modal Import Kartu PAS Handler
-        function openModalImport() {
-            document.getElementById('modalImportFileName').textContent = '';
-            document.getElementById('import_file_input').value = '';
-            document.getElementById('modalImportKartu').classList.remove('hidden');
-        }
-
-        function closeModalImport() {
-            document.getElementById('modalImportKartu').classList.add('hidden');
-        }
-
         function showModalImportFileName(input) {
             const fileName = input.files[0]?.name ?? '';
             document.getElementById('modalImportFileName').textContent = fileName ? '✅ File Dipilih: ' + fileName : '';
         }
 
-        // Modal Tambah Kartu PAS Handler
+        // ---------------------------------------------------------------------
+        // SPA Table AJAX Navigation & Filter System
+        // ---------------------------------------------------------------------
+        function showTableLoading() {
+            const overlay   = document.getElementById('tableLoadingOverlay');
+            const container = document.getElementById('tableContainer');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            }
+            if (container) {
+                container.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function hideTableLoading() {
+            const overlay   = document.getElementById('tableLoadingOverlay');
+            const container = document.getElementById('tableContainer');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+            if (container) {
+                container.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        async function loadTableData(url, pushState = true) {
+            const container = document.getElementById('tableContainer');
+            if (!container) return;
+
+            showTableLoading();
+
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!res.ok) throw new Error('Network error');
+
+                const html = await res.text();
+                container.innerHTML = html;
+
+                if (pushState) {
+                    history.pushState(null, '', url);
+                }
+
+                // Sync export links with current query string
+                syncExportLinks(url);
+
+                // Reset selection state on page change
+                updateSelectedCount();
+            } catch (err) {
+                console.error('SPA Navigation Error:', err);
+                window.location.href = url;
+            } finally {
+                hideTableLoading();
+            }
+        }
+
+        function syncExportLinks(url) {
+            try {
+                const currentUrl = new URL(url, window.location.origin);
+                const excelBtn   = document.getElementById('btnExportExcel');
+                const pdfBtn     = document.getElementById('btnExportPdf');
+                if (excelBtn) {
+                    const excelUrl = new URL("{{ route('administrator.kartu-pas.export.excel') }}", window.location.origin);
+                    currentUrl.searchParams.forEach((val, key) => excelUrl.searchParams.set(key, val));
+                    excelBtn.href = excelUrl.toString();
+                }
+                if (pdfBtn) {
+                    const pdfUrl = new URL("{{ route('administrator.kartu-pas.export.pdf') }}", window.location.origin);
+                    currentUrl.searchParams.forEach((val, key) => pdfUrl.searchParams.set(key, val));
+                    pdfBtn.href = pdfUrl.toString();
+                }
+            } catch(e) {}
+        }
+
+        // Intercept all SPA pagination links
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[data-spa="true"]');
+            if (link && link.href) {
+                e.preventDefault();
+                loadTableData(link.href, true);
+            }
+        });
+
+        // History Back / Forward navigation
+        window.addEventListener('popstate', function() {
+            loadTableData(window.location.href, false);
+        });
+
+        // SPA Filter Form Submit
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const url = new URL(filterForm.action, window.location.origin);
+                const formData = new FormData(filterForm);
+                for (const [key, val] of formData.entries()) {
+                    if (val) url.searchParams.set(key, val);
+                }
+                loadTableData(url.toString(), true);
+            });
+        }
+
+        // Search Input Debounce (350ms)
+        let searchDebounceTimer;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    if (filterForm) filterForm.dispatchEvent(new Event('submit'));
+                }, 350);
+            });
+        }
+
+        // Instant Filter dropdown change
+        document.querySelectorAll('#filterForm select').forEach(select => {
+            select.addEventListener('change', () => {
+                if (filterForm) filterForm.dispatchEvent(new Event('submit'));
+            });
+        });
+
+        function clearSearchInput() {
+            if (searchInput) {
+                searchInput.value = '';
+                if (filterForm) filterForm.dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function resetFilter(e) {
+            if (e) e.preventDefault();
+            if (filterForm) {
+                filterForm.reset();
+                const baseUrl = "{{ route('administrator.kartu-pas.index') }}";
+                loadTableData(baseUrl, true);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Checkbox & Bulk Actions
+        // ---------------------------------------------------------------------
+        function toggleCheckAll(source) {
+            const checkboxes = document.querySelectorAll('.kartu-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const selected = document.querySelectorAll('.kartu-checkbox:checked');
+            const total    = document.querySelectorAll('.kartu-checkbox');
+            const badge    = document.getElementById('selectedCountBadge');
+            const btnDel   = document.getElementById('btnDeleteSelected');
+            const checkAll = document.getElementById('checkAll');
+
+            if (checkAll && total.length > 0) {
+                checkAll.checked = selected.length === total.length;
+            }
+
+            if (selected.length > 0) {
+                if (badge) {
+                    badge.textContent = `${selected.length} dipilih`;
+                    badge.classList.remove('hidden');
+                }
+                if (btnDel) {
+                    btnDel.classList.remove('hidden');
+                    btnDel.classList.add('inline-flex');
+                }
+            } else {
+                if (badge) badge.classList.add('hidden');
+                if (btnDel) {
+                    btnDel.classList.add('hidden');
+                    btnDel.classList.remove('inline-flex');
+                }
+            }
+        }
+
+        function confirmDeleteSelected() {
+            const selected = document.querySelectorAll('.kartu-checkbox:checked');
+            if (selected.length === 0) return;
+
+            const extraInputs = [];
+            selected.forEach(cb => {
+                extraInputs.push({ name: 'ids[]', value: cb.value });
+            });
+
+            openDeleteModal({
+                action: "{{ route('administrator.kartu-pas.destroy-selected') }}",
+                title: 'Hapus Kartu Terpilih?',
+                message: `Anda akan menghapus ${selected.length} data kartu PAS yang dipilih. Tindakan ini tidak dapat dibatalkan!`,
+                targetName: `${selected.length} Kartu Terpilih`,
+                btnText: 'Hapus Terpilih',
+                extraInputs: extraInputs
+            });
+        }
+
+        function confirmDeleteAll() {
+            openDeleteModal({
+                action: "{{ route('administrator.kartu-pas.destroy-all') }}",
+                title: 'Hapus Seluruh Data Kartu PAS?',
+                message: 'PERINGATAN KRITIS: Seluruh data kartu PAS pada basis data akan dihapus permanen!',
+                targetName: 'SEMUA DATA KARTU PAS',
+                btnText: 'Kosongkan Seluruh Data'
+            });
+        }
+
+        function confirmSingleDelete(id, nomorKartu) {
+            openDeleteModal({
+                action: `{{ url('/administrator/kartu-pas') }}/${id}`,
+                title: 'Hapus Data Kartu PAS?',
+                message: 'Apakah Anda yakin ingin menghapus data kartu izin masuk ini?',
+                targetName: `No. Registrasi: ${nomorKartu}`,
+                btnText: 'Ya, Hapus Kartu'
+            });
+        }
+
+        // ---------------------------------------------------------------------
+        // Modal Tambah, Edit & Perpanjangan Handlers
+        // ---------------------------------------------------------------------
         function openModalTambahKartu() {
-            document.getElementById('modalTambahKartu').classList.remove('hidden');
+            const form = document.getElementById('formTambahKartu');
+            if (form) {
+                form.reset();
+                document.querySelectorAll('#container_area_tambah .checkbox-area-tambah').forEach(cb => cb.checked = false);
+                const selectJabatan = document.getElementById('select_jabatan');
+                if (selectJabatan) selectJabatan.value = '';
+                const dateInput = document.getElementById('tambah_tanggal_terbit');
+                if (dateInput) dateInput.value = new Date().toISOString().substring(0, 10);
+                const expInput = document.getElementById('tambah_tanggal_berlaku');
+                if (expInput) {
+                    let nextYear = new Date();
+                    nextYear.setFullYear(nextYear.getFullYear() + 1);
+                    expInput.value = nextYear.toISOString().substring(0, 10);
+                }
+            }
+            openModal('modalTambahKartu');
         }
 
-        function closeModalTambahKartu() {
-            document.getElementById('modalTambahKartu').classList.add('hidden');
+        function openModalEditKartuFromBtn(btn) {
+            try {
+                const kartu = JSON.parse(btn.getAttribute('data-kartu'));
+                openModalEditKartu(kartu);
+            } catch(e) {
+                console.error('Gagal membaca data kartu:', e);
+            }
         }
 
-        // Modal Edit Kartu PAS Handler
+        function openModalPerpanjanganFromBtn(btn) {
+            try {
+                const kartu = JSON.parse(btn.getAttribute('data-kartu'));
+                openModalPerpanjangan(kartu);
+            } catch(e) {
+                console.error('Gagal membaca data kartu:', e);
+            }
+        }
+
         function openModalEditKartu(kartu) {
             const form = document.getElementById('formEditKartu');
             form.action = "{{ url('/administrator/kartu-pas') }}/" + kartu.id;
 
             document.getElementById('edit_nomor_kartu').value   = kartu.nomor_kartu || '';
-            if (document.getElementById('edit_email')) {
-                document.getElementById('edit_email').value     = kartu.email || '';
-            }
             document.getElementById('edit_nama_pemegang').value = kartu.nama_pemegang || '';
 
             let editInstId = kartu.instansi_id || '';
@@ -725,15 +1036,14 @@
                 const matched = (@json($instansiList) || []).find(i => (i.nama_instansi || '').trim().toLowerCase() === (kartu.perusahaan || '').trim().toLowerCase());
                 if (matched) editInstId = matched.id;
             }
-            document.getElementById('edit_instansi_id').value   = editInstId;
+            document.getElementById('edit_instansi_id').value = editInstId;
             
-            // Set checkboxes for multi-select Area Akses
             let selectedAreas = (kartu.area_akses || '').split(',').map(s => s.trim());
             document.querySelectorAll('#container_area_edit .checkbox-area-edit').forEach(cb => {
                 cb.checked = selectedAreas.includes(cb.value);
             });
 
-            document.getElementById('edit_jabatan').value      = kartu.jabatan || '';
+            document.getElementById('edit_jabatan').value = kartu.jabatan || '';
             
             if (kartu.tanggal_terbit) {
                 document.getElementById('edit_tanggal_terbit').value = kartu.tanggal_terbit.substring(0, 10);
@@ -743,14 +1053,9 @@
             }
             document.getElementById('edit_status').value = kartu.status || 'aktif';
 
-            document.getElementById('modalEditKartu').classList.remove('hidden');
+            openModal('modalEditKartu');
         }
 
-        function closeModalEditKartu() {
-            document.getElementById('modalEditKartu').classList.add('hidden');
-        }
-
-        // Modal Perpanjangan Kartu PAS Handler
         function openModalPerpanjangan(kartu) {
             const form = document.getElementById('formPerpanjanganKartu');
             form.action = "{{ url('/administrator/kartu-pas') }}/" + kartu.id;
@@ -758,392 +1063,221 @@
             document.getElementById('perp_nomor_display').textContent   = kartu.nomor_kartu || '-';
             document.getElementById('perp_nama_display').textContent    = kartu.nama_pemegang || '-';
             document.getElementById('perp_instansi_display').textContent= kartu.perusahaan || '-';
-            
-            const tglBisa = kartu.tanggal_berlaku ? kartu.tanggal_berlaku.substring(0, 10) : '-';
-            document.getElementById('perp_lama_display').textContent    = tglBisa;
+            document.getElementById('perp_lama_display').textContent    = kartu.tanggal_berlaku ? kartu.tanggal_berlaku.substring(0, 10) : '-';
 
-            let perpInstId = kartu.instansi_id || '';
-            if (!perpInstId && kartu.perusahaan) {
-                const matched = (@json($instansiList) || []).find(i => (i.nama_instansi || '').trim().toLowerCase() === (kartu.perusahaan || '').trim().toLowerCase());
-                if (matched) perpInstId = matched.id;
+            document.getElementById('perp_nomor_kartu').value    = kartu.nomor_kartu || '';
+            document.getElementById('perp_email').value          = kartu.email || '';
+            document.getElementById('perp_nama_pemegang').value  = kartu.nama_pemegang || '';
+            document.getElementById('perp_instansi_id').value    = kartu.instansi_id || '';
+            document.getElementById('perp_area_akses').value     = kartu.area_akses || '';
+            document.getElementById('perp_jabatan').value        = kartu.jabatan || '';
+            document.getElementById('perp_tanggal_terbit').value = kartu.tanggal_terbit ? kartu.tanggal_terbit.substring(0, 10) : '';
+
+            // Default: 1 tahun dari hari ini atau tanggal berlaku
+            let baseDate = new Date();
+            if (kartu.tanggal_berlaku) {
+                const currentExp = new Date(kartu.tanggal_berlaku);
+                if (currentExp > baseDate) baseDate = currentExp;
             }
+            baseDate.setFullYear(baseDate.getFullYear() + 1);
+            document.getElementById('perp_tanggal_berlaku').value = baseDate.toISOString().substring(0, 10);
 
-            // Fill hidden values
-            document.getElementById('perp_nomor_kartu').value   = kartu.nomor_kartu;
-            document.getElementById('perp_email').value         = kartu.email || '';
-            document.getElementById('perp_nama_pemegang').value = kartu.nama_pemegang;
-            document.getElementById('perp_instansi_id').value   = perpInstId;
-            document.getElementById('perp_area_akses').value   = kartu.area_akses;
-            document.getElementById('perp_jabatan').value      = kartu.jabatan || '';
-            if (kartu.tanggal_terbit) {
-                document.getElementById('perp_tanggal_terbit').value = kartu.tanggal_terbit.substring(0, 10);
-            }
-
-            // Default new expiration: Today + 1 Year
-            setPerpanjangTahun(1);
-
-            document.getElementById('modalPerpanjanganKartu').classList.remove('hidden');
-        }
-
-        function closeModalPerpanjangan() {
-            document.getElementById('modalPerpanjanganKartu').classList.add('hidden');
+            openModal('modalPerpanjanganKartu');
         }
 
         function setPerpanjangTahun(years) {
-            const now = new Date();
-            now.setFullYear(now.getFullYear() + years);
-            const yyyy = now.getFullYear();
-            const mm   = String(now.getMonth() + 1).padStart(2, '0');
-            const dd   = String(now.getDate()).padStart(2, '0');
-            document.getElementById('perp_tanggal_berlaku').value = `${yyyy}-${mm}-${dd}`;
+            const input = document.getElementById('perp_tanggal_berlaku');
+            let d = new Date();
+            d.setFullYear(d.getFullYear() + years);
+            input.value = d.toISOString().substring(0, 10);
         }
 
-        // Open modal otomatis jika ada error validasi dari form tambah
-        @if($errors->any())
-            openModalTambahKartu();
-        @endif
+        function openModalNonaktifkan(id, nomorKartu, namaPemegang, instansi) {
+            const form = document.getElementById('formNonaktifkanKartu');
+            form.action = "{{ url('/administrator/kartu-pas') }}/" + id + "/nonaktifkan";
 
-        // Modal Area Akses Handler
-        function openModalArea() {
-            document.getElementById('modal_kode_akses').value = '';
-            document.getElementById('modal_keterangan_akses').value = '';
-            document.getElementById('areaAksesError').classList.add('hidden');
-            document.getElementById('modalAreaAkses').classList.remove('hidden');
+            document.getElementById('nonaktif_nama_pemegang').textContent = namaPemegang || '-';
+            document.getElementById('nonaktif_nomor_kartu').textContent  = nomorKartu || '-';
+            document.getElementById('nonaktif_instansi').textContent     = instansi || '-';
+            document.getElementById('nonaktif_keterangan').value         = '';
+            document.getElementById('nonaktif_catatan').value            = '';
+
+            openModal('modalNonaktifkanKartu');
         }
 
-        function closeModalArea() {
-            document.getElementById('modalAreaAkses').classList.add('hidden');
+        function confirmReaktifkan(id, nomorKartu, namaPemegang) {
+            if (confirm(`Aktifkan kembali kartu PAS ${nomorKartu} (${namaPemegang})?\n\nPerhatian: Kuota instansi akan kembali terpakai 1 slot.`)) {
+                const form = document.getElementById('formAktifkanKembaliKartu');
+                form.action = "{{ url('/administrator/kartu-pas') }}/" + id + "/aktifkan";
+                form.submit();
+            }
         }
 
-        function openModalJabatan() {
-            document.getElementById('modal_nama_jabatan').value = '';
-            document.getElementById('jabatanError').classList.add('hidden');
-            document.getElementById('modalJabatan').classList.remove('hidden');
-        }
-
-        function closeModalJabatan() {
-            document.getElementById('modalJabatan').classList.add('hidden');
-        }
-
-        // Table Checkbox Handler
-        function toggleCheckAll(checkbox) {
-            document.querySelectorAll('.kartu-checkbox').forEach(cb => {
-                cb.checked = checkbox.checked;
-            });
-            updateSelectedCount();
-        }
-
-        function updateSelectedCount() {
-            const checked = document.querySelectorAll('.kartu-checkbox:checked');
-            const count   = checked.length;
-            const btn     = document.getElementById('btnDeleteSelected');
-            const span    = document.getElementById('selectedCount');
-
-            span.textContent = count > 0 ? `(${count} dipilih)` : '';
-            btn.classList.toggle('hidden', count === 0);
-
-            const all = document.querySelectorAll('.kartu-checkbox');
-            document.getElementById('checkAll').checked = count === all.length && all.length > 0;
-        }
-
-        // SweetAlert2 Delete Confirmations
-        function confirmSingleDelete(id, nomorKartu) {
-            SwalConfirm('Hapus Kartu PAS?', `Kartu nomor [${nomorKartu}] akan dihapus secara permanen!`)
-            .then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('formDeleteItem-' + id).submit();
-                }
-            });
-        }
-
-        function confirmDeleteSelected() {
-            const checked = document.querySelectorAll('.kartu-checkbox:checked');
-            if (checked.length === 0) return;
-
-            SwalConfirm('Hapus Kartu Dipilih?', `Yakin ingin menghapus ${checked.length} kartu PAS yang dipilih?`)
-            .then((result) => {
-                if (result.isConfirmed) {
-                    const form   = document.getElementById('formDeleteSelected');
-                    const inputs = document.getElementById('selectedInputs');
-                    inputs.innerHTML = '';
-
-                    checked.forEach(cb => {
-                        const input = document.createElement('input');
-                        input.type  = 'hidden';
-                        input.name  = 'ids[]';
-                        input.value = cb.value;
-                        inputs.appendChild(input);
-                    });
-
-                    form.submit();
-                }
-            });
-        }
-
-        function confirmDeleteAll() {
-            SwalConfirm('⚠️ PERINGATAN KRUSIAL!', 'Semua data kartu PAS di database akan dihapus permanen!', 'Ya, Hapus Semua!')
-            .then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('formDeleteAll').submit();
-                }
-            });
-        }
-
-        // AJAX SPA Submissions
+        // ---------------------------------------------------------------------
+        // Area Akses & Jabatan AJAX Handlers
+        // ---------------------------------------------------------------------
         async function submitAreaAkses(e) {
             e.preventDefault();
-            const kode = document.getElementById('modal_kode_akses').value;
-            const keterangan = document.getElementById('modal_keterangan_akses').value;
-            const errDiv = document.getElementById('areaAksesError');
+            const kode = document.getElementById('modal_kode_akses').value.trim();
+            const keterangan = document.getElementById('modal_keterangan_akses').value.trim();
+            const err  = document.getElementById('areaAksesError');
+            err.classList.add('hidden');
 
             try {
-                const response = await fetch("{{ route('administrator.area-akses.store-ajax') }}", {
-                    method: "POST",
+                const res = await fetch("{{ route('administrator.area-akses.store-ajax') }}", {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ kode, keterangan })
                 });
 
-                const result = await response.json();
-                if (result.success) {
-                    // Update Multi-select Containers
-                    const cTambah = document.getElementById('container_area_tambah');
-                    if (cTambah) {
-                        const lbl = document.createElement('label');
-                        lbl.className = 'flex items-center gap-2 p-1.5 rounded hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer text-xs font-medium text-gray-700 transition';
-                        lbl.title = result.data.label;
-                        lbl.innerHTML = `<input type="checkbox" name="area_akses[]" value="${result.data.kode}" class="rounded text-blue-600 focus:ring-blue-500 checkbox-area-tambah" checked>
-                            <span class="font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded shrink-0">${result.data.kode}</span>
-                            <span class="truncate">${result.data.keterangan}</span>`;
-                        cTambah.appendChild(lbl);
-                    }
-
-                    const cEdit = document.getElementById('container_area_edit');
-                    if (cEdit) {
-                        const lbl = document.createElement('label');
-                        lbl.className = 'flex items-center gap-2 p-1.5 rounded hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer text-xs font-medium text-gray-700 transition';
-                        lbl.title = result.data.label;
-                        lbl.innerHTML = `<input type="checkbox" name="area_akses[]" value="${result.data.kode}" class="rounded text-amber-600 focus:ring-amber-500 checkbox-area-edit">
-                            <span class="font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded shrink-0">${result.data.kode}</span>
-                            <span class="truncate">${result.data.keterangan}</span>`;
-                        cEdit.appendChild(lbl);
-                    }
-
+                const data = await res.json();
+                if (data.success) {
+                    // Append to list
                     const list = document.getElementById('modal_area_list');
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border text-sm';
-                    itemDiv.id = 'item-area-' + result.data.id;
-                    itemDiv.innerHTML = `
-                        <span class="font-medium text-gray-800">${result.data.label}</span>
-                        <button type="button" onclick="deleteAreaById(${result.data.id}, '${result.data.kode}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Hapus Area Ini">
+                    const div = document.createElement('div');
+                    div.id = `item-area-${data.data.id}`;
+                    div.className = 'flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/70 text-xs transition';
+                    div.innerHTML = `
+                        <span class="font-semibold text-slate-800">
+                            <strong class="text-blue-600 font-bold">${data.data.kode}:</strong> ${data.data.keterangan}
+                        </span>
+                        <button type="button" onclick="deleteAreaById(${data.data.id}, '${data.data.kode}')" class="text-rose-500 hover:text-rose-700 p-1 text-xs">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     `;
-                    list.appendChild(itemDiv);
+                    list.appendChild(div);
+
+                    // Append to form checkboxes
+                    ['container_area_tambah', 'container_area_edit'].forEach(contId => {
+                        const cont = document.getElementById(contId);
+                        if (cont) {
+                            const lbl = document.createElement('label');
+                            lbl.className = 'flex items-center gap-2 p-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 cursor-pointer text-xs font-medium text-slate-700 transition';
+                            lbl.innerHTML = `
+                                <input type="checkbox" name="area_akses[]" value="${data.data.kode}" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded text-[10px]">${data.data.kode}</span>
+                                <span class="truncate">${data.data.keterangan}</span>
+                            `;
+                            cont.appendChild(lbl);
+                        }
+                    });
 
                     document.getElementById('modal_kode_akses').value = '';
                     document.getElementById('modal_keterangan_akses').value = '';
-                    errDiv.classList.add('hidden');
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Tersimpan!',
-                        text: result.message,
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
                 } else {
-                    errDiv.textContent = result.message || 'Gagal menambahkan Area Akses';
-                    errDiv.classList.remove('hidden');
+                    err.textContent = data.message || 'Gagal menambahkan area';
+                    err.classList.remove('hidden');
                 }
-            } catch (err) {
-                errDiv.textContent = 'Terjadi kesalahan sistem.';
-                errDiv.classList.remove('hidden');
+            } catch (error) {
+                err.textContent = 'Terjadi kesalahan sistem';
+                err.classList.remove('hidden');
             }
         }
 
         async function deleteAreaById(id, kode) {
-            const res = await SwalConfirm('Hapus Area Akses?', `Yakin ingin menghapus Area Akses [${kode}]?`);
-            if (!res.isConfirmed) return;
+            if (!confirm(`Hapus area ${kode}?`)) return;
 
             try {
-                const response = await fetch("{{ route('administrator.area-akses.delete-ajax') }}", {
-                    method: "POST",
+                const res = await fetch("{{ route('administrator.area-akses.delete-ajax') }}", {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ id })
                 });
-
-                const result = await response.json();
-                if (result.success) {
-                    const elModal = document.getElementById('item-area-' + id);
-                    if (elModal) elModal.remove();
-
-                    const select = document.getElementById('select_area_akses');
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].getAttribute('data-id') == id || select.options[i].value == kode) {
-                            select.remove(i);
-                            break;
-                        }
-                    }
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Terhapus!',
-                        text: result.message,
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
-                } else {
-                    Swal.fire('Gagal!', result.message || 'Gagal menghapus area akses', 'error');
+                const data = await res.json();
+                if (data.success) {
+                    const item = document.getElementById(`item-area-${id}`);
+                    if (item) item.remove();
                 }
-            } catch (err) {
-                Swal.fire('Error!', 'Terjadi kesalahan koneksi.', 'error');
-            }
-        }
-
-        function deleteSelectedArea() {
-            const select = document.getElementById('select_area_akses');
-            const selectedOpt = select.options[select.selectedIndex];
-            if (!select.value) {
-                Swal.fire('Pilih Area Akses', 'Silakan pilih Area Akses dari dropdown terlebih dahulu.', 'info');
-                return;
-            }
-            const id = selectedOpt.getAttribute('data-id');
-            const kode = select.value;
-            if (id) {
-                deleteAreaById(id, kode);
-            } else {
-                Swal.fire('Info', 'Data ID bawaan tidak dapat dihapus dari dropdown.', 'info');
-            }
+            } catch(e) {}
         }
 
         async function submitJabatan(e) {
             e.preventDefault();
-            const nama_jabatan = document.getElementById('modal_nama_jabatan').value;
-            const errDiv = document.getElementById('jabatanError');
+            const nama_jabatan = document.getElementById('modal_nama_jabatan').value.trim();
+            const err  = document.getElementById('jabatanError');
+            err.classList.add('hidden');
 
             try {
-                const response = await fetch("{{ route('administrator.jabatan.store-ajax') }}", {
-                    method: "POST",
+                const res = await fetch("{{ route('administrator.jabatan.store-ajax') }}", {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ nama_jabatan })
                 });
 
-                const result = await response.json();
-                if (result.success) {
-                    const select = document.getElementById('select_jabatan');
-                    const opt = document.createElement('option');
-                    opt.value = result.data.value;
-                    opt.setAttribute('data-id', result.data.id);
-                    opt.textContent = result.data.label;
-                    opt.selected = true;
-                    select.appendChild(opt);
-
+                const data = await res.json();
+                if (data.success) {
                     const list = document.getElementById('modal_jabatan_list');
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border text-sm';
-                    itemDiv.id = 'item-jabatan-' + result.data.id;
-                    itemDiv.innerHTML = `
-                        <span class="font-medium text-gray-800">${result.data.label}</span>
-                        <button type="button" onclick="deleteJabatanById(${result.data.id}, '${result.data.nama_jabatan}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Hapus Jabatan Ini">
+                    const div = document.createElement('div');
+                    div.id = `item-jabatan-${data.data.id}`;
+                    div.className = 'flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/70 text-xs transition';
+                    div.innerHTML = `
+                        <span class="font-semibold text-slate-800">${data.data.nama_jabatan}</span>
+                        <button type="button" onclick="deleteJabatanById(${data.data.id}, '${data.data.nama_jabatan}')" class="text-rose-500 hover:text-rose-700 p-1 text-xs">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     `;
-                    list.appendChild(itemDiv);
+                    list.appendChild(div);
+
+                    // Add option to selects
+                    ['select_jabatan', 'edit_jabatan'].forEach(selId => {
+                        const sel = document.getElementById(selId);
+                        if (sel) {
+                            const opt = document.createElement('option');
+                            opt.value = data.data.nama_jabatan;
+                            opt.textContent = data.data.nama_jabatan;
+                            opt.dataset.id = data.data.id;
+                            sel.appendChild(opt);
+                        }
+                    });
 
                     document.getElementById('modal_nama_jabatan').value = '';
-                    errDiv.classList.add('hidden');
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Tersimpan!',
-                        text: result.message,
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
                 } else {
-                    errDiv.textContent = result.message || 'Gagal menambahkan Jabatan';
-                    errDiv.classList.remove('hidden');
+                    err.textContent = data.message || 'Gagal menambahkan jabatan';
+                    err.classList.remove('hidden');
                 }
-            } catch (err) {
-                errDiv.textContent = 'Terjadi kesalahan sistem.';
-                errDiv.classList.remove('hidden');
+            } catch (error) {
+                err.textContent = 'Terjadi kesalahan sistem';
+                err.classList.remove('hidden');
             }
         }
 
         async function deleteJabatanById(id, nama) {
-            const res = await SwalConfirm('Hapus Jabatan?', `Yakin ingin menghapus Jabatan [${nama}]?`);
-            if (!res.isConfirmed) return;
+            if (!confirm(`Hapus jabatan ${nama}?`)) return;
 
             try {
-                const response = await fetch("{{ route('administrator.jabatan.delete-ajax') }}", {
-                    method: "POST",
+                const res = await fetch("{{ route('administrator.jabatan.delete-ajax') }}", {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ id })
                 });
-
-                const result = await response.json();
-                if (result.success) {
-                    const elModal = document.getElementById('item-jabatan-' + id);
-                    if (elModal) elModal.remove();
-
-                    const select = document.getElementById('select_jabatan');
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].getAttribute('data-id') == id || select.options[i].value == nama) {
-                            select.remove(i);
-                            break;
-                        }
-                    }
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Terhapus!',
-                        text: result.message,
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
-                } else {
-                    Swal.fire('Gagal!', result.message || 'Gagal menghapus jabatan', 'error');
+                const data = await res.json();
+                if (data.success) {
+                    const item = document.getElementById(`item-jabatan-${id}`);
+                    if (item) item.remove();
                 }
-            } catch (err) {
-                Swal.fire('Error!', 'Terjadi kesalahan koneksi.', 'error');
-            }
+            } catch(e) {}
         }
 
         function deleteSelectedJabatan() {
-            const select = document.getElementById('select_jabatan');
-            const selectedOpt = select.options[select.selectedIndex];
-            if (!select.value) {
-                Swal.fire('Pilih Jabatan', 'Silakan pilih Jabatan dari dropdown terlebih dahulu.', 'info');
+            const sel = document.getElementById('select_jabatan');
+            const selectedOpt = sel.options[sel.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) {
+                alert('Pilih jabatan yang ingin dihapus terlebih dahulu.');
                 return;
             }
-            const id = selectedOpt.getAttribute('data-id');
-            const nama = select.value;
-            if (id) {
-                deleteJabatanById(id, nama);
-            } else {
-                Swal.fire('Info', 'Data ID bawaan tidak dapat dihapus dari dropdown.', 'info');
-            }
+            deleteJabatanById(selectedOpt.dataset.id, selectedOpt.value);
         }
     </script>
-
 </x-app-layout>

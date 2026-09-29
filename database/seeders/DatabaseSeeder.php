@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             AreaAksesSeeder::class,
             JabatanSeeder::class,
             CameraDeviceSeeder::class,
+            TemplateKartuSeeder::class,
         ]);
     }
 }

@@ -67,4 +67,12 @@ class KartuPas extends Model
 
         return $this->tanggal_berlaku ? $this->tanggal_berlaku->isPast() : false;
     }
+
+    /**
+     * Resolusi template kartu PAS aktif berdasarkan area akses kartu
+     */
+    public function getTemplateKartuAttribute(): ?TemplateKartu
+    {
+        return TemplateKartu::resolveTemplateForKartu($this);
+    }
 }

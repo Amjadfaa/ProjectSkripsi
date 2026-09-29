@@ -53,42 +53,80 @@ class LaporanAktivitasController extends Controller
 
         // Summary KPI
         $totalScan     = (clone $query)->count();
-        $totalDiterima  = (clone $query)->where('status_akses', 'diterima')->count();
-        $totalDitolak   = (clone $query)->where('status_akses', 'ditolak')->count();
+        $totalDiterima = (clone $query)->where('status_akses', 'diterima')->count();
+        $totalDitolak  = (clone $query)->where('status_akses', 'ditolak')->count();
         $totalMasuk    = (clone $query)->where('tipe_aktivitas', 'masuk')->count();
         $totalKeluar   = (clone $query)->where('tipe_aktivitas', 'keluar')->count();
 
-        // Paginated log data (max 6 items per page)
-        $scanLogs = $query->latest('waktu_scan')->paginate(6)->withQueryString();
+        // Paginated log data (10 items per page)
+        $scanLogs = $query->latest('waktu_scan')->paginate(10)->withQueryString();
 
         // Dropdown filter master lists
         $areaAksesList = AreaAkses::orderBy('kode')->get();
         $cameraDevices = CameraDevice::orderBy('nama_kamera')->get();
 
-        // Distribution data for Chart
-        $chartDataArea = ScanLog::selectRaw('kode_area, count(*) as total')
+        // Distribution data for Area Doughnut Chart
+        $chartDataAreaQuery = ScanLog::selectRaw('kode_area, count(*) as total')
             ->whereDate('waktu_scan', '>=', $startDate)
-            ->whereDate('waktu_scan', '<=', $endDate)
-            ->groupBy('kode_area')
-            ->pluck('total', 'kode_area');
+            ->whereDate('waktu_scan', '<=', $endDate);
+        if (!empty($kodeArea)) {
+            $chartDataAreaQuery->where('kode_area', $kodeArea);
+        }
+        $chartDataArea = $chartDataAreaQuery->groupBy('kode_area')->pluck('total', 'kode_area');
 
-        if ($request->ajax()) {
-            return response()->json([
-                'table_html' => view('administrator.laporan-aktivitas.partials.table', compact('scanLogs'))->render(),
-                'totalScan' => number_format($totalScan),
-                'totalMasuk' => number_format($totalMasuk),
-                'totalKeluar' => number_format($totalKeluar),
-                'totalDiterima' => number_format($totalDiterima),
-                'totalDitolak' => number_format($totalDitolak),
-                'chartLabels' => $chartDataArea->keys()->map(fn($a) => 'Area ' . $a)->toArray(),
-                'chartValues' => $chartDataArea->values()->toArray(),
-            ]);
+        // Daily trend data for Trend Line Chart
+        $trendQuery = ScanLog::selectRaw("DATE(waktu_scan) as tanggal, 
+                SUM(CASE WHEN tipe_aktivitas = 'masuk' THEN 1 ELSE 0 END) as total_masuk,
+                SUM(CASE WHEN tipe_aktivitas = 'keluar' THEN 1 ELSE 0 END) as total_keluar,
+                SUM(CASE WHEN status_akses = 'ditolak' THEN 1 ELSE 0 END) as total_ditolak")
+            ->whereDate('waktu_scan', '>=', $startDate)
+            ->whereDate('waktu_scan', '<=', $endDate);
+
+        if (!empty($kodeArea)) {
+            $trendQuery->where('kode_area', $kodeArea);
+        }
+        if (!empty($cameraId)) {
+            $trendQuery->where('camera_device_id', $cameraId);
+        }
+
+        $trendData = $trendQuery->groupBy('tanggal')->orderBy('tanggal')->get();
+
+        $trendLabels = $trendData->map(fn($item) => \Carbon\Carbon::parse($item->tanggal)->format('d M'))->toArray();
+        $trendMasuk   = $trendData->pluck('total_masuk')->map(fn($v) => (int)$v)->toArray();
+        $trendKeluar  = $trendData->pluck('total_keluar')->map(fn($v) => (int)$v)->toArray();
+        $trendDitolak = $trendData->pluck('total_ditolak')->map(fn($v) => (int)$v)->toArray();
+
+        // AJAX / SPA Response Handler
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-SPA')) {
+            if ($request->header('Accept') === 'application/json' || $request->wantsJson()) {
+                return response()->json([
+                    'table_html'    => view('administrator.laporan-aktivitas.partials.table', compact(
+                        'scanLogs', 'totalScan', 'totalMasuk', 'totalKeluar', 'totalDiterima', 'totalDitolak'
+                    ))->render(),
+                    'totalScan'     => number_format($totalScan),
+                    'totalMasuk'    => number_format($totalMasuk),
+                    'totalKeluar'   => number_format($totalKeluar),
+                    'totalDiterima' => number_format($totalDiterima),
+                    'totalDitolak'  => number_format($totalDitolak),
+                    'chartLabels'   => $chartDataArea->keys()->map(fn($a) => 'Area ' . $a)->toArray(),
+                    'chartValues'   => $chartDataArea->values()->toArray(),
+                    'trendLabels'   => $trendLabels,
+                    'trendMasuk'    => $trendMasuk,
+                    'trendKeluar'   => $trendKeluar,
+                    'trendDitolak'  => $trendDitolak,
+                ]);
+            }
+
+            return view('administrator.laporan-aktivitas.partials.table', compact(
+                'scanLogs', 'totalScan', 'totalMasuk', 'totalKeluar', 'totalDiterima', 'totalDitolak'
+            ));
         }
 
         return view('administrator.laporan-aktivitas.index', compact(
             'scanLogs', 'startDate', 'endDate', 'kodeArea', 'statusAkses', 'tipeAktivitas', 'cameraId', 'search',
             'totalScan', 'totalDiterima', 'totalDitolak', 'totalMasuk', 'totalKeluar',
-            'areaAksesList', 'cameraDevices', 'chartDataArea'
+            'areaAksesList', 'cameraDevices', 'chartDataArea',
+            'trendLabels', 'trendMasuk', 'trendKeluar', 'trendDitolak'
         ));
     }
 

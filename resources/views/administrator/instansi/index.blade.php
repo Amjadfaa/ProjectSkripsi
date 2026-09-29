@@ -1,422 +1,428 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Data Instansi</h2>
+        <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm shadow-xs border border-blue-100">
+                <i class="fas fa-building"></i>
+            </span>
+            <div>
+                <h1 class="font-bold text-base sm:text-lg text-slate-800 tracking-tight leading-tight">
+                    Data Instansi
+                </h1>
+                <p class="text-[11px] text-slate-500 font-normal leading-none mt-0.5 hidden sm:block">Kelola profil instansi, perusahaan mitra, dan alokasi batas kuota kartu PAS</p>
+            </div>
+        </div>
     </x-slot>
 
-    <style>
-        .modal-backdrop-clean {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(15, 23, 42, 0.70);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        .modal-backdrop-clean.hidden {
-            display: none !important;
-        }
-        .modal-scroll-smooth {
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-        }
-        .modal-scroll-smooth::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-scroll-smooth::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .modal-scroll-smooth::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 9999px;
-        }
-        .modal-scroll-smooth::-webkit-scrollbar-thumb:hover {
-            background-color: #94a3b8;
-        }
-    </style>
-
-    <div class="bg-white shadow-sm rounded-lg p-6">
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <i class="fas fa-building text-blue-600"></i> Daftar Instansi / Perusahaan
-            </h3>
-            <div class="flex items-center gap-2 flex-wrap">
-                <!-- Tombol Import Excel -->
-                <button type="button" onclick="openModalImportInstansi()"
-                   class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition">
-                    <i class="fas fa-file-import"></i> Import Excel
-                </button>
-
-                <!-- Tombol Export Excel -->
-                <a href="{{ route('administrator.instansi.export.excel') }}"
-                   class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition"
-                   title="Unduh Data Instansi format Excel">
-                    <i class="fas fa-file-excel"></i> Export Excel
-                </a>
-
-                <!-- Tombol Tambah Instansi -->
-                <button type="button" onclick="openModalTambahInstansi()"
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm flex items-center gap-1.5 cursor-pointer transition">
-                    <i class="fas fa-plus"></i> Tambah Instansi
-                </button>
+    {{-- KPI STAT CARDS --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {{-- Total Instansi --}}
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex items-center justify-between group hover:shadow-sm transition-shadow">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Instansi</p>
+                <h3 class="text-2xl font-black text-slate-800 mt-1 tracking-tight">{{ number_format($totalInstansiAll) }}</h3>
+                <p class="text-[11px] text-slate-400 mt-1">Terdaftar dalam sistem</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                <i class="fas fa-building"></i>
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="bg-emerald-100 border border-emerald-200 text-emerald-700 p-4 rounded-lg mb-4 text-sm font-medium">
-                ✅ {{ session('success') }}
+        {{-- Instansi Aktif --}}
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex items-center justify-between group hover:shadow-sm transition-shadow">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Instansi Aktif</p>
+                <h3 class="text-2xl font-black text-emerald-600 mt-1 tracking-tight">{{ number_format($totalAktifAll) }}</h3>
+                <p class="text-[11px] text-emerald-500 mt-1 font-medium">Status operasional aktif</p>
             </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-200 text-red-700 p-4 rounded-lg mb-4 text-sm font-medium">
-                ⚠️ {{ session('error') }}
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                <i class="fas fa-circle-check"></i>
             </div>
-        @endif
+        </div>
 
-        @if($errors->any())
-            <div class="bg-red-100 border border-red-200 text-red-700 p-4 rounded-lg mb-4 text-sm">
-                <strong class="font-bold">Gagal Menyimpan Data!</strong>
-                <ul class="mt-1 list-disc list-inside">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        {{-- Total Kuota PAS --}}
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex items-center justify-between group hover:shadow-sm transition-shadow">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Kuota PAS</p>
+                <h3 class="text-2xl font-black text-indigo-600 mt-1 tracking-tight">{{ number_format($totalKuotaAll) }}</h3>
+                <p class="text-[11px] text-indigo-500 mt-1 font-medium">Akumulasi seluruh kuota</p>
             </div>
-        @endif
-
-        @if($instansis->isEmpty())
-            <p class="text-gray-500 py-6 text-center">Belum ada data instansi.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm border-collapse">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="p-3 font-semibold text-gray-700">Nama Instansi</th>
-                            <th class="p-3 font-semibold text-gray-700">Kuota PAS</th>
-                            <th class="p-3 font-semibold text-gray-700">Terpakai</th>
-                            <th class="p-3 font-semibold text-gray-700">Sisa Kuota</th>
-                            <th class="p-3 font-semibold text-gray-700">Email</th>
-                            <th class="p-3 font-semibold text-gray-700">Telepon</th>
-                            <th class="p-3 font-semibold text-gray-700">Status</th>
-                            <th class="p-3 font-semibold text-gray-700 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($instansis as $instansi)
-                        @php
-                            $terpakai = $instansi->total_kartu ?? $instansi->kartu_pas_count ?? $instansi->kartuPas()->count();
-                            $aktif    = $instansi->kartu_aktif ?? $instansi->kartuPas()->where('status', 'aktif')->count();
-                            $nonaktif = $instansi->kartu_nonaktif ?? $instansi->kartuPas()->where('status', '!=', 'aktif')->count();
-                            $sisa     = max(0, $instansi->kuota - $terpakai);
-                        @endphp
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="p-3 font-semibold text-gray-800">{{ $instansi->nama_instansi }}</td>
-                            <td class="p-3 font-medium text-blue-600">{{ $instansi->kuota }} Kartu</td>
-                            <td class="p-3 font-medium text-purple-600">
-                                <span>{{ $terpakai }} Kartu</span>
-                                @if($terpakai > 0)
-                                    <span class="block text-[11px] text-gray-400 font-normal">
-                                        ({{ $aktif }} aktif{{ $nonaktif > 0 ? ', ' . $nonaktif . ' kadaluarsa/nonaktif' : '' }})
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="p-3 font-medium {{ $sisa <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600' }}">
-                                {{ $sisa }} Kartu {{ $sisa <= 0 ? '[HABIS]' : '' }}
-                            </td>
-                            <td class="p-3 text-gray-600">{{ $instansi->email ?? '-' }}</td>
-                            <td class="p-3 text-gray-600">{{ $instansi->telepon ?? '-' }}</td>
-                            <td class="p-3">
-                                <span class="px-2 py-1 rounded text-xs font-semibold {{ $instansi->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                                    {{ $instansi->is_active ? 'Aktif' : 'Nonaktif' }}
-                                </span>
-                            </td>
-                            <td class="p-3 text-center">
-                                <div class="flex items-center justify-center gap-1.5">
-                                    <!-- Tombol Edit Icon -->
-                                    <button type="button" onclick='openModalEditInstansi(@json($instansi))'
-                                            class="bg-amber-500 hover:bg-amber-600 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                            title="Edit Instansi">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-
-                                    <!-- Tombol Hapus Icon -->
-                                    <form id="formDeleteInstansi-{{ $instansi->id }}" method="POST" action="{{ route('administrator.instansi.destroy', $instansi->id) }}" class="inline">
-                                        @csrf @method('DELETE')
-                                        <button type="button" onclick="confirmDeleteInstansi({{ $instansi->id }}, '{{ $instansi->nama_instansi }}')"
-                                                class="bg-rose-600 hover:bg-rose-700 text-white w-8 h-8 rounded-lg text-xs flex items-center justify-center transition shadow-sm"
-                                                title="Hapus Instansi">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                <i class="fas fa-boxes-stacked"></i>
             </div>
-        @endif
+        </div>
+
+        {{-- Kartu Terpakai --}}
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex items-center justify-between group hover:shadow-sm transition-shadow">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kartu Terpakai</p>
+                <h3 class="text-2xl font-black text-purple-600 mt-1 tracking-tight">{{ number_format($totalTerpakaiAll) }}</h3>
+                <p class="text-[11px] text-purple-500 mt-1 font-medium">Kartu berstatus aktif & terbit</p>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                <i class="fas fa-id-card"></i>
+            </div>
+        </div>
     </div>
 
-    <!-- MODAL BESAR TAMBAH INSTANSI -->
-    <div id="modalTambahInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalTambahInstansi()">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-building text-blue-600"></i> Form Tambah Instansi Baru
-                </h3>
-                <button type="button" onclick="closeModalTambahInstansi()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
+    {{-- REUSABLE TABLE CARD COMPONENT --}}
+    <x-table-card title="Daftar Instansi / Perusahaan"
+                  subtitle="Kelola profil perusahaan mitra dan alokasi kuota kartu PAS bandara"
+                  icon="fas fa-building"
+                  iconColor="bg-blue-50 text-blue-600">
 
-            <form method="POST" action="{{ route('administrator.instansi.store') }}">
-                @csrf
+        {{-- Header Actions Slot --}}
+        <x-slot name="actions">
+            <!-- Tombol Import Excel -->
+            <button type="button" onclick="openModal('modalImportInstansi')"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                <i class="fas fa-file-import"></i>
+                <span>Import Excel</span>
+            </button>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Perusahaan</label>
-                    <input type="text" name="nama_instansi" value="{{ old('nama_instansi') }}"
-                           placeholder="Contoh: PT Angkasa Pura Indonesia"
-                           class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+            <!-- Tombol Export Excel -->
+            <a href="{{ route('administrator.instansi.export.excel') }}"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all transform hover:-translate-y-0.5 cursor-pointer"
+               title="Unduh Data Instansi format Excel">
+                <i class="fas fa-file-excel"></i>
+                <span>Export Excel</span>
+            </a>
+
+            <!-- Tombol Tambah Instansi -->
+            <button type="button" onclick="openModalTambahInstansi()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                <i class="fas fa-plus-circle"></i>
+                <span>Tambah Instansi</span>
+            </button>
+        </x-slot>
+
+        {{-- Filters Slot --}}
+        <x-slot name="filters">
+            <form id="filterForm" method="GET" action="{{ route('administrator.instansi.index') }}" class="flex flex-wrap items-end gap-3">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-[220px]">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pencarian</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-400 text-xs">
+                            <i class="fas fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
+                               placeholder="Cari nama instansi, email, telepon..."
+                               class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-2xs">
+                        <button type="button" id="btnClearSearch" onclick="clearSearchInput()"
+                                class="{{ request('search') ? '' : 'hidden' }} absolute right-2.5 top-2.5 text-slate-400 hover:text-rose-500 text-xs transition cursor-pointer"
+                                title="Hapus pencarian">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <!-- Filter Status -->
+                <div class="min-w-[140px]">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+                    <select id="statusFilter" name="status"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-2xs cursor-pointer">
+                        <option value="">Semua Status</option>
+                        <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                        <option value="nonaktif" {{ request('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                    </select>
+                </div>
+
+                <!-- Per Page -->
+                <div class="w-28">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Per Halaman</label>
+                    <select id="perPageSelect" name="per_page"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-2xs cursor-pointer">
+                        @foreach([10, 15, 25, 50] as $pp)
+                            <option value="{{ $pp }}" {{ request('per_page', 10) == $pp ? 'selected' : '' }}>{{ $pp }} data</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs transition-all cursor-pointer">
+                        <i class="fas fa-filter text-[11px]"></i> Filter
+                    </button>
+                    <button type="button" onclick="resetFilterSpa(event)"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer border border-slate-200/80"
+                            title="Reset Filter">
+                        <i class="fas fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </x-slot>
+
+        <!-- Table Viewport with Persistent Loading Overlay (SPA Replaced via AJAX) -->
+        <div class="relative">
+            <!-- Shimmer Loading Overlay -->
+            <div id="tableLoadingOverlay" class="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-20 hidden items-center justify-center transition-all duration-200">
+                <div class="flex items-center gap-3 px-5 py-3 rounded-2xl bg-slate-900/90 text-white shadow-2xl text-xs font-bold border border-slate-700 backdrop-blur-md">
+                    <i class="fas fa-circle-notch fa-spin text-blue-400 text-base"></i>
+                    <span>Memperbarui data instansi...</span>
+                </div>
+            </div>
+
+            <!-- Table Container (SPA HTML injected here) -->
+            <div id="tableContainer" class="transition-opacity duration-200">
+                @include('administrator.instansi.partials.table')
+            </div>
+        </div>
+
+    </x-table-card>
+
+    <!-- ======================================================================== -->
+    {{-- REUSABLE MODALS (USING x-modal)                                        --}}
+    <!-- ======================================================================== -->
+
+    {{-- 1. MODAL TAMBAH INSTANSI --}}
+    <x-modal id="modalTambahInstansi"
+             title="Tambah Instansi Baru"
+             subtitle="Daftarkan profil instansi / perusahaan mitra baru"
+             icon="fas fa-building"
+             iconColor="bg-blue-50 text-blue-600 border-blue-100"
+             maxWidth="max-w-lg">
+        <form method="POST" action="{{ route('administrator.instansi.store') }}">
+            @csrf
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Instansi / Perusahaan <span class="text-rose-500">*</span></label>
+                    <input type="text" name="nama_instansi" value="{{ old('nama_instansi') }}"
+                           placeholder="Contoh: PT Angkasa Pura Indonesia"
+                           class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Kartu PAS</label>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kuota Kartu PAS <span class="text-rose-500">*</span></label>
                         <input type="number" name="kuota" value="{{ old('kuota', 10) }}" min="0"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Status Instansi</label>
-                        <select name="is_active" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Status <span class="text-rose-500">*</span></label>
+                        <select name="is_active" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs cursor-pointer" required>
                             <option value="1" {{ old('is_active', '1') == '1' ? 'selected' : '' }}>Aktif</option>
                             <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Nonaktif</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email (Opsional)</label>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Email (Opsional)</label>
                         <input type="email" name="email" value="{{ old('email') }}"
                                placeholder="email@instansi.com"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Telepon (Opsional)</label>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nomor Telepon (Opsional)</label>
                         <input type="text" name="telepon" value="{{ old('telepon') }}"
                                placeholder="0812xxxxxxxx"
-                               class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">
                     </div>
                 </div>
 
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Kantor (Opsional)</label>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Alamat Kantor (Opsional)</label>
                     <textarea name="alamat" rows="3" placeholder="Alamat lengkap instansi..."
-                              class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">{{ old('alamat') }}</textarea>
+                              class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">{{ old('alamat') }}</textarea>
                 </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModalTambahInstansi()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-bold shadow-md">
-                        Simpan Instansi
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL EDIT INSTANSI (SPA) -->
-    <div id="modalEditInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalEditInstansi()">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center pb-4 border-b mb-4">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-edit text-amber-500"></i> Edit Data Instansi
-                </h3>
-                <button type="button" onclick="closeModalEditInstansi()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
             </div>
 
-            <form id="formEditInstansi" method="POST" action="">
-                @csrf @method('PUT')
+            <x-slot name="footer">
+                <button type="button" onclick="closeModal('modalTambahInstansi')"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 transition cursor-pointer">
+                    <i class="fas fa-save mr-1"></i> Simpan Instansi
+                </button>
+            </x-slot>
+        </form>
+    </x-modal>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Perusahaan</label>
-                    <input type="text" id="edit_nama_instansi" name="nama_instansi" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+    {{-- 2. MODAL EDIT INSTANSI --}}
+    <x-modal id="modalEditInstansi"
+             title="Edit Data Instansi"
+             subtitle="Perbarui profil instansi dan kuota kartu PAS"
+             icon="fas fa-pen-to-square"
+             iconColor="bg-amber-50 text-amber-600 border-amber-100"
+             maxWidth="max-w-lg">
+        <form id="formEditInstansi" method="POST" action="">
+            @csrf @method('PUT')
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Instansi / Perusahaan <span class="text-rose-500">*</span></label>
+                    <input type="text" id="edit_nama_instansi" name="nama_instansi"
+                           class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs" required>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Kartu PAS</label>
-                        <input type="number" id="edit_kuota" name="kuota" min="0" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kuota Kartu PAS <span class="text-rose-500">*</span></label>
+                        <input type="number" id="edit_kuota" name="kuota" min="0"
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Status Instansi</label>
-                        <select id="edit_is_active" name="is_active" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Status <span class="text-rose-500">*</span></label>
+                        <select id="edit_is_active" name="is_active" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs cursor-pointer" required>
                             <option value="1">Aktif</option>
                             <option value="0">Nonaktif</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                        <input type="email" id="edit_email" name="email" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Email (Opsional)</label>
+                        <input type="email" id="edit_email" name="email"
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor Telepon</label>
-                        <input type="text" id="edit_telepon" name="telepon" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nomor Telepon (Opsional)</label>
+                        <input type="text" id="edit_telepon" name="telepon"
+                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">
                     </div>
                 </div>
 
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Kantor</label>
-                    <textarea id="edit_alamat" name="alamat" rows="3" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm"></textarea>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Alamat Kantor (Opsional)</label>
+                    <textarea id="edit_alamat" name="alamat" rows="3"
+                              class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs"></textarea>
                 </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModalEditInstansi()"
-                            class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium">Batal</button>
-                    <button type="submit"
-                            class="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 text-sm font-bold shadow-md">
-                        Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL IMPORT DATA INSTANSI -->
-    <div id="modalImportInstansi" class="modal-backdrop-clean hidden" onclick="if(event.target === this) closeModalImportInstansi()">
-        <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full flex flex-col max-h-[90vh] overflow-hidden">
-            <!-- Header Modal (Tetap di atas) -->
-            <div class="flex justify-between items-center px-6 py-3.5 border-b bg-gray-50/80 flex-shrink-0">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fas fa-file-import text-amber-500"></i> Import Data Instansi (File Excel)
-                </h3>
-                <button type="button" onclick="closeModalImportInstansi()" class="text-gray-400 hover:text-gray-600 transition p-1">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
             </div>
 
-            <!-- Form & Konten Modal (Scroll Halus & Ringan) -->
-            <form method="POST" action="{{ route('administrator.instansi.import.excel') }}" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
-                @csrf
-                
-                <div class="flex-1 overflow-y-auto p-5 space-y-3.5 modal-scroll-smooth" style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
-                    <!-- Ketentuan Duplikasi Ringkas -->
-                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2.5">
-                        <i class="fas fa-shield-alt text-amber-600 text-sm flex-shrink-0"></i>
-                        <div>
-                            <strong class="font-bold">Anti-Duplikasi:</strong>
-                            Jika instansi sudah ada di sistem, data lama <strong>tidak akan ditimpa</strong> dan baris tersebut akan <strong>dilewati (di-skip)</strong> secara otomatis.
-                        </div>
-                    </div>
+            <x-slot name="footer">
+                <button type="button" onclick="closeModal('modalEditInstansi')"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer">
+                    <i class="fas fa-check mr-1"></i> Simpan Perubahan
+                </button>
+            </x-slot>
+        </form>
+    </x-modal>
 
-                    <!-- Banner Template Excel -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2">
-                        <div class="text-xs text-blue-900">
-                            <p class="font-bold flex items-center gap-1.5">
-                                <i class="fas fa-file-excel text-emerald-600"></i> Format File Excel
-                            </p>
-                            <p class="text-blue-700 text-[11px] mt-0.5">Disarankan menggunakan template resmi agar kolom sesuai.</p>
-                        </div>
-                        <a href="{{ route('administrator.instansi.template.excel') }}"
-                           class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-lg border border-blue-300 shadow-sm hover:bg-blue-50 transition">
-                            <i class="fas fa-download text-emerald-600"></i> Unduh Template (.xlsx)
-                        </a>
-                    </div>
-
-                    <!-- Detail Rincian Kolom (Collapsible / Ringan) -->
-                    <details class="text-xs text-gray-600 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-                        <summary class="font-semibold text-gray-700 px-3.5 py-2 cursor-pointer hover:bg-gray-100 flex items-center justify-between select-none">
-                            <span class="flex items-center gap-1.5">
-                                <i class="fas fa-list-ul text-blue-500"></i> Lihat Susunan Kolom Excel (7 Kolom)
-                            </span>
-                            <span class="text-gray-400 text-[11px]">Buka / Tutup ▾</span>
-                        </summary>
-                        <div class="p-3 border-t bg-white">
-                            <table class="w-full text-xs text-gray-700">
-                                <thead class="text-gray-500 border-b">
-                                    <tr>
-                                        <th class="py-1 text-left font-semibold">Kolom</th>
-                                        <th class="py-1 text-left font-semibold">Field</th>
-                                        <th class="py-1 text-left font-semibold">Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom A</td><td>No</td><td class="text-gray-500">Nomor urut (Opsional)</td></tr>
-                                    <tr><td class="py-1 font-bold text-blue-600">Kolom B</td><td class="font-semibold">Nama Instansi</td><td class="text-emerald-600 font-medium">Wajib diisi</td></tr>
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom C</td><td>Kuota PAS</td><td class="text-gray-500">Default: 10</td></tr>
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom D</td><td>Email</td><td class="text-gray-500">Opsional</td></tr>
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom E</td><td>Nomor Telepon</td><td class="text-gray-500">Opsional</td></tr>
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom F</td><td>Alamat</td><td class="text-gray-500">Opsional</td></tr>
-                                    <tr><td class="py-1 font-bold text-gray-700">Kolom G</td><td>Status</td><td class="text-gray-500">Aktif / Nonaktif</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </details>
-
-                    <!-- Dropzone Pemilih File (Ringkas) -->
+    {{-- 3. MODAL IMPORT INSTANSI --}}
+    <x-modal id="modalImportInstansi"
+             title="Import Data Instansi"
+             subtitle="Upload file Excel (.xlsx / .xls) untuk import data massal"
+             icon="fas fa-file-import"
+             iconColor="bg-amber-50 text-amber-600 border-amber-100"
+             maxWidth="max-w-xl">
+        <form method="POST" action="{{ route('administrator.instansi.import.excel') }}" enctype="multipart/form-data">
+            @csrf
+            <div class="space-y-3.5">
+                <!-- Info Anti Duplikasi -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2.5">
+                    <i class="fas fa-shield-alt text-amber-600 text-sm shrink-0"></i>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Pilih File Excel (.xlsx / .xls)</label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-xl py-4 px-5 text-center hover:border-amber-500 transition cursor-pointer bg-gray-50 hover:bg-amber-50/20"
-                             onclick="document.getElementById('import_instansi_file').click()">
-                            <input type="file" name="file" id="import_instansi_file" accept=".xlsx,.xls"
-                                   class="hidden" onchange="showModalImportInstansiFileName(this)" required>
-                            <i class="fas fa-cloud-upload-alt text-3xl text-amber-500 mb-1"></i>
-                            <p class="text-gray-700 font-medium text-xs">Klik untuk memilih file Excel dari komputer</p>
-                            <p class="text-gray-400 text-[11px] mt-0.5">Format: .xlsx atau .xls (Ukuran maks. 10MB)</p>
-                            <p id="modalImportInstansiFileName" class="text-emerald-600 text-xs mt-2 font-semibold"></p>
-                        </div>
+                        <strong class="font-bold">Anti-Duplikasi:</strong>
+                        Jika instansi sudah ada di sistem, data lama <strong>tidak akan ditimpa</strong> dan baris tersebut akan <strong>dilewati (di-skip)</strong> secara otomatis.
                     </div>
                 </div>
 
-                <!-- Footer Modal (Selalu terlihat di bawah, tanpa perlu scroll) -->
-                <div class="flex justify-end gap-2.5 px-6 py-3 border-t bg-gray-50 flex-shrink-0">
-                    <button type="button" onclick="closeModalImportInstansi()"
-                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium transition">
-                        Batal
-                    </button>
-                    <button type="submit"
-                            class="bg-amber-500 text-white px-5 py-2 rounded-lg hover:bg-amber-600 text-sm font-bold shadow-sm flex items-center gap-1.5 transition">
-                        <i class="fas fa-upload"></i> Import Sekarang
-                    </button>
+                <!-- Template Download Banner -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2">
+                    <div class="text-xs text-blue-900">
+                        <p class="font-bold flex items-center gap-1.5">
+                            <i class="fas fa-file-excel text-emerald-600"></i> Format File Excel
+                        </p>
+                        <p class="text-blue-700 text-[11px] mt-0.5">Disarankan menggunakan template resmi agar kolom sesuai.</p>
+                    </div>
+                    <a href="{{ route('administrator.instansi.template.excel') }}"
+                       class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-lg border border-blue-300 shadow-2xs hover:bg-blue-50 transition">
+                        <i class="fas fa-download text-emerald-600"></i> Unduh Template (.xlsx)
+                    </a>
                 </div>
-            </form>
-        </div>
-    </div>
 
+                <!-- Detail Susunan Kolom -->
+                <details class="text-xs text-slate-600 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                    <summary class="font-semibold text-slate-700 px-3.5 py-2 cursor-pointer hover:bg-slate-100 flex items-center justify-between select-none">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-list-ul text-blue-500"></i> Lihat Susunan Kolom Excel (7 Kolom)
+                        </span>
+                        <span class="text-slate-400 text-[11px]">Buka / Tutup ▾</span>
+                    </summary>
+                    <div class="p-3 border-t border-slate-200 bg-white overflow-x-auto">
+                        <table class="w-full text-xs text-slate-700">
+                            <thead class="text-slate-500 border-b border-slate-100">
+                                <tr>
+                                    <th class="py-1 text-left font-semibold">Kolom</th>
+                                    <th class="py-1 text-left font-semibold">Field</th>
+                                    <th class="py-1 text-left font-semibold">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom A</td><td>No</td><td class="text-slate-400">Nomor urut (Opsional)</td></tr>
+                                <tr><td class="py-1 font-bold text-blue-600">Kolom B</td><td class="font-semibold">Nama Instansi</td><td class="text-emerald-600 font-medium">Wajib diisi</td></tr>
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom C</td><td>Kuota PAS</td><td class="text-slate-400">Default: 10</td></tr>
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom D</td><td>Email</td><td class="text-slate-400">Opsional</td></tr>
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom E</td><td>Nomor Telepon</td><td class="text-slate-400">Opsional</td></tr>
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom F</td><td>Alamat</td><td class="text-slate-400">Opsional</td></tr>
+                                <tr><td class="py-1 font-bold text-slate-700">Kolom G</td><td>Status</td><td class="text-slate-400">Aktif / Nonaktif</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+
+                <!-- Dropzone File Upload -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih File Excel (.xlsx / .xls)</label>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl py-5 px-5 text-center hover:border-amber-500 transition cursor-pointer bg-slate-50 hover:bg-amber-50/20"
+                         onclick="document.getElementById('import_instansi_file').click()">
+                        <input type="file" name="file" id="import_instansi_file" accept=".xlsx,.xls"
+                               class="hidden" onchange="showModalImportInstansiFileName(this)" required>
+                        <i class="fas fa-cloud-arrow-up text-3xl text-amber-500 mb-1.5"></i>
+                        <p class="text-slate-700 font-medium text-xs">Klik untuk memilih file Excel dari komputer</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Format: .xlsx atau .xls (Ukuran maks. 10MB)</p>
+                        <p id="modalImportInstansiFileName" class="text-emerald-600 text-xs mt-2 font-semibold"></p>
+                    </div>
+                </div>
+            </div>
+
+            <x-slot name="footer">
+                <button type="button" onclick="closeModal('modalImportInstansi')"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer">
+                    <i class="fas fa-upload mr-1"></i> Import Sekarang
+                </button>
+            </x-slot>
+        </form>
+    </x-modal>
+
+    {{-- 4. REUSABLE MODAL DELETE --}}
+    <x-modal-delete id="globalDeleteModal" />
+
+    <!-- ======================================================================== -->
+    {{-- SPA JAVASCRIPT & MODAL HANDLERS                                         --}}
+    <!-- ======================================================================== -->
     <script>
-        // Modal Import Instansi
-        function openModalImportInstansi() {
-            document.getElementById('modalImportInstansiFileName').textContent = '';
-            document.getElementById('import_instansi_file').value = '';
-            document.getElementById('modalImportInstansi').classList.remove('hidden');
+        // Modal Helpers (Vanilla JS instant toggle)
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
         }
 
-        function closeModalImportInstansi() {
-            document.getElementById('modalImportInstansi').classList.add('hidden');
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         }
 
-        function showModalImportInstansiFileName(input) {
-            const fileName = input.files[0]?.name ?? '';
-            document.getElementById('modalImportInstansiFileName').textContent = fileName ? '✅ File Dipilih: ' + fileName : '';
-        }
         function openModalTambahInstansi() {
-            document.getElementById('modalTambahInstansi').classList.remove('hidden');
-        }
-
-        function closeModalTambahInstansi() {
-            document.getElementById('modalTambahInstansi').classList.add('hidden');
+            openModal('modalTambahInstansi');
         }
 
         function openModalEditInstansi(instansi) {
@@ -430,29 +436,200 @@
             document.getElementById('edit_telepon').value       = instansi.telepon || '';
             document.getElementById('edit_alamat').value        = instansi.alamat || '';
 
-            document.getElementById('modalEditInstansi').classList.remove('hidden');
+            openModal('modalEditInstansi');
         }
 
-        function closeModalEditInstansi() {
-            document.getElementById('modalEditInstansi').classList.add('hidden');
+        function showModalImportInstansiFileName(input) {
+            const fileName = input.files[0]?.name ?? '';
+            document.getElementById('modalImportInstansiFileName').textContent = fileName ? '✅ File Dipilih: ' + fileName : '';
         }
 
         function confirmDeleteInstansi(id, nama) {
-            SwalConfirm('Hapus Instansi?', `Semua data relasi untuk instansi [${nama}] mungkin terpengaruh. Yakin hapus?`)
-            .then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('formDeleteInstansi-' + id).submit();
-                }
+            window.openDeleteModal({
+                id: 'globalDeleteModal',
+                action: `{{ url('/administrator/instansi') }}/${id}`,
+                title: 'Hapus Data Instansi?',
+                message: 'Apakah Anda yakin ingin menghapus data instansi ini? Seluruh data relasi terkait instansi ini akan terpengaruh.',
+                targetName: nama,
+                btnText: 'Ya, Hapus Instansi'
             });
         }
 
-        // Tutup modal jika tombol Escape ditekan
+        // Close on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                closeModalImportInstansi();
-                closeModalTambahInstansi();
-                closeModalEditInstansi();
+                const openModals = document.querySelectorAll('.app-modal:not(.hidden)');
+                openModals.forEach(m => closeModal(m.id));
             }
         });
+
+        // ---------------------------------------------------------------------
+        // SPA TABLE NAVIGATION & FILTERING
+        // ---------------------------------------------------------------------
+        function showTableLoading() {
+            const overlay   = document.getElementById('tableLoadingOverlay');
+            const container = document.getElementById('tableContainer');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            }
+            if (container) {
+                container.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function hideTableLoading() {
+            const overlay   = document.getElementById('tableLoadingOverlay');
+            const container = document.getElementById('tableContainer');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+            if (container) {
+                container.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        async function loadTableData(url, pushState = true) {
+            const container = document.getElementById('tableContainer');
+            if (!container) return;
+
+            showTableLoading();
+
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!res.ok) throw new Error('Network error');
+
+                const html = await res.text();
+                container.innerHTML = html;
+
+                if (pushState) {
+                    history.pushState(null, '', url);
+                }
+
+                syncFormWithUrl(url);
+            } catch (err) {
+                console.error('SPA Navigation Error:', err);
+                window.location.href = url;
+            } finally {
+                hideTableLoading();
+            }
+        }
+
+        function syncFormWithUrl(url) {
+            try {
+                const u = new URL(url, window.location.origin);
+                const searchVal = u.searchParams.get('search') || '';
+                const statusVal = u.searchParams.get('status') || '';
+                const perPageVal = u.searchParams.get('per_page') || '10';
+
+                const searchInput = document.getElementById('searchInput');
+                const statusFilter = document.getElementById('statusFilter');
+                const perPageSelect = document.getElementById('perPageSelect');
+                const btnClear = document.getElementById('btnClearSearch');
+
+                if (searchInput && searchInput.value !== searchVal) searchInput.value = searchVal;
+                if (statusFilter && statusFilter.value !== statusVal) statusFilter.value = statusVal;
+                if (perPageSelect && perPageSelect.value !== perPageVal) perPageSelect.value = perPageVal;
+
+                if (btnClear) {
+                    if (searchVal.trim() !== '') {
+                        btnClear.classList.remove('hidden');
+                    } else {
+                        btnClear.classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // Intercept all SPA pagination links
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[data-spa="true"], a.pagination-link');
+            if (link && link.href) {
+                e.preventDefault();
+                loadTableData(link.href, true);
+            }
+        });
+
+        // Browser Back / Forward
+        window.addEventListener('popstate', function() {
+            loadTableData(window.location.href, false);
+        });
+
+        // SPA Filter Form Submit
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const url = new URL(filterForm.action, window.location.origin);
+                const formData = new FormData(filterForm);
+                for (const [key, val] of formData.entries()) {
+                    if (val) {
+                        url.searchParams.set(key, val);
+                    }
+                }
+                url.searchParams.delete('page');
+                loadTableData(url.toString(), true);
+            });
+        }
+
+        // Search Input Debounce (350ms)
+        let searchDebounceTimer;
+        const searchInput = document.getElementById('searchInput');
+        const btnClearSearch = document.getElementById('btnClearSearch');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (btnClearSearch) {
+                    if (this.value.trim() !== '') {
+                        btnClearSearch.classList.remove('hidden');
+                    } else {
+                        btnClearSearch.classList.add('hidden');
+                    }
+                }
+
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    if (filterForm) {
+                        filterForm.dispatchEvent(new Event('submit'));
+                    }
+                }, 350);
+            });
+        }
+
+        function clearSearchInput() {
+            if (searchInput) {
+                searchInput.value = '';
+                if (btnClearSearch) btnClearSearch.classList.add('hidden');
+                if (filterForm) filterForm.dispatchEvent(new Event('submit'));
+            }
+        }
+
+        // Instant Filter dropdown changes
+        document.querySelectorAll('#filterForm select').forEach(select => {
+            select.addEventListener('change', () => {
+                if (filterForm) filterForm.dispatchEvent(new Event('submit'));
+            });
+        });
+
+        function resetFilterSpa(e) {
+            if (e) e.preventDefault();
+            if (filterForm) {
+                filterForm.reset();
+                if (searchInput) searchInput.value = '';
+                const perPageSelect = document.getElementById('perPageSelect');
+                if (perPageSelect) perPageSelect.value = '10';
+                const statusFilter = document.getElementById('statusFilter');
+                if (statusFilter) statusFilter.value = '';
+                if (btnClearSearch) btnClearSearch.classList.add('hidden');
+                const baseUrl = "{{ route('administrator.instansi.index') }}";
+                loadTableData(baseUrl, true);
+            }
+        }
     </script>
 </x-app-layout>

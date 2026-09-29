@@ -46,6 +46,10 @@ class KartuPasController extends Controller
         $areaAksesList = AreaAkses::orderBy('kode')->get();
         $jabatanList   = Jabatan::orderBy('nama_jabatan')->get();
 
+        if ($request->ajax()) {
+            return view('administrator.kartu-pas.partials.table', compact('kartuPas'));
+        }
+
         return view('administrator.kartu-pas.index', compact('kartuPas', 'instansiList', 'areaAksesList', 'jabatanList'));
     }
 
@@ -68,7 +72,7 @@ class KartuPasController extends Controller
             'jabatan'         => ['nullable', 'string', 'max:255'],
             'email'           => ['nullable', 'email', 'max:255'],
             'tanggal_terbit'  => ['required', 'date'],
-            'tanggal_berlaku' => ['required', 'date', 'after:tanggal_terbit'],
+            'tanggal_berlaku' => ['required', 'date'],
         ]);
 
         $instansi = Instansi::findOrFail($request->instansi_id);
@@ -128,7 +132,7 @@ class KartuPasController extends Controller
             'jabatan'         => ['nullable', 'string'],
             'email'           => ['nullable', 'email'],
             'tanggal_terbit'  => ['required', 'date'],
-            'tanggal_berlaku' => ['required', 'date', 'after:tanggal_terbit'],
+            'tanggal_berlaku' => ['required', 'date'],
             'status'          => ['required', 'in:aktif,tidak_aktif,kadaluarsa'],
         ]);
 
@@ -178,6 +182,49 @@ class KartuPasController extends Controller
 
         return redirect()->route('administrator.kartu-pas.index')
             ->with('success', 'Kartu PAS berhasil dihapus.');
+    }
+
+    public function nonaktifkan(Request $request, int $id)
+    {
+        $request->validate([
+            'keterangan_nonaktif' => ['required', 'in:resign,pensiun,meninggal,lainnya'],
+            'catatan_nonaktif'    => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $kartu = KartuPas::findOrFail($id);
+        $kartu->update([
+            'status'              => 'tidak_aktif',
+            'keterangan_nonaktif' => $request->keterangan_nonaktif,
+            'catatan_nonaktif'    => $request->catatan_nonaktif,
+        ]);
+
+        return redirect()->route('administrator.kartu-pas.index')
+            ->with('success', "Kartu PAS {$kartu->nomor_kartu} ({$kartu->nama_pemegang}) berhasil dinonaktifkan. Kuota instansi telah bertambah.");
+    }
+
+    public function aktifkan(int $id)
+    {
+        $kartu = KartuPas::findOrFail($id);
+        
+        if ($kartu->instansi_id) {
+            $instansi = Instansi::find($kartu->instansi_id);
+            if ($instansi && $instansi->sisa_kuota <= 0) {
+                return redirect()->route('administrator.kartu-pas.index')
+                    ->with('error', "Kuota untuk instansi {$instansi->nama_instansi} sudah habis! Kartu tidak dapat diaktifkan kembali.");
+            }
+        }
+
+        $now = now();
+        $newStatus = ($kartu->tanggal_berlaku && $kartu->tanggal_berlaku < $now) ? 'kadaluarsa' : 'aktif';
+
+        $kartu->update([
+            'status'              => $newStatus,
+            'keterangan_nonaktif' => null,
+            'catatan_nonaktif'    => null,
+        ]);
+
+        return redirect()->route('administrator.kartu-pas.index')
+            ->with('success', "Kartu PAS {$kartu->nomor_kartu} ({$kartu->nama_pemegang}) berhasil diaktifkan kembali.");
     }
 
     public function destroyAll()

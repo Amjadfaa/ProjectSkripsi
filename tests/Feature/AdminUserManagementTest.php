@@ -191,4 +191,18 @@ class AdminUserManagementTest extends TestCase
         $response->assertDontSee('Scan QR');
         $response->assertSee('MASUK KE SISTEM');
     }
+
+    public function test_spa_ajax_request_returns_users_table_partial(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('administrator.users.index'), [
+            'HTTP_X-Requested-With' => 'XMLHttpRequest',
+            'HTTP_X-SPA'            => 'true',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertViewIs('administrator.users.partials.table');
+        $response->assertSee('Operator Test');
+        $response->assertSee('Admin Test');
+        $response->assertSee('spaKpiData');
+    }
 }

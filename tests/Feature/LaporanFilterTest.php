@@ -97,4 +97,96 @@ class LaporanFilterTest extends TestCase
         ]));
         $responseExcel->assertStatus(200);
     }
+
+    public function test_laporan_detail_kartu_search_and_status_filter(): void
+    {
+        $instansi = Instansi::create([
+            'nama_instansi' => 'PT GARUDA INDONESIA',
+            'kuota'         => 50,
+            'is_active'     => true,
+        ]);
+
+        KartuPas::create([
+            'instansi_id'     => $instansi->id,
+            'nomor_kartu'     => 'GIA-001',
+            'nama_pemegang'   => 'BUDI SANTOSO',
+            'perusahaan'      => 'PT GARUDA INDONESIA',
+            'jabatan'         => 'Pilot',
+            'area_akses'      => 'AB',
+            'tanggal_terbit'  => '2026-03-10',
+            'tanggal_berlaku' => '2027-03-10',
+            'status'          => 'aktif',
+            'tipe_permohonan' => 'baru',
+        ]);
+
+        KartuPas::create([
+            'instansi_id'     => $instansi->id,
+            'nomor_kartu'     => 'GIA-002',
+            'nama_pemegang'   => 'SITI AMINAH',
+            'perusahaan'      => 'PT GARUDA INDONESIA',
+            'jabatan'         => 'Flight Attendant',
+            'area_akses'      => 'A',
+            'tanggal_terbit'  => '2026-03-15',
+            'tanggal_berlaku' => '2027-03-15',
+            'status'          => 'tidak_aktif',
+            'tipe_permohonan' => 'baru',
+        ]);
+
+        // Search test: BUDI
+        $responseSearch = $this->actingAs($this->admin)->get(route('administrator.laporan.index', [
+            'tahun'  => 2026,
+            'search' => 'BUDI',
+        ]));
+        $responseSearch->assertStatus(200);
+        $responseSearch->assertSee('BUDI SANTOSO');
+        $responseSearch->assertDontSee('SITI AMINAH');
+
+        // Status test: nonaktif
+        $responseStatus = $this->actingAs($this->admin)->get(route('administrator.laporan.index', [
+            'tahun'  => 2026,
+            'status' => 'nonaktif',
+        ]));
+        $responseStatus->assertStatus(200);
+        $responseStatus->assertSee('SITI AMINAH');
+        $responseStatus->assertDontSee('BUDI SANTOSO');
+    }
+
+    public function test_spa_ajax_request_returns_laporan_table_partial(): void
+    {
+        $instansi = Instansi::create([
+            'nama_instansi' => 'PT LION AIR',
+            'kuota'         => 30,
+            'is_active'     => true,
+        ]);
+
+        KartuPas::create([
+            'instansi_id'     => $instansi->id,
+            'nomor_kartu'     => 'LION-777',
+            'nama_pemegang'   => 'HENDRA WIJAYA',
+            'perusahaan'      => 'PT LION AIR',
+            'jabatan'         => 'Teknisi',
+            'area_akses'      => 'ABCD',
+            'tanggal_terbit'  => '2026-05-12',
+            'tanggal_berlaku' => '2027-05-12',
+            'status'          => 'aktif',
+            'tipe_permohonan' => 'baru',
+        ]);
+
+        // Request with X-SPA header
+        $response = $this->actingAs($this->admin)->get(route('administrator.laporan.index', [
+            'tahun' => 2026,
+            'bulan' => 5,
+        ]), [
+            'X-Requested-With' => 'XMLHttpRequest',
+            'X-SPA'            => 'true',
+        ]);
+
+        $response->assertStatus(200);
+        // Should contain the table rows and spaKpiData, but NOT the full app layout
+        $response->assertSee('LION-777');
+        $response->assertSee('HENDRA WIJAYA');
+        $response->assertSee('spaKpiData');
+        $response->assertDontSee('<x-app-layout>');
+        $response->assertDontSee('Tren Kartu PAS per Bulan');
+    }
 }

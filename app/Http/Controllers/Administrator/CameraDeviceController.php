@@ -9,12 +9,69 @@ use Illuminate\Http\Request;
 
 class CameraDeviceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $devices       = CameraDevice::with('areaAkses')->latest()->get();
+        $query = CameraDevice::with('areaAkses');
+
+        // Pencarian Nama Kamera, Kode Akses, atau Kode Area
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_kamera', 'like', "%{$search}%")
+                  ->orWhere('kode_akses', 'like', "%{$search}%")
+                  ->orWhere('kode_area', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter Area
+        if ($request->filled('area')) {
+            $query->where('kode_area', $request->area);
+        }
+
+        // Filter Status
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'aktif');
+        }
+
+        // Filter Tipe Scan
+        if ($request->filled('tipe_scan')) {
+            $query->where('tipe_scan', $request->tipe_scan);
+        }
+
+        $perPage = (int) $request->input('per_page', 8);
+        if ($perPage <= 0 || $perPage > 100) {
+            $perPage = 8;
+        }
+
+        $devices       = $query->latest('id')->paginate($perPage)->withQueryString();
         $areaAksesList = AreaAkses::orderBy('kode')->get();
 
-        return view('administrator.perangkat-kamera.index', compact('devices', 'areaAksesList'));
+        // Statistik Cepat untuk KPI Cards
+        $totalDevices  = CameraDevice::count();
+        $totalAktif    = CameraDevice::where('is_active', true)->count();
+        $totalAreaUsed = CameraDevice::distinct('kode_area')->count('kode_area');
+        $totalAreaAll  = $areaAksesList->count();
+
+        // Respon Partial untuk SPA Pagination & Filtering
+        if ($request->ajax()) {
+            return view('administrator.perangkat-kamera.partials.table', compact(
+                'devices',
+                'areaAksesList',
+                'totalDevices',
+                'totalAktif',
+                'totalAreaUsed',
+                'totalAreaAll'
+            ));
+        }
+
+        return view('administrator.perangkat-kamera.index', compact(
+            'devices',
+            'areaAksesList',
+            'totalDevices',
+            'totalAktif',
+            'totalAreaUsed',
+            'totalAreaAll'
+        ));
     }
 
     public function store(Request $request)

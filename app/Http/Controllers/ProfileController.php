@@ -22,12 +22,18 @@ class ProfileController extends Controller
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
         ]);
 
-        $user->update([
+        $user->fill([
             'name'  => $request->name,
             'email' => $request->email,
         ]);
 
-        return redirect()->back()->with('success', 'Profil berhasil diupdate.');
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui.');
     }
 
     public function updatePassword(Request $request)
@@ -39,13 +45,31 @@ class ProfileController extends Controller
         ]);
 
         if (!Hash::check($request->current_password, auth()->user()->password)) {
-            return redirect()->back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
+            return redirect()->route('profile.edit')->withErrors(['current_password' => 'Password lama tidak sesuai.']);
         }
 
         auth()->user()->update([
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->back()->with('success_password', 'Password berhasil diubah.');
+        return redirect()->route('profile.edit')->with('success_password', 'Password berhasil diubah.');
+    }
+
+    public function destroy(Request $request)
+    {
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

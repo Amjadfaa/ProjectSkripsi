@@ -12,22 +12,62 @@ use Illuminate\Http\Request;
 
 class InstansiController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Sinkronkan kartu PAS yang belum terhubung ke instansi_id
         Instansi::syncUnlinkedKartuPas();
 
-        $instansis = Instansi::withCount([
+        $query = Instansi::withCount([
             'kartuPas as total_kartu',
             'kartuPas as kartu_aktif' => function($q) {
                 $q->where('status', 'aktif');
             },
             'kartuPas as kartu_nonaktif' => function($q) {
-                $q->where('status', '!=', 'aktif');
-            }
-        ])->latest()->get();
+                $q->whereIn('status', ['tidak_aktif', 'nonaktif', 'kadaluarsa']);
+            },
+            'kartuPas as kartu_terpakai' => function($q) {
+                $q->where('status', '!=', 'tidak_aktif');
+            },
+        ]);
 
-        return view('administrator.instansi.index', compact('instansis'));
+        // Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_instansi', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('telepon', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+
+        // Status Filter
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'aktif' ? 1 : 0);
+        }
+
+        // Summary counts for KPI cards
+        $totalInstansiAll = Instansi::count();
+        $totalAktifAll    = Instansi::where('is_active', true)->count();
+        $totalKuotaAll    = Instansi::sum('kuota');
+        $totalTerpakaiAll = \App\Models\KartuPas::where('status', '!=', 'tidak_aktif')->count();
+
+        $perPage = $request->input('per_page', 10);
+        $instansis = $query->orderBy('nama_instansi')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            return view('administrator.instansi.partials.table', compact('instansis'));
+        }
+
+        return view('administrator.instansi.index', compact(
+            'instansis',
+            'totalInstansiAll',
+            'totalAktifAll',
+            'totalKuotaAll',
+            'totalTerpakaiAll'
+        ));
     }
 
     public function create()

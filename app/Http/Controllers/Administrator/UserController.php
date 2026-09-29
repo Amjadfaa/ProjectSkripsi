@@ -39,17 +39,41 @@ class UserController extends Controller
         $users = $query->latest()->paginate(10)->withQueryString();
 
         // Ringkasan statistik
-        $totalUsers    = User::count();
-        $totalOperator = User::where('role', 'operator')->count();
-        $totalAdmin    = User::where('role', 'administrator')->count();
+        $totalUsers          = User::count();
+        $totalOperator       = User::where('role', 'operator')->count();
+        $totalAdmin          = User::where('role', 'administrator')->count();
+        $totalKameraAssigned = \Illuminate\Support\Facades\DB::table('camera_device_user')->distinct('camera_device_id')->count('camera_device_id');
 
-        // Seluruh daftar kamera aktif untuk modal penugasan cepat
+        // Seluruh daftar kamera aktif untuk modal penugasan cepat & tambah akun
         $allCameraDevices = CameraDevice::with('areaAkses')
             ->where('is_active', true)
             ->orderBy('nama_kamera')
             ->get();
 
-        return view('administrator.users.index', compact('users', 'totalUsers', 'totalOperator', 'totalAdmin', 'allCameraDevices'));
+        // Daftar instansi aktif untuk autocomplete/select di modal tambah & edit
+        $instansiList = Instansi::where('is_active', true)->orWhereNull('is_active')->orderBy('nama_instansi')->get();
+
+        // Respon SPA Partial via AJAX
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-SPA')) {
+            return view('administrator.users.partials.table', compact(
+                'users',
+                'totalUsers',
+                'totalOperator',
+                'totalAdmin',
+                'totalKameraAssigned',
+                'allCameraDevices'
+            ));
+        }
+
+        return view('administrator.users.index', compact(
+            'users',
+            'totalUsers',
+            'totalOperator',
+            'totalAdmin',
+            'totalKameraAssigned',
+            'allCameraDevices',
+            'instansiList'
+        ));
     }
 
     /**

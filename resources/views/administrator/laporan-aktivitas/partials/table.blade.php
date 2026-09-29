@@ -1,122 +1,148 @@
-<div>
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="font-extrabold text-base text-gray-800 flex items-center gap-2">
-            <i class="fas fa-list-alt text-blue-600"></i> Riwayat Aktivitas Scan Masuk / Keluar
-        </h3>
-        <span class="text-xs text-gray-500 font-medium">
-            Halaman {{ $scanLogs->currentPage() }} dari {{ $scanLogs->lastPage() }}
-        </span>
-    </div>
+{{-- ======================================================================== --}}
+{{-- TABLE PARTIAL FOR DETAIL LAPORAN AKTIVITAS PAS (SPA REUSABLE COMPONENT)  --}}
+{{-- ======================================================================== --}}
+<div class="w-full">
+    <table class="w-full text-left text-xs border-collapse">
+        <thead>
+            <tr class="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[11px] font-bold border-b border-slate-200/80 select-none">
+                <th scope="col" class="px-3.5 py-3 text-center w-12">No</th>
+                <th scope="col" class="px-3.5 py-3 whitespace-nowrap">Waktu Scan</th>
+                <th scope="col" class="px-3.5 py-3 whitespace-nowrap">Area & Perangkat</th>
+                <th scope="col" class="px-3.5 py-3 whitespace-nowrap">No. Kartu PAS</th>
+                <th scope="col" class="px-3.5 py-3">Pemegang & Instansi</th>
+                <th scope="col" class="px-3.5 py-3 text-center whitespace-nowrap">Aktivitas</th>
+                <th scope="col" class="px-3.5 py-3 text-center whitespace-nowrap">Status Akses</th>
+                <th scope="col" class="px-3.5 py-3">Keterangan / Alasan</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 bg-white text-xs">
+            @forelse($scanLogs as $idx => $log)
+                <tr class="hover:bg-slate-50/70 transition-colors group">
+                    {{-- 1. Nomor Urut --}}
+                    <td class="px-3.5 py-3 text-center font-bold text-slate-400">
+                        {{ $scanLogs->firstItem() + $idx }}
+                    </td>
 
-    @if($scanLogs->isEmpty())
-        <p class="text-gray-500 text-center py-12">Tidak ada data aktivitas scan ditemukan untuk kriteria filter ini.</p>
-    @else
-        <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-800 text-white uppercase tracking-wider text-[11px]">
-                        <th class="p-3">Waktu Scan</th>
-                        <th class="p-3">Perangkat Kamera & Area</th>
-                        <th class="p-3">No. Kartu PAS</th>
-                        <th class="p-3">Pemegang & Perusahaan</th>
-                        <th class="p-3 text-center">Aktivitas</th>
-                        <th class="p-3 text-center">Status</th>
-                        <th class="p-3">Keterangan / Catatan</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($scanLogs as $log)
-                    <tr class="hover:bg-gray-50/80 transition">
-                        <td class="p-3 font-mono text-xs text-gray-600">
-                            <div class="font-bold text-gray-800 flex items-center gap-1">
-                                <i class="far fa-calendar-alt text-blue-500 text-[11px]"></i>
-                                {{ $log->waktu_scan->translatedFormat('l, d M Y') }}
-                            </div>
-                            <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
-                                <i class="far fa-clock text-gray-400 text-[10px]"></i>
-                                {{ $log->waktu_scan->format('H:i:s') }} WIT
-                            </div>
-                        </td>
-                        <td class="p-3">
-                            <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[11px] font-bold inline-block mb-0.5">Area {{ $log->kode_area }}</span>
-                            <p class="text-[11px] text-gray-500">{{ optional($log->cameraDevice)->nama_kamera ?? 'Kamera Station' }}</p>
-                        </td>
-                        <td class="p-3 font-mono font-bold text-purple-700">
-                            {{ $log->nomor_kartu }}
-                        </td>
-                        <td class="p-3">
-                            <p class="font-bold text-gray-800 text-xs">{{ $log->nama_pemegang }}</p>
-                            <p class="text-[11px] text-gray-500">{{ $log->perusahaan }}</p>
-                        </td>
-                        <td class="p-3 text-center">
-                            <span class="px-2.5 py-1 rounded text-[10px] font-extrabold uppercase {{ $log->tipe_aktivitas === 'keluar' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300' }}">
-                                <i class="fas {{ $log->tipe_aktivitas === 'keluar' ? 'fa-sign-out-alt' : 'fa-sign-in-alt' }} mr-0.5"></i>
-                                {{ $log->tipe_aktivitas ?: 'masuk' }}
-                            </span>
-                        </td>
-                        <td class="p-3 text-center">
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider {{ $log->status_akses === 'diterima' ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-rose-100 text-rose-700 border border-rose-300' }}">
-                                {{ $log->status_akses }}
-                            </span>
-                        </td>
-                        <td class="p-3 text-xs text-gray-600">
-                            <div class="font-medium text-gray-800">{{ $log->alasan }}</div>
-                            @if($log->catatan)
-                                <div class="text-[11px] text-blue-700 mt-1 italic bg-blue-50/80 px-2 py-1 rounded border border-blue-200/80 inline-block">
-                                    <i class="fas fa-sticky-note mr-1"></i> Catatan: {{ $log->catatan }}
-                                </div>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                    {{-- 2. Waktu Scan --}}
+                    <td class="px-3.5 py-3 whitespace-nowrap">
+                        <div class="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+                            <i class="far fa-calendar text-blue-500 text-[11px]"></i>
+                            <span>{{ $log->waktu_scan ? $log->waktu_scan->format('d/m/Y') : '-' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-slate-500 text-[11px] mt-0.5 font-mono">
+                            <i class="far fa-clock text-slate-400 text-[10px]"></i>
+                            <span>{{ $log->waktu_scan ? $log->waktu_scan->format('H:i:s') : '-' }} WIT</span>
+                        </div>
+                    </td>
 
-        <!-- Custom Rapi & Elegant Indonesian Pagination Bar -->
-        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
-            <div class="text-xs text-gray-500 font-medium">
-                Menampilkan <span class="font-bold text-gray-800">{{ $scanLogs->firstItem() ?? 0 }}</span> s/d <span class="font-bold text-gray-800">{{ $scanLogs->lastItem() ?? 0 }}</span> dari total <span class="font-bold text-blue-600">{{ $scanLogs->total() }}</span> data
-            </div>
-
-            @if($scanLogs->hasPages())
-                <div class="inline-flex items-center space-x-1 rounded-xl bg-gray-100/90 p-1 border border-gray-200/80">
-                    {{-- Previous Page Link --}}
-                    @if ($scanLogs->onFirstPage())
-                        <span class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 cursor-not-allowed select-none">
-                            <i class="fas fa-chevron-left text-[10px]"></i>
+                    {{-- 3. Area & Perangkat --}}
+                    <td class="px-3.5 py-3 whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                            <i class="fas fa-location-dot text-[9px]"></i>
+                            <span>Area {{ $log->kode_area }}</span>
                         </span>
-                    @else
-                        <a href="{{ $scanLogs->previousPageUrl() }}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
-                            <i class="fas fa-chevron-left text-[10px]"></i>
-                        </a>
-                    @endif
+                        <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate max-w-[150px]" title="{{ optional($log->cameraDevice)->nama_kamera ?? 'Kamera Station' }}">
+                            <i class="fas fa-video text-slate-400 text-[9px] shrink-0"></i>
+                            <span class="truncate">{{ optional($log->cameraDevice)->nama_kamera ?? 'Kamera Station' }}</span>
+                        </p>
+                    </td>
 
-                    {{-- Page Links --}}
-                    @foreach ($scanLogs->getUrlRange(1, $scanLogs->lastPage()) as $page => $url)
-                        @if ($page == $scanLogs->currentPage())
-                            <span class="px-3 py-1.5 rounded-lg text-xs font-black bg-blue-600 text-white shadow-sm">
-                                {{ $page }}
+                    {{-- 4. No. Kartu PAS --}}
+                    <td class="px-3.5 py-3 whitespace-nowrap">
+                        <span class="font-mono font-bold text-xs text-blue-600 bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-100 shadow-2xs">
+                            {{ $log->nomor_kartu }}
+                        </span>
+                    </td>
+
+                    {{-- 5. Pemegang & Instansi --}}
+                    <td class="px-3.5 py-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                                {{ strtoupper(substr($log->nama_pemegang ?? 'P', 0, 1)) }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-slate-800 text-xs truncate max-w-[160px]" title="{{ $log->nama_pemegang ?? '-' }}">
+                                    {{ $log->nama_pemegang ?? '-' }}
+                                </p>
+                                <p class="text-[11px] text-slate-500 truncate max-w-[160px] flex items-center gap-1" title="{{ $log->perusahaan ?? '-' }}">
+                                    <i class="fas fa-building text-slate-400 text-[9px] shrink-0"></i>
+                                    <span class="truncate">{{ $log->perusahaan ?? '-' }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+
+                    {{-- 6. Tipe Scan (Masuk/Keluar) --}}
+                    <td class="px-3.5 py-3 text-center whitespace-nowrap">
+                        @if($log->tipe_aktivitas === 'keluar')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
+                                <i class="fas fa-right-from-bracket text-[9px]"></i>
+                                <span>Keluar (OUT)</span>
                             </span>
                         @else
-                            <a href="{{ $url }}" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
-                                {{ $page }}
-                            </a>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                <i class="fas fa-right-to-bracket text-[9px]"></i>
+                                <span>Masuk (IN)</span>
+                            </span>
                         @endif
-                    @endforeach
+                    </td>
 
-                    {{-- Next Page Link --}}
-                    @if ($scanLogs->hasMorePages())
-                        <a href="{{ $scanLogs->nextPageUrl() }}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition">
-                            <i class="fas fa-chevron-right text-[10px]"></i>
-                        </a>
-                    @else
-                        <span class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 cursor-not-allowed select-none">
-                            <i class="fas fa-chevron-right text-[10px]"></i>
-                        </span>
-                    @endif
-                </div>
-            @endif
-        </div>
-    @endif
+                    {{-- 7. Status Akses --}}
+                    <td class="px-3.5 py-3 text-center whitespace-nowrap">
+                        @if($log->status_akses === 'diterima')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Diterima</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <span>Ditolak</span>
+                            </span>
+                        @endif
+                    </td>
+
+                    {{-- 8. Keterangan / Alasan --}}
+                    <td class="px-3.5 py-3">
+                        <div class="text-xs text-slate-700 font-medium max-w-[200px] truncate" title="{{ $log->alasan ?? 'Akses diizinkan' }}">
+                            {{ $log->alasan ?: 'Akses diizinkan' }}
+                        </div>
+                        @if($log->catatan)
+                            <div class="text-[10px] text-blue-700 mt-0.5 italic bg-blue-50/80 px-2 py-0.5 rounded border border-blue-100 inline-flex items-center gap-1 max-w-[200px] truncate" title="{{ $log->catatan }}">
+                                <i class="fas fa-note-sticky text-[8px] shrink-0"></i>
+                                <span class="truncate">{{ $log->catatan }}</span>
+                            </div>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-xl mb-3">
+                            <i class="fas fa-clock-rotate-left"></i>
+                        </div>
+                        <p class="font-bold text-slate-700 text-sm">Tidak Ada Riwayat Aktivitas Scan</p>
+                        <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                            Tidak ditemukan data scan log yang sesuai dengan rentang tanggal dan parameter filter yang dipilih.
+                        </p>
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
+{{-- FOOTER / PAGINASI REUSABLE COMPONENT --}}
+<div id="spaPaginationWrapper">
+    <x-pagination :paginator="$scanLogs" />
+</div>
+
+{{-- METADATA UNTUK SPA STATS UPDATE --}}
+<div id="spaKpiData"
+     data-total-scan="{{ $totalScan ?? '' }}"
+     data-total-masuk="{{ $totalMasuk ?? '' }}"
+     data-total-keluar="{{ $totalKeluar ?? '' }}"
+     data-total-diterima="{{ $totalDiterima ?? '' }}"
+     data-total-ditolak="{{ $totalDitolak ?? '' }}"
+     class="hidden">
 </div>

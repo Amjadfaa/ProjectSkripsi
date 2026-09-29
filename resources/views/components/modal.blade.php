@@ -1,78 +1,103 @@
 @props([
-    'name',
+    'name' => null,
+    'id' => null,
     'show' => false,
-    'maxWidth' => '2xl'
+    'focusable' => false,
+    'title' => '',
+    'subtitle' => '',
+    'icon' => '',
+    'iconColor' => 'bg-blue-50 text-blue-600 border-blue-100',
+    'maxWidth' => 'max-w-2xl',
+    'zIndex' => 'z-50'
 ])
 
 @php
-$maxWidth = [
-    'sm' => 'sm:max-w-sm',
-    'md' => 'sm:max-w-md',
-    'lg' => 'sm:max-w-lg',
-    'xl' => 'sm:max-w-xl',
-    '2xl' => 'sm:max-w-2xl',
-][$maxWidth];
+    $modalId = $id ?? $name;
 @endphp
 
-<div
-    x-data="{
-        show: @js($show),
-        focusables() {
-            // All focusable element types...
-            let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
-            return [...$el.querySelectorAll(selector)]
-                // All non-disabled elements...
-                .filter(el => ! el.hasAttribute('disabled'))
-        },
-        firstFocusable() { return this.focusables()[0] },
-        lastFocusable() { return this.focusables().slice(-1)[0] },
-        nextFocusable() { return this.focusables()[this.nextFocusableIndex()] || this.firstFocusable() },
-        prevFocusable() { return this.focusables()[this.prevFocusableIndex()] || this.lastFocusable() },
-        nextFocusableIndex() { return (this.focusables().indexOf(document.activeElement) + 1) % (this.focusables().length + 1) },
-        prevFocusableIndex() { return Math.max(0, this.focusables().indexOf(document.activeElement)) -1 },
-    }"
-    x-init="$watch('show', value => {
-        if (value) {
-            document.body.classList.add('overflow-y-hidden');
-            {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
-        } else {
-            document.body.classList.remove('overflow-y-hidden');
-        }
-    })"
-    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
-    x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
-    x-on:close.stop="show = false"
-    x-on:keydown.escape.window="show = false"
-    x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
-    x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
-    x-show="show"
-    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: {{ $show ? 'block' : 'none' }};"
->
-    <div
-        x-show="show"
-        class="fixed inset-0 transform transition-all"
-        x-on:click="show = false"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
+<div id="{{ $modalId }}"
+     class="app-modal fixed inset-0 {{ $zIndex }} hidden items-center justify-center p-3 sm:p-5 bg-slate-900/60"
+     onclick="if(event.target === this) closeModal('{{ $modalId }}')">
+    
+    <div class="bg-white rounded-2xl shadow-2xl {{ $maxWidth }} w-full relative flex flex-col max-h-[92vh] border border-slate-100 overflow-hidden animate-modal-pop"
+         onclick="event.stopPropagation()">
+        
+        <!-- Modal Header -->
+        @if($title || $icon)
+            <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/70 rounded-t-2xl">
+                <div class="flex items-center gap-3 min-w-0 pr-3">
+                    @if($icon)
+                        <div class="w-10 h-10 rounded-xl {{ $iconColor }} border flex items-center justify-center text-base shrink-0 shadow-2xs">
+                            <i class="{{ $icon }}"></i>
+                        </div>
+                    @endif
+                    <div class="min-w-0">
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight leading-tight truncate">
+                            {{ $title }}
+                        </h3>
+                        @if($subtitle)
+                            <p class="text-xs text-slate-400 mt-0.5 truncate">{{ $subtitle }}</p>
+                        @endif
+                    </div>
+                </div>
+                <button type="button" 
+                        onclick="closeModal('{{ $modalId }}')" 
+                        class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                        title="Tutup (Esc)">
+                    <i class="fas fa-xmark text-lg"></i>
+                </button>
+            </div>
+        @endif
 
-    <div
-        x-show="show"
-        class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-    >
-        {{ $slot }}
+        <!-- Modal Body -->
+        <div class="px-5 sm:px-6 py-5 overflow-y-auto custom-scrollbar flex-1 text-slate-600 text-sm">
+            {{ $slot }}
+        </div>
+
+        <!-- Modal Footer (Optional) -->
+        @if(isset($footer))
+            <div class="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2.5 shrink-0">
+                {{ $footer }}
+            </div>
+        @endif
+
     </div>
 </div>
+
+<style>
+    @keyframes modal-pop {
+        0% { opacity: 0; transform: scale(0.97) translateY(-4px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal-pop {
+        animation: modal-pop 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+</style>
+
+<script>
+    if (typeof window.openModal === 'undefined') {
+        window.openModal = function(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        };
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openModals = document.querySelectorAll('.app-modal:not(.hidden)');
+                openModals.forEach(m => window.closeModal(m.id));
+            }
+        });
+    }
+</script>

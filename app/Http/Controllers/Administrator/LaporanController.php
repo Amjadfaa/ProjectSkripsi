@@ -58,25 +58,51 @@ class LaporanController extends Controller
             $distribusiInstansi = $distribusiInstansiQuery;
         }
 
-        // Jika filter bulan spesifik dipilih, ambil daftar kartu pas detail untuk bulan tersebut
-        $detailKartuPas = null;
-        if ($bulan !== 'all' && !empty($bulan)) {
-            $detailKartuPas = KartuPas::whereYear('tanggal_terbit', $tahun)
-                ->whereMonth('tanggal_terbit', (int)$bulan)
-                ->with('instansi')
-                ->latest('id')
-                ->paginate(50)
-                ->withQueryString();
-        }
-
         $namaBulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
+        $isBulanFilter = (!empty($bulan) && $bulan !== 'all');
+        $namaBulanSelected = $isBulanFilter && isset($namaBulanList[(int)$bulan]) ? $namaBulanList[(int)$bulan] : null;
+
+        // Ambil daftar kartu pas detail untuk periode terpilih (mendukung pencarian & filter status)
+        $detailQuery = KartuPas::whereYear('tanggal_terbit', $tahun)->with('instansi');
+        if ($isBulanFilter) {
+            $detailQuery->whereMonth('tanggal_terbit', (int)$bulan);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $detailQuery->where(function ($q) use ($search) {
+                $q->where('nomor_kartu', 'like', "%{$search}%")
+                  ->orWhere('nama_pemegang', 'like', "%{$search}%")
+                  ->orWhere('perusahaan', 'like', "%{$search}%")
+                  ->orWhere('jabatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            if (in_array($request->status, ['nonaktif', 'tidak_aktif'])) {
+                $detailQuery->whereIn('status', ['nonaktif', 'tidak_aktif']);
+            } else {
+                $detailQuery->where('status', $request->status);
+            }
+        }
+
+        $detailKartuPas = $detailQuery->latest('id')->paginate(15)->withQueryString();
+
+        // Respon partial via AJAX untuk paginasi SPA
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-SPA')) {
+            return view('administrator.laporan.partials.table', compact(
+                'detailKartuPas', 'tahun', 'bulan', 'isBulanFilter', 'namaBulanSelected',
+                'totalKartuTerbit', 'totalKartuAktif', 'totalKadaluarsa', 'totalNonaktif'
+            ));
+        }
+
         return view('administrator.laporan.index', compact(
-            'laporanKartu', 'tahun', 'bulan', 'tahunList', 'namaBulanList',
+            'laporanKartu', 'tahun', 'bulan', 'tahunList', 'namaBulanList', 'namaBulanSelected', 'isBulanFilter',
             'totalKartuTerbit', 'totalKartuAktif', 'totalKadaluarsa', 'totalNonaktif',
             'distribusiInstansi', 'detailKartuPas'
         ));
