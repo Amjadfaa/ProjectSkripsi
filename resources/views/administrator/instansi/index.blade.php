@@ -182,7 +182,7 @@
              icon="fas fa-building"
              iconColor="bg-blue-50 text-blue-600 border-blue-100"
              maxWidth="max-w-lg">
-        <form method="POST" action="{{ route('administrator.instansi.store') }}">
+        <form id="formTambahInstansi" method="POST" action="{{ route('administrator.instansi.store') }}">
             @csrf
             <div class="space-y-4">
                 <div>
@@ -228,18 +228,18 @@
                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs">{{ old('alamat') }}</textarea>
                 </div>
             </div>
-
-            <x-slot name="footer">
-                <button type="button" onclick="closeModal('modalTambahInstansi')"
-                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="submit"
-                        class="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 transition cursor-pointer">
-                    <i class="fas fa-save mr-1"></i> Simpan Instansi
-                </button>
-            </x-slot>
         </form>
+
+        <x-slot name="footer">
+            <button type="button" onclick="closeModal('modalTambahInstansi')"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                Batal
+            </button>
+            <button type="submit" form="formTambahInstansi"
+                    class="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center gap-1.5">
+                <i class="fas fa-save mr-1"></i> Simpan Instansi
+            </button>
+        </x-slot>
     </x-modal>
 
     {{-- 2. MODAL EDIT INSTANSI --}}
@@ -292,18 +292,18 @@
                               class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition shadow-2xs"></textarea>
                 </div>
             </div>
-
-            <x-slot name="footer">
-                <button type="button" onclick="closeModal('modalEditInstansi')"
-                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="submit"
-                        class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer">
-                    <i class="fas fa-check mr-1"></i> Simpan Perubahan
-                </button>
-            </x-slot>
         </form>
+
+        <x-slot name="footer">
+            <button type="button" onclick="closeModal('modalEditInstansi')"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                Batal
+            </button>
+            <button type="submit" form="formEditInstansi"
+                    class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer flex items-center gap-1.5">
+                <i class="fas fa-check mr-1"></i> Simpan Perubahan
+            </button>
+        </x-slot>
     </x-modal>
 
     {{-- 3. MODAL IMPORT INSTANSI --}}
@@ -313,7 +313,7 @@
              icon="fas fa-file-import"
              iconColor="bg-amber-50 text-amber-600 border-amber-100"
              maxWidth="max-w-xl">
-        <form method="POST" action="{{ route('administrator.instansi.import.excel') }}" enctype="multipart/form-data">
+        <form id="formImportInstansi" method="POST" action="{{ route('administrator.instansi.import.excel') }}" enctype="multipart/form-data">
             @csrf
             <div class="space-y-3.5">
                 <!-- Info Anti Duplikasi -->
@@ -383,18 +383,18 @@
                     </div>
                 </div>
             </div>
-
-            <x-slot name="footer">
-                <button type="button" onclick="closeModal('modalImportInstansi')"
-                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
-                    Batal
-                </button>
-                <button type="submit"
-                        class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer">
-                    <i class="fas fa-upload mr-1"></i> Import Sekarang
-                </button>
-            </x-slot>
         </form>
+
+        <x-slot name="footer">
+            <button type="button" onclick="closeModal('modalImportInstansi')"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200/90 shadow-2xs transition cursor-pointer">
+                Batal
+            </button>
+            <button type="submit" form="formImportInstansi"
+                    class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition cursor-pointer flex items-center gap-1.5">
+                <i class="fas fa-upload mr-1"></i> Import Sekarang
+            </button>
+        </x-slot>
     </x-modal>
 
     {{-- 4. REUSABLE MODAL DELETE --}}
@@ -462,6 +462,12 @@
                 openModals.forEach(m => closeModal(m.id));
             }
         });
+
+        @if($errors->any() && !old('_method'))
+        document.addEventListener('DOMContentLoaded', function() {
+            openModal('modalTambahInstansi');
+        });
+        @endif
 
         // ---------------------------------------------------------------------
         // SPA TABLE NAVIGATION & FILTERING

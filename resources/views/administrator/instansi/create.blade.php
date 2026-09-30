@@ -35,13 +35,12 @@
                 </div>
             </div>
 
-            <div>
+            <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-600 mb-1">Email Instansi</label>
                 <input type="email" name="email" value="{{ old('email') }}"
-                            placeholder="Email untuk notifikasi"
-                            class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                    @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                       placeholder="Email untuk notifikasi"
+                       class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
             <div class="mb-4">

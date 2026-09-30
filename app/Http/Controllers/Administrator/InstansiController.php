@@ -77,15 +77,24 @@ class InstansiController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'nama_instansi' => ['required', 'string', 'unique:instansis', 'max:255'],
+        $validated = $request->validate([
+            'nama_instansi' => ['required', 'string', 'unique:instansis,nama_instansi', 'max:255'],
             'alamat'        => ['nullable', 'string'],
             'telepon'       => ['nullable', 'string', 'max:20'],
             'email'         => ['nullable', 'email'],
             'kuota'         => ['nullable', 'integer', 'min:0'],
+            'is_active'     => ['nullable', 'boolean'],
         ]);
 
-        Instansi::create($request->all());
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = 1;
+        }
+
+        if (!isset($validated['kuota']) || $validated['kuota'] === null) {
+            $validated['kuota'] = 0;
+        }
+
+        Instansi::create($validated);
 
         return redirect()->route('administrator.instansi.index')
             ->with('success', 'Instansi berhasil ditambahkan.');
@@ -101,7 +110,7 @@ class InstansiController extends Controller
     {
         $instansi = Instansi::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'nama_instansi' => ['required', 'string', 'unique:instansis,nama_instansi,' . $id, 'max:255'],
             'alamat'        => ['nullable', 'string'],
             'telepon'       => ['nullable', 'string', 'max:20'],
@@ -110,7 +119,11 @@ class InstansiController extends Controller
             'is_active'     => ['required'],
         ]);
 
-        $instansi->update($request->all());
+        if (!isset($validated['kuota']) || $validated['kuota'] === null) {
+            $validated['kuota'] = 0;
+        }
+
+        $instansi->update($validated);
 
         return redirect()->route('administrator.instansi.index')
             ->with('success', 'Instansi berhasil diupdate.');

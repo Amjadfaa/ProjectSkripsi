@@ -88,4 +88,58 @@ class InstansiExportImportTest extends TestCase
         $this->assertEquals(15, $radar->kuota);
         $this->assertEquals('radar@test.com', $radar->email);
     }
+
+    public function test_store_instansi_creates_record_and_redirects(): void
+    {
+        $payload = [
+            'nama_instansi' => 'PT Garuda Indonesia Baru',
+            'kuota'         => 25,
+            'is_active'     => 1,
+            'email'         => 'garuda@test.com',
+            'telepon'       => '081234567890',
+            'alamat'        => 'Bandara Mopah Merauke',
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('administrator.instansi.store'), $payload);
+
+        $response->assertRedirect(route('administrator.instansi.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('instansis', [
+            'nama_instansi' => 'PT Garuda Indonesia Baru',
+            'kuota'         => 25,
+            'is_active'     => 1,
+            'email'         => 'garuda@test.com',
+        ]);
+    }
+
+    public function test_update_instansi_updates_record_and_redirects(): void
+    {
+        $instansi = Instansi::create([
+            'nama_instansi' => 'PT Lion Air Lama',
+            'kuota'         => 10,
+            'is_active'     => 1,
+        ]);
+
+        $payload = [
+            'nama_instansi' => 'PT Lion Air Diperbarui',
+            'kuota'         => 30,
+            'is_active'     => 1,
+            'email'         => 'lion@test.com',
+            'telepon'       => '08987654321',
+            'alamat'        => 'Terminal Keberangkatan',
+        ];
+
+        $response = $this->actingAs($this->admin)->put(route('administrator.instansi.update', $instansi->id), $payload);
+
+        $response->assertRedirect(route('administrator.instansi.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('instansis', [
+            'id'            => $instansi->id,
+            'nama_instansi' => 'PT Lion Air Diperbarui',
+            'kuota'         => 30,
+            'email'         => 'lion@test.com',
+        ]);
+    }
 }
