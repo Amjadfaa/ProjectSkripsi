@@ -35,6 +35,20 @@ class KartuPas extends Model
     protected static function booted()
     {
         static::saving(function ($kartu) {
+            // Normalisasi area_akses ke format per huruf dipisah koma (contoh: 'ABC' -> 'A, B, C')
+            if (isset($kartu->area_akses)) {
+                $kartu->area_akses = self::normalizeAreaAkses($kartu->area_akses);
+            }
+
+            // Daftarkan jabatan baru ke tabel master Jabatan jika belum ada
+            if (!empty($kartu->jabatan) && trim($kartu->jabatan) !== '-') {
+                try {
+                    \App\Models\Jabatan::firstOrCreate(['nama_jabatan' => trim($kartu->jabatan)]);
+                } catch (\Throwable $t) {
+                    // Abaikan jika tabel jabatan belum siap/migrasi
+                }
+            }
+
             // Sinkronisasi otomatis instansi_id berdasarkan perusahaan
             if (empty($kartu->instansi_id) && !empty($kartu->perusahaan)) {
                 $instansi = Instansi::whereRaw('TRIM(LOWER(nama_instansi)) = ?', [strtolower(trim($kartu->perusahaan))])->first();
@@ -50,6 +64,66 @@ class KartuPas extends Model
                 }
             }
         });
+    }
+
+    /**
+     * Normalisasi string atau array area akses ke format huruf kapital dipisah koma dan spasi
+     * Contoh: 'ABC' => 'A, B, C', ['A', 'B'] => 'A, B', 'ABCV' => 'A, B, C, V'
+     */
+    public static function normalizeAreaAkses($value): string
+    {
+        if (is_array($value)) {
+            $letters = [];
+            foreach ($value as $item) {
+                $item = strtoupper(trim((string)$item));
+                if (str_contains($item, ',')) {
+                    foreach (explode(',', $item) as $part) {
+                        $p = trim($part);
+                        if ($p !== '') $letters = array_merge($letters, str_split($p));
+                    }
+                } else {
+                    $clean = preg_replace('/[^A-Z0-9]/', '', $item);
+                    if ($clean !== '') {
+                        $letters = array_merge($letters, str_split($clean));
+                    }
+                }
+            }
+            return implode(', ', array_values(array_unique(array_filter($letters))));
+        }
+
+        if (empty($value)) return '';
+
+        $str = strtoupper(trim((string)$value));
+
+        if (str_contains($str, ',')) {
+            $parts = array_filter(array_map('trim', explode(',', $str)));
+            $letters = [];
+            foreach ($parts as $part) {
+                $clean = preg_replace('/[^A-Z0-9]/', '', $part);
+                if (strlen($clean) > 1) {
+                    $letters = array_merge($letters, str_split($clean));
+                } elseif ($clean !== '') {
+                    $letters[] = $clean;
+                }
+            }
+            return implode(', ', array_values(array_unique($letters)));
+        }
+
+        preg_match_all('/[A-Z0-9]/', $str, $matches);
+        if (!empty($matches[0])) {
+            return implode(', ', array_values(array_unique($matches[0])));
+        }
+
+        return $str;
+    }
+
+    /**
+     * Daftar area akses dalam bentuk array
+     */
+    public function getAreaAksesListAttribute(): array
+    {
+        if (empty($this->area_akses)) return [];
+        return array_filter(array_map('trim', explode(',', $this->area_akses)));
     }
 
     // Relasi ke Instansi

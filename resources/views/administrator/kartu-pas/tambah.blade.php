@@ -34,18 +34,84 @@
             </div>
 
             <div class="mb-4">
-                <label class="block font-medium text-gray-700">Instansi / Perusahaan</label>
-                <select name="instansi_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                    <option value="">-- Pilih Instansi --</option>
-                    @foreach($instansiList as $instansi)
-                        @php $sisa = $instansi->sisa_kuota; @endphp
-                        <option value="{{ $instansi->id }}"
-                            {{ old('instansi_id') == $instansi->id ? 'selected' : '' }}
-                            {{ $sisa <= 0 ? 'disabled' : '' }}>
-                            {{ $instansi->nama_instansi }} &mdash; (Sisa Kuota: {{ $sisa }} / Total: {{ $instansi->kuota }}) {{ $sisa <= 0 ? '[KUOTA HABIS]' : '' }}
-                        </option>
-                    @endforeach
-                </select>
+                <label class="block font-medium text-gray-700 mb-1">Instansi / Perusahaan</label>
+                <div class="relative searchable-dropdown-wrapper" id="containerTambahInstansi">
+                    <select name="instansi_id" id="tambah_instansi_id" class="hidden" required>
+                        <option value="">-- Pilih Instansi --</option>
+                        @foreach($instansiList as $instansi)
+                            @php $sisa = $instansi->sisa_kuota; @endphp
+                            <option value="{{ $instansi->id }}"
+                                {{ old('instansi_id') == $instansi->id ? 'selected' : '' }}
+                                {{ $sisa <= 0 ? 'disabled' : '' }}>
+                                {{ $instansi->nama_instansi }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <button type="button" 
+                            data-dropdown-target="dropdownTambahInstansi"
+                            onclick="toggleSearchableDropdown('dropdownTambahInstansi')"
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer flex items-center justify-between gap-2 hover:border-gray-400">
+                        <div class="flex items-center gap-2 min-w-0 pr-1">
+                            <i class="fas fa-building text-gray-400 text-sm shrink-0"></i>
+                            <span class="dropdown-selected-label truncate font-medium text-gray-700">
+                                @php
+                                    $selectedInstansi = old('instansi_id') ? $instansiList->firstWhere('id', old('instansi_id')) : null;
+                                @endphp
+                                {{ $selectedInstansi ? $selectedInstansi->nama_instansi : '-- Pilih Instansi --' }}
+                            </span>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 text-xs shrink-0 dropdown-chevron transition-transform duration-200"></i>
+                    </button>
+
+                    <div id="dropdownTambahInstansi" 
+                         class="searchable-dropdown-menu absolute left-0 top-full mt-1.5 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 p-2.5 hidden animate-dropdown-fade">
+                        <div class="searchable-input-box mb-2">
+                            <i class="fas fa-search searchable-search-icon"></i>
+                            <input type="text" 
+                                   oninput="filterSearchableOptions('dropdownTambahInstansi', this.value)"
+                                   placeholder="Cari nama instansi..." 
+                                   autocomplete="off"
+                                   class="searchable-input"
+                                   style="padding-left: 2.25rem !important; padding-right: 2rem !important;">
+                            <button type="button" 
+                                    onclick="clearSearchableInput('dropdownTambahInstansi')"
+                                    class="searchable-clear-btn hidden"
+                                    title="Hapus pencarian">
+                                <i class="fas fa-times-circle text-xs"></i>
+                            </button>
+                        </div>
+                        <div class="searchable-list-scroll space-y-0.5" id="listTambahInstansi">
+                            @foreach($instansiList as $instansi)
+                                @php 
+                                    $sisa = $instansi->sisa_kuota; 
+                                    $isHabis = ($sisa <= 0); 
+                                    $isSelected = old('instansi_id') == $instansi->id;
+                                @endphp
+                                <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition {{ $isHabis ? 'opacity-50 cursor-not-allowed bg-slate-50/50' : 'cursor-pointer hover:bg-slate-50' }} {{ $isSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700' }}"
+                                     data-value="{{ $instansi->id }}"
+                                     data-search-text="{{ $instansi->nama_instansi }}"
+                                     data-display-name="{{ $instansi->nama_instansi }}"
+                                     @if(!$isHabis) onclick="selectSearchableOption('tambah_instansi_id', '{{ $instansi->id }}', '{{ addslashes($instansi->nama_instansi) }}', 'dropdownTambahInstansi')" @endif>
+                                    <div class="flex items-center gap-2 min-w-0 pr-2">
+                                        <i class="fas fa-building text-slate-400 text-xs shrink-0"></i>
+                                        <span class="truncate">{{ $instansi->nama_instansi }}</span>
+                                    </div>
+                                    <div class="shrink-0 text-[10px]">
+                                        @if($isHabis)
+                                            <span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-bold border border-rose-200/80">HABIS</span>
+                                        @else
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">Sisa: {{ $sisa }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                            <div class="searchable-empty py-4 text-center text-slate-400 text-xs hidden">
+                                <i class="fas fa-search-minus mr-1"></i> Tidak ada instansi yang cocok
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @error('instansi_id') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -78,15 +144,78 @@
                 <!-- Jabatan Dropdown & Modal Button -->
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Jabatan</label>
-                    <div class="flex gap-1.5">
-                        <select name="jabatan" id="select_jabatan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                            <option value="">-- Pilih Jabatan --</option>
-                            @foreach($jabatanList as $jbt)
-                                <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ old('jabatan') == $jbt->nama_jabatan ? 'selected' : '' }}>
-                                    {{ $jbt->nama_jabatan }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <div class="flex gap-1.5 items-center">
+                        <div class="relative searchable-dropdown-wrapper flex-1" id="containerTambahJabatan">
+                            <select name="jabatan" id="select_jabatan" class="hidden">
+                                <option value="">-- Pilih Jabatan --</option>
+                                @foreach($jabatanList as $jbt)
+                                    <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ old('jabatan') == $jbt->nama_jabatan ? 'selected' : '' }}>
+                                        {{ $jbt->nama_jabatan }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <button type="button" 
+                                    data-dropdown-target="dropdownTambahJabatan"
+                                    onclick="toggleSearchableDropdown('dropdownTambahJabatan')"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer flex items-center justify-between gap-2 hover:border-gray-400">
+                                <div class="flex items-center gap-2 min-w-0 pr-1">
+                                    <i class="fas fa-briefcase text-gray-400 text-xs shrink-0"></i>
+                                    <span class="dropdown-selected-label truncate font-medium text-gray-700">
+                                        {{ old('jabatan') ? old('jabatan') : '-- Pilih Jabatan --' }}
+                                    </span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs shrink-0 dropdown-chevron transition-transform duration-200"></i>
+                            </button>
+
+                            <div id="dropdownTambahJabatan" 
+                                 class="searchable-dropdown-menu absolute left-0 top-full mt-1.5 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 p-2.5 hidden animate-dropdown-fade">
+                                <div class="searchable-input-box mb-2">
+                                    <i class="fas fa-search searchable-search-icon"></i>
+                                    <input type="text" 
+                                           oninput="filterSearchableOptions('dropdownTambahJabatan', this.value)"
+                                           placeholder="Cari nama jabatan..." 
+                                           autocomplete="off"
+                                           class="searchable-input"
+                                           style="padding-left: 2.25rem !important; padding-right: 2rem !important;">
+                                    <button type="button" 
+                                            onclick="clearSearchableInput('dropdownTambahJabatan')"
+                                            class="searchable-clear-btn hidden"
+                                            title="Hapus pencarian">
+                                        <i class="fas fa-times-circle text-xs"></i>
+                                    </button>
+                                </div>
+                                <div class="searchable-list-scroll space-y-0.5" id="listTambahJabatan">
+                                    <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition text-slate-700 hover:bg-slate-50"
+                                         data-value=""
+                                         data-search-text="-- pilih jabatan -- kosong reset"
+                                         data-display-name="-- Pilih Jabatan --"
+                                         onclick="selectSearchableOption('select_jabatan', '', '-- Pilih Jabatan --', 'dropdownTambahJabatan')">
+                                        <span class="text-slate-400 italic">-- Pilih Jabatan --</span>
+                                    </div>
+                                    @foreach($jabatanList as $jbt)
+                                        @php $isJbtSelected = (old('jabatan') == $jbt->nama_jabatan); @endphp
+                                        <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition {{ $isJbtSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}"
+                                             data-value="{{ $jbt->nama_jabatan }}"
+                                             data-search-text="{{ $jbt->nama_jabatan }}"
+                                             data-display-name="{{ $jbt->nama_jabatan }}"
+                                             onclick="selectSearchableOption('select_jabatan', '{{ addslashes($jbt->nama_jabatan) }}', '{{ addslashes($jbt->nama_jabatan) }}', 'dropdownTambahJabatan')">
+                                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                                <i class="fas fa-briefcase text-slate-400 text-xs shrink-0"></i>
+                                                <span class="truncate">{{ $jbt->nama_jabatan }}</span>
+                                            </div>
+                                            @if($isJbtSelected)
+                                                <i class="fas fa-check text-blue-600 text-xs shrink-0 check-icon"></i>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                    <div class="searchable-empty py-4 text-center text-slate-400 text-xs hidden">
+                                        <i class="fas fa-search-minus mr-1"></i> Tidak ada jabatan yang cocok
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <button type="button" onclick="openModalJabatan()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded-lg text-sm flex items-center justify-center shrink-0 shadow-sm" title="Kelola / Tambah Jabatan">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -368,6 +497,28 @@
                     opt.selected = true;
                     select.appendChild(opt);
 
+                    // Add to searchable list
+                    const sList = document.getElementById('listTambahJabatan');
+                    if (sList) {
+                        const optDiv = document.createElement('div');
+                        optDiv.className = 'searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition text-slate-700 hover:bg-slate-50';
+                        optDiv.setAttribute('data-value', result.data.value);
+                        optDiv.setAttribute('data-search-text', result.data.label);
+                        optDiv.setAttribute('data-display-name', result.data.label);
+                        optDiv.onclick = function() {
+                            selectSearchableOption('select_jabatan', result.data.value, result.data.label, 'dropdownTambahJabatan');
+                        };
+                        optDiv.innerHTML = `
+                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                <i class="fas fa-briefcase text-slate-400 text-xs shrink-0"></i>
+                                <span class="truncate">${result.data.label}</span>
+                            </div>
+                        `;
+                        sList.appendChild(optDiv);
+                        // Auto-select newly created
+                        selectSearchableOption('select_jabatan', result.data.value, result.data.label, 'dropdownTambahJabatan');
+                    }
+
                     // Update Modal List
                     const list = document.getElementById('modal_jabatan_list');
                     const itemDiv = document.createElement('div');
@@ -419,6 +570,17 @@
                             select.remove(i);
                             break;
                         }
+                    }
+
+                    // Remove from Searchable list
+                    const sList = document.getElementById('listTambahJabatan');
+                    if (sList) {
+                        sList.querySelectorAll(`.searchable-option[data-value="${nama}"]`).forEach(el => el.remove());
+                    }
+                    if (select.value === nama || !select.value) {
+                        select.value = '';
+                        const triggerLabel = document.querySelector('[data-dropdown-target="dropdownTambahJabatan"] .dropdown-selected-label');
+                        if (triggerLabel) triggerLabel.textContent = '-- Pilih Jabatan --';
                     }
                 } else {
                     alert(result.message || 'Gagal menghapus jabatan');

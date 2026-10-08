@@ -177,12 +177,14 @@ class TemplateKartu extends Model
         $targetAreas = [];
 
         if ($kartuOrAreas instanceof KartuPas) {
-            $raw = $kartuOrAreas->area_akses ?? '';
+            $raw = KartuPas::normalizeAreaAkses($kartuOrAreas->area_akses ?? '');
             $targetAreas = array_filter(array_map('trim', explode(',', $raw)));
         } elseif (is_string($kartuOrAreas)) {
-            $targetAreas = array_filter(array_map('trim', explode(',', $kartuOrAreas)));
+            $raw = KartuPas::normalizeAreaAkses($kartuOrAreas);
+            $targetAreas = array_filter(array_map('trim', explode(',', $raw)));
         } elseif (is_array($kartuOrAreas)) {
-            $targetAreas = array_filter(array_map('trim', $kartuOrAreas));
+            $raw = KartuPas::normalizeAreaAkses($kartuOrAreas);
+            $targetAreas = array_filter(array_map('trim', explode(',', $raw)));
         }
 
         $targetAreas = array_map('strtoupper', $targetAreas);

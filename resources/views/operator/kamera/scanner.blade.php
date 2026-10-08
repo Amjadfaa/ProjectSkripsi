@@ -3,8 +3,9 @@
         Terminal Scanner QR — {{ $device->nama_kamera }}
     </x-slot>
 
-    <!-- html5-qrcode library for webcam QR scanning -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Ultra-Fast QR Scanner Libraries: html5-qrcode & jsQR -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" type="text/javascript"></script>
 
     <style>
         @keyframes scanline {
@@ -114,15 +115,24 @@
 
                 <!-- Webcam Card -->
                 <div class="bg-slate-950 rounded-3xl border border-slate-800 p-4 sm:p-5 shadow-2xl overflow-hidden text-white">
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                             <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Live Camera Stream</h3>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                <i class="fas fa-bolt text-[9px]"></i> Turbo Engine
+                            </span>
                         </div>
-                        <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
-                                class="text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 shadow-md">
-                            <i class="fas fa-camera"></i> <span id="btnText">Nyalakan Kamera</span>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <select id="cameraSelect" onchange="onCameraChange()" 
+                                    class="hidden bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 cursor-pointer max-w-[160px] truncate"
+                                    title="Pilih Perangkat Kamera">
+                            </select>
+                            <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
+                                    class="text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 shadow-md cursor-pointer">
+                                <i class="fas fa-camera"></i> <span id="btnText">Nyalakan Kamera</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Viewfinder Area -->
@@ -132,6 +142,13 @@
                         <div class="absolute top-3 right-3 w-7 h-7 border-t-2 border-r-2 border-amber-400 rounded-tr pointer-events-none z-10 shadow-sm"></div>
                         <div class="absolute bottom-3 left-3 w-7 h-7 border-b-2 border-l-2 border-amber-400 rounded-bl pointer-events-none z-10 shadow-sm"></div>
                         <div class="absolute bottom-3 right-3 w-7 h-7 border-b-2 border-r-2 border-amber-400 rounded-br pointer-events-none z-10 shadow-sm"></div>
+
+                        <!-- Scan Success Flash Feedback -->
+                        <div id="scanSuccessFlash" class="hidden absolute inset-0 bg-emerald-500/30 z-30 pointer-events-none transition-opacity duration-200 flex items-center justify-center">
+                            <div class="bg-emerald-600/90 text-white font-black text-xs px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-pulse">
+                                <i class="fas fa-check-circle"></i> QR TERBACA
+                            </div>
+                        </div>
 
                         <!-- Animated Scanline Laser Beam (active when webcam running) -->
                         <div id="scanlineBeam" class="hidden absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_#34d399] z-20 scanline-beam pointer-events-none"></div>
@@ -471,6 +488,63 @@
         let isProcessing = false;
         let audioEnabled = true;
 
+        // Ultra-Fast Turbo Scanner State (Multi-Engine Pipeline)
+        let turboScanActive = false;
+        let turboCanvas = null;
+        let turboCtx = null;
+        let nativeBarcodeDetector = null;
+        let availableCameras = [];
+        let selectedCameraId = localStorage.getItem('monpasku_selected_camera') || null;
+
+        // Initialize Native Hardware BarcodeDetector if supported in Chromium
+        if ('BarcodeDetector' in window) {
+            try {
+                nativeBarcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+            } catch(e) {
+                nativeBarcodeDetector = null;
+            }
+        }
+
+        async function initCameraList() {
+            try {
+                if (typeof Html5Qrcode !== 'undefined' && Html5Qrcode.getCameras) {
+                    const devices = await Html5Qrcode.getCameras();
+                    if (devices && devices.length > 0) {
+                        availableCameras = devices;
+                        const select = document.getElementById('cameraSelect');
+                        if (select) {
+                            select.innerHTML = '';
+                            devices.forEach((d, idx) => {
+                                const opt = document.createElement('option');
+                                opt.value = d.id;
+                                opt.textContent = d.label || `Kamera ${idx + 1}`;
+                                if (selectedCameraId && d.id === selectedCameraId) {
+                                    opt.selected = true;
+                                }
+                                select.appendChild(opt);
+                            });
+                            if (devices.length > 1) {
+                                select.classList.remove('hidden');
+                            }
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+        window.addEventListener('DOMContentLoaded', initCameraList);
+
+        function onCameraChange() {
+            const select = document.getElementById('cameraSelect');
+            if (select && select.value) {
+                selectedCameraId = select.value;
+                localStorage.setItem('monpasku_selected_camera', selectedCameraId);
+                if (isWebcamRunning) {
+                    toggleWebcam();
+                    setTimeout(() => toggleWebcam(), 300);
+                }
+            }
+        }
+
         // Web Audio API Beep Synthesizer
         let audioCtx = null;
         function getAudioContext() {
@@ -558,6 +632,94 @@
             }
         }
 
+        // ---------------------------------------------------------------------
+        // Turbo Scanning Loop (High-speed Native BarcodeDetector + jsQR)
+        // ---------------------------------------------------------------------
+        function startTurboScanner(videoEl) {
+            if (!videoEl) return;
+            turboScanActive = true;
+
+            if (!turboCanvas) {
+                turboCanvas = document.createElement('canvas');
+                turboCtx = turboCanvas.getContext('2d', { willReadFrequently: true });
+            }
+
+            let lastScanTime = 0;
+            const scanIntervalMs = 50; // ~20 checks per second for instantaneous reaction
+            let failureStreak = 0;
+
+            async function scanFrame(timestamp) {
+                if (!turboScanActive || !isWebcamRunning) return;
+
+                if (videoEl.readyState >= 2 && !isProcessing && (timestamp - lastScanTime >= scanIntervalMs)) {
+                    lastScanTime = timestamp;
+
+                    const vw = videoEl.videoWidth;
+                    const vh = videoEl.videoHeight;
+
+                    if (vw > 0 && vh > 0) {
+                        let detectedCode = null;
+
+                        // Priority 1: Native Hardware BarcodeDetector (Fastest ~1-3ms)
+                        if (nativeBarcodeDetector) {
+                            try {
+                                const barcodes = await nativeBarcodeDetector.detect(videoEl);
+                                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                                    detectedCode = barcodes[0].rawValue.trim();
+                                }
+                            } catch(e) {}
+                        }
+
+                        // Priority 2: Ultra-Fast jsQR Engine (~8-15ms)
+                        if (!detectedCode && typeof jsQR === 'function') {
+                            let targetW = vw;
+                            let targetH = vh;
+                            if (vw > 800) {
+                                const scale = 800 / vw;
+                                targetW = 800;
+                                targetH = Math.round(vh * scale);
+                            }
+
+                            if (turboCanvas.width !== targetW || turboCanvas.height !== targetH) {
+                                turboCanvas.width = targetW;
+                                turboCanvas.height = targetH;
+                            }
+
+                            turboCtx.drawImage(videoEl, 0, 0, targetW, targetH);
+                            const imgData = turboCtx.getImageData(0, 0, targetW, targetH);
+                            
+                            // Check dontInvert normally, or attemptBoth if streak of no detection (handles glare/contrast)
+                            const attemptMode = (failureStreak > 6) ? "attemptBoth" : "dontInvert";
+                            const res = jsQR(imgData.data, targetW, targetH, {
+                                inversionAttempts: attemptMode
+                            });
+
+                            if (res && res.data) {
+                                detectedCode = res.data.trim();
+                                failureStreak = 0;
+                            } else {
+                                failureStreak++;
+                            }
+                        }
+
+                        if (detectedCode && !isProcessing) {
+                            processQrCode(detectedCode);
+                        }
+                    }
+                }
+
+                if (turboScanActive && isWebcamRunning) {
+                    requestAnimationFrame(scanFrame);
+                }
+            }
+
+            requestAnimationFrame(scanFrame);
+        }
+
+        function stopTurboScanner() {
+            turboScanActive = false;
+        }
+
         function toggleWebcam() {
             const btnText = document.getElementById('btnText');
             const placeholder = document.getElementById('scannerPlaceholder');
@@ -565,28 +727,63 @@
             const scanline = document.getElementById('scanlineBeam');
 
             if (isWebcamRunning) {
+                stopTurboScanner();
                 if (html5QrcodeScanner) {
                     html5QrcodeScanner.stop().then(() => {
                         isWebcamRunning = false;
                         btnText.innerText = 'Nyalakan Kamera';
                         readerEl.classList.add('hidden');
+                        readerEl.innerHTML = '';
                         placeholder.classList.remove('hidden');
                         scanline.classList.add('hidden');
-                    }).catch(err => console.error(err));
+                    }).catch(err => {
+                        isWebcamRunning = false;
+                        btnText.innerText = 'Nyalakan Kamera';
+                        readerEl.classList.add('hidden');
+                        readerEl.innerHTML = '';
+                        placeholder.classList.remove('hidden');
+                        scanline.classList.add('hidden');
+                    });
+                } else {
+                    isWebcamRunning = false;
+                    btnText.innerText = 'Nyalakan Kamera';
+                    readerEl.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                    scanline.classList.add('hidden');
                 }
             } else {
                 placeholder.classList.add('hidden');
                 readerEl.classList.remove('hidden');
                 scanline.classList.remove('hidden');
 
-                html5QrcodeScanner = new Html5Qrcode("reader");
+                const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
+                    ? [ Html5QrcodeSupportedFormats.QR_CODE ]
+                    : [];
+
+                // Initialize Html5Qrcode exclusively for QR code with native barcode detector support
+                html5QrcodeScanner = new Html5Qrcode("reader", {
+                    formatsToSupport: formatsToSupport,
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    },
+                    verbose: false
+                });
+
+                const cameraConfig = selectedCameraId 
+                    ? { deviceId: { exact: selectedCameraId } }
+                    : { 
+                        facingMode: "environment",
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 }
+                      };
+
+                // Optimal 15 FPS: Prevents event-loop blockage; NO qrbox means 100% full-frame uncropped scanning
                 const scanConfig = { 
-                    fps: 30, 
-                    qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.85) })
+                    fps: 15
                 };
 
                 html5QrcodeScanner.start(
-                    { facingMode: "environment" },
+                    cameraConfig,
                     scanConfig,
                     (decodedText) => {
                         if (!isProcessing) {
@@ -597,6 +794,17 @@
                 ).then(() => {
                     isWebcamRunning = true;
                     btnText.innerText = 'Matikan Kamera';
+
+                    // Attach Turbo Scanner to active video stream
+                    setTimeout(() => {
+                        const videoEl = document.querySelector('#reader video');
+                        if (videoEl) {
+                            videoEl.style.objectFit = 'cover';
+                            startTurboScanner(videoEl);
+                        }
+                    }, 200);
+
+                    initCameraList();
                 }).catch(err => {
                     alert('Gagal membuka kamera webcam: ' + err);
                     readerEl.classList.add('hidden');
@@ -609,6 +817,13 @@
         async function processQrCode(qrData) {
             if (isProcessing) return;
             isProcessing = true;
+
+            // Instant visual scan flash feedback
+            const flash = document.getElementById('scanSuccessFlash');
+            if (flash) {
+                flash.classList.remove('hidden');
+                setTimeout(() => flash.classList.add('hidden'), 250);
+            }
 
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -635,7 +850,7 @@
                 setTimeout(() => {
                     isProcessing = false;
                     qrInput?.focus();
-                }, 1500);
+                }, 1200);
             }
         }
 

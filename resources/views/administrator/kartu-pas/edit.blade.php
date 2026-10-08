@@ -36,17 +36,91 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-600 mb-1">Instansi / Perusahaan</label>
-                <select name="instansi_id" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                    <option value="">-- Pilih Instansi --</option>
-                    @foreach($instansiList as $instansi)
-                        @php $sisa = $instansi->sisa_kuota; @endphp
-                        <option value="{{ $instansi->id }}"
-                            {{ old('instansi_id', $kartuPas->instansi_id) == $instansi->id || old('perusahaan', $kartuPas->perusahaan) == $instansi->nama_instansi ? 'selected' : '' }}
-                            {{ $sisa <= 0 && $kartuPas->instansi_id != $instansi->id ? 'disabled' : '' }}>
-                            {{ $instansi->nama_instansi }} &mdash; (Sisa Kuota: {{ $sisa }} / Total: {{ $instansi->kuota }}) {{ $sisa <= 0 && $kartuPas->instansi_id != $instansi->id ? '[KUOTA HABIS]' : '' }}
-                        </option>
-                    @endforeach
-                </select>
+                <div class="relative searchable-dropdown-wrapper" id="containerEditInstansi">
+                    <select name="instansi_id" id="edit_instansi_id" class="hidden" required>
+                        <option value="">-- Pilih Instansi --</option>
+                        @foreach($instansiList as $instansi)
+                            @php $sisa = $instansi->sisa_kuota; @endphp
+                            <option value="{{ $instansi->id }}"
+                                {{ old('instansi_id', $kartuPas->instansi_id) == $instansi->id || old('perusahaan', $kartuPas->perusahaan) == $instansi->nama_instansi ? 'selected' : '' }}
+                                {{ $sisa <= 0 && $kartuPas->instansi_id != $instansi->id ? 'disabled' : '' }}>
+                                {{ $instansi->nama_instansi }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    @php
+                        $currInstId = old('instansi_id', $kartuPas->instansi_id);
+                        $currInstName = old('perusahaan', $kartuPas->perusahaan);
+                        $matchedInst = $instansiList->first(function($i) use ($currInstId, $currInstName) {
+                            return ($currInstId && $i->id == $currInstId) || ($currInstName && strtolower(trim($i->nama_instansi)) === strtolower(trim($currInstName)));
+                        });
+                        $selectedInstLabel = $matchedInst ? $matchedInst->nama_instansi : ($currInstName ?: '-- Pilih Instansi --');
+                        $selectedInstVal = $matchedInst ? $matchedInst->id : ($currInstId ?: '');
+                    @endphp
+
+                    <button type="button" 
+                            data-dropdown-target="dropdownEditInstansi"
+                            onclick="toggleSearchableDropdown('dropdownEditInstansi')"
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer flex items-center justify-between gap-2 hover:border-gray-400">
+                        <div class="flex items-center gap-2 min-w-0 pr-1">
+                            <i class="fas fa-building text-gray-400 text-sm shrink-0"></i>
+                            <span class="dropdown-selected-label truncate font-medium text-gray-700">
+                                {{ $selectedInstLabel }}
+                            </span>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 text-xs shrink-0 dropdown-chevron transition-transform duration-200"></i>
+                    </button>
+
+                    <div id="dropdownEditInstansi" 
+                         class="searchable-dropdown-menu absolute left-0 top-full mt-1.5 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 p-2.5 hidden animate-dropdown-fade">
+                        <div class="searchable-input-box mb-2">
+                            <i class="fas fa-search searchable-search-icon"></i>
+                            <input type="text" 
+                                   oninput="filterSearchableOptions('dropdownEditInstansi', this.value)"
+                                   placeholder="Cari nama instansi..." 
+                                   autocomplete="off"
+                                   class="searchable-input"
+                                   style="padding-left: 2.25rem !important; padding-right: 2rem !important;">
+                            <button type="button" 
+                                    onclick="clearSearchableInput('dropdownEditInstansi')"
+                                    class="searchable-clear-btn hidden"
+                                    title="Hapus pencarian">
+                                <i class="fas fa-times-circle text-xs"></i>
+                            </button>
+                        </div>
+                        <div class="searchable-list-scroll space-y-0.5" id="listEditInstansi">
+                            @foreach($instansiList as $instansi)
+                                @php 
+                                    $sisa = $instansi->sisa_kuota; 
+                                    $isCurrentCardInstansi = ($kartuPas->instansi_id == $instansi->id);
+                                    $isHabis = ($sisa <= 0 && !$isCurrentCardInstansi); 
+                                    $isSelected = ($selectedInstVal == $instansi->id);
+                                @endphp
+                                <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition {{ $isHabis ? 'opacity-50 cursor-not-allowed bg-slate-50/50' : 'cursor-pointer hover:bg-slate-50' }} {{ $isSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700' }}"
+                                     data-value="{{ $instansi->id }}"
+                                     data-search-text="{{ $instansi->nama_instansi }}"
+                                     data-display-name="{{ $instansi->nama_instansi }}"
+                                     @if(!$isHabis) onclick="selectSearchableOption('edit_instansi_id', '{{ $instansi->id }}', '{{ addslashes($instansi->nama_instansi) }}', 'dropdownEditInstansi')" @endif>
+                                    <div class="flex items-center gap-2 min-w-0 pr-2">
+                                        <i class="fas fa-building text-slate-400 text-xs shrink-0"></i>
+                                        <span class="truncate">{{ $instansi->nama_instansi }}</span>
+                                    </div>
+                                    <div class="shrink-0 text-[10px]">
+                                        @if($isHabis)
+                                            <span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-bold border border-rose-200/80">HABIS</span>
+                                        @else
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">Sisa: {{ $sisa }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                            <div class="searchable-empty py-4 text-center text-slate-400 text-xs hidden">
+                                <i class="fas fa-search-minus mr-1"></i> Tidak ada instansi yang cocok
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @error('instansi_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -63,7 +137,8 @@
                     </div>
                     <div class="border border-gray-300 rounded-lg p-2 max-h-40 overflow-y-auto bg-gray-50/50 space-y-1" id="select_area_akses">
                         @php
-                            $existingAreas = array_map('trim', explode(',', old('area_akses_str', $kartuPas->area_akses ?? '')));
+                            $normArea = \App\Models\KartuPas::normalizeAreaAkses(old('area_akses_str', $kartuPas->area_akses ?? ''));
+                            $existingAreas = array_map('trim', explode(',', $normArea));
                         @endphp
                         @foreach($areaAksesList as $area)
                             @php $labelFormatted = $area->kode . ': ' . $area->keterangan; @endphp
@@ -82,18 +157,98 @@
                 <!-- Jabatan Dropdown & Modal Button -->
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Jabatan</label>
-                    <div class="flex gap-1.5">
-                        <select name="jabatan" id="select_jabatan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
-                            <option value="">-- Pilih Jabatan --</option>
-                            @foreach($jabatanList as $jbt)
-                                <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ old('jabatan', $kartuPas->jabatan) == $jbt->nama_jabatan ? 'selected' : '' }}>
-                                    {{ $jbt->nama_jabatan }}
-                                </option>
-                            @endforeach
-                            @if(!in_array(old('jabatan', $kartuPas->jabatan), $jabatanList->pluck('nama_jabatan')->toArray()) && $kartuPas->jabatan)
-                                <option value="{{ $kartuPas->jabatan }}" selected>{{ $kartuPas->jabatan }}</option>
-                            @endif
-                        </select>
+                    <div class="flex gap-1.5 items-center">
+                        <div class="relative searchable-dropdown-wrapper flex-1" id="containerEditJabatan">
+                            @php
+                                $currentJabatanVal = old('jabatan', $kartuPas->jabatan);
+                            @endphp
+                            <select name="jabatan" id="select_jabatan" class="hidden">
+                                <option value="">-- Pilih Jabatan --</option>
+                                @foreach($jabatanList as $jbt)
+                                    <option value="{{ $jbt->nama_jabatan }}" data-id="{{ $jbt->id }}" {{ $currentJabatanVal == $jbt->nama_jabatan ? 'selected' : '' }}>
+                                        {{ $jbt->nama_jabatan }}
+                                    </option>
+                                @endforeach
+                                @if(!in_array($currentJabatanVal, $jabatanList->pluck('nama_jabatan')->toArray()) && $currentJabatanVal)
+                                    <option value="{{ $currentJabatanVal }}" selected>{{ $currentJabatanVal }}</option>
+                                @endif
+                            </select>
+
+                            <button type="button" 
+                                    data-dropdown-target="dropdownEditJabatan"
+                                    onclick="toggleSearchableDropdown('dropdownEditJabatan')"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer flex items-center justify-between gap-2 hover:border-gray-400">
+                                <div class="flex items-center gap-2 min-w-0 pr-1">
+                                    <i class="fas fa-briefcase text-gray-400 text-xs shrink-0"></i>
+                                    <span class="dropdown-selected-label truncate font-medium text-gray-700">
+                                        {{ $currentJabatanVal ?: '-- Pilih Jabatan --' }}
+                                    </span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs shrink-0 dropdown-chevron transition-transform duration-200"></i>
+                            </button>
+
+                            <div id="dropdownEditJabatan" 
+                                 class="searchable-dropdown-menu absolute left-0 top-full mt-1.5 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 p-2.5 hidden animate-dropdown-fade">
+                                <div class="searchable-input-box mb-2">
+                                    <i class="fas fa-search searchable-search-icon"></i>
+                                    <input type="text" 
+                                           oninput="filterSearchableOptions('dropdownEditJabatan', this.value)"
+                                           placeholder="Cari nama jabatan..." 
+                                           autocomplete="off"
+                                           class="searchable-input"
+                                           style="padding-left: 2.25rem !important; padding-right: 2rem !important;">
+                                    <button type="button" 
+                                            onclick="clearSearchableInput('dropdownEditJabatan')"
+                                            class="searchable-clear-btn hidden"
+                                            title="Hapus pencarian">
+                                        <i class="fas fa-times-circle text-xs"></i>
+                                    </button>
+                                </div>
+                                <div class="searchable-list-scroll space-y-0.5" id="listEditJabatan">
+                                    <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition text-slate-700 hover:bg-slate-50"
+                                         data-value=""
+                                         data-search-text="-- pilih jabatan -- kosong reset"
+                                         data-display-name="-- Pilih Jabatan --"
+                                         onclick="selectSearchableOption('select_jabatan', '', '-- Pilih Jabatan --', 'dropdownEditJabatan')">
+                                        <span class="text-slate-400 italic">-- Pilih Jabatan --</span>
+                                    </div>
+                                    @php $hasCustomJbt = !empty($currentJabatanVal) && !in_array($currentJabatanVal, $jabatanList->pluck('nama_jabatan')->toArray()); @endphp
+                                    @if($hasCustomJbt)
+                                        <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition bg-blue-50 text-blue-700 font-bold"
+                                             data-value="{{ $currentJabatanVal }}"
+                                             data-search-text="{{ $currentJabatanVal }}"
+                                             data-display-name="{{ $currentJabatanVal }}"
+                                             onclick="selectSearchableOption('select_jabatan', '{{ addslashes($currentJabatanVal) }}', '{{ addslashes($currentJabatanVal) }}', 'dropdownEditJabatan')">
+                                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                                <i class="fas fa-briefcase text-slate-400 text-xs shrink-0"></i>
+                                                <span class="truncate">{{ $currentJabatanVal }}</span>
+                                            </div>
+                                            <i class="fas fa-check text-blue-600 text-xs shrink-0 check-icon"></i>
+                                        </div>
+                                    @endif
+                                    @foreach($jabatanList as $jbt)
+                                        @php $isJbtSelected = ($currentJabatanVal == $jbt->nama_jabatan); @endphp
+                                        <div class="searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition {{ $isJbtSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700 hover:bg-slate-50' }}"
+                                             data-value="{{ $jbt->nama_jabatan }}"
+                                             data-search-text="{{ $jbt->nama_jabatan }}"
+                                             data-display-name="{{ $jbt->nama_jabatan }}"
+                                             onclick="selectSearchableOption('select_jabatan', '{{ addslashes($jbt->nama_jabatan) }}', '{{ addslashes($jbt->nama_jabatan) }}', 'dropdownEditJabatan')">
+                                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                                <i class="fas fa-briefcase text-slate-400 text-xs shrink-0"></i>
+                                                <span class="truncate">{{ $jbt->nama_jabatan }}</span>
+                                            </div>
+                                            @if($isJbtSelected)
+                                                <i class="fas fa-check text-blue-600 text-xs shrink-0 check-icon"></i>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                    <div class="searchable-empty py-4 text-center text-slate-400 text-xs hidden">
+                                        <i class="fas fa-search-minus mr-1"></i> Tidak ada jabatan yang cocok
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <button type="button" onclick="openModalJabatan()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded-lg text-sm flex items-center justify-center shrink-0 shadow-sm" title="Kelola / Tambah Jabatan">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -105,7 +260,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal Terbit</label>
                     <input type="date" name="tanggal_terbit"
@@ -119,15 +274,6 @@
                            value="{{ old('tanggal_berlaku', optional($kartuPas->tanggal_berlaku)->format('Y-m-d')) }}"
                            class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                     @error('tanggal_berlaku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
-                    <select name="status" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
-                        <option value="aktif" {{ old('status', $kartuPas->status) == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="tidak_aktif" {{ old('status', $kartuPas->status) == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
-                        <option value="kadaluarsa" {{ old('status', $kartuPas->status) == 'kadaluarsa' ? 'selected' : '' }}>Kadaluarsa</option>
-                    </select>
-                    @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 
@@ -404,6 +550,27 @@
                     opt.selected = true;
                     select.appendChild(opt);
 
+                    // Add to searchable list
+                    const sList = document.getElementById('listEditJabatan');
+                    if (sList) {
+                        const optDiv = document.createElement('div');
+                        optDiv.className = 'searchable-option px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition text-slate-700 hover:bg-slate-50';
+                        optDiv.setAttribute('data-value', result.data.value);
+                        optDiv.setAttribute('data-search-text', result.data.label);
+                        optDiv.setAttribute('data-display-name', result.data.label);
+                        optDiv.onclick = function() {
+                            selectSearchableOption('select_jabatan', result.data.value, result.data.label, 'dropdownEditJabatan');
+                        };
+                        optDiv.innerHTML = `
+                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                <i class="fas fa-briefcase text-slate-400 text-xs shrink-0"></i>
+                                <span class="truncate">${result.data.label}</span>
+                            </div>
+                        `;
+                        sList.appendChild(optDiv);
+                        selectSearchableOption('select_jabatan', result.data.value, result.data.label, 'dropdownEditJabatan');
+                    }
+
                     const list = document.getElementById('modal_jabatan_list');
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border text-sm';
@@ -463,6 +630,17 @@
                             select.remove(i);
                             break;
                         }
+                    }
+
+                    // Remove from Searchable list
+                    const sList = document.getElementById('listEditJabatan');
+                    if (sList) {
+                        sList.querySelectorAll(`.searchable-option[data-value="${nama}"]`).forEach(el => el.remove());
+                    }
+                    if (select.value === nama || !select.value) {
+                        select.value = '';
+                        const triggerLabel = document.querySelector('[data-dropdown-target="dropdownEditJabatan"] .dropdown-selected-label');
+                        if (triggerLabel) triggerLabel.textContent = '-- Pilih Jabatan --';
                     }
 
                     Swal.fire({

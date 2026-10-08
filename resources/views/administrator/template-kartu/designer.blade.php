@@ -1,51 +1,78 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm shadow-xs border border-blue-100">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <div>
+                <h1 class="font-bold text-base sm:text-lg text-slate-800 tracking-tight leading-tight">
+                    Desainer Tata Letak Kartu PAS
+                </h1>
+                <p class="text-[11px] text-slate-500 font-normal leading-none mt-0.5 hidden sm:block">
+                    Template {{ $template->nama_template }} (PAS {{ strtoupper($template->kode_warna) }})
+                </p>
+            </div>
+        </div>
+    </x-slot>
+
+    {{-- Main Designer Action Bar: Kembali, Info Template, & Tombol Simpan --}}
+    <div class="mb-5 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            
+            {{-- Left: Kembali & Info Template --}}
             <div class="flex items-center gap-3">
-                <a href="{{ route('administrator.template-kartu.index') }}" 
-                   class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition shadow-2xs"
-                   title="Kembali ke Daftar Template">
-                    <i class="fas fa-arrow-left text-sm"></i>
-                </a>
+                <button type="button" 
+                        onclick="handleBackNavigation('{{ route('administrator.template-kartu.index') }}')"
+                        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition shadow-2xs group cursor-pointer"
+                        title="Kembali ke Daftar Template">
+                    <i class="fas fa-arrow-left text-xs group-hover:-translate-x-0.5 transition-transform"></i>
+                    <span>Kembali</span>
+                </button>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background-color: {{ $template->warna_hex }};"></span>
-                        <h1 class="font-bold text-base sm:text-lg text-slate-800 tracking-tight leading-tight">
-                            Desainer Tata Letak Kartu PAS: {{ $template->nama_template }}
-                        </h1>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="w-3.5 h-3.5 rounded-full shadow-xs shrink-0" style="background-color: {{ $template->warna_hex }};"></span>
+                        <h2 class="font-bold text-base text-slate-800 tracking-tight">
+                            {{ $template->nama_template }}
+                        </h2>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                             PAS {{ strtoupper($template->kode_warna) }}
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 mt-0.5">
-                        Klik dan geser (drag & drop) elemen data di atas canvas kartu untuk mengatur posisi secara visual.
-                    </p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="unsavedStatusBadge" class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                            <i class="fas fa-circle-check text-emerald-500"></i>
+                            <span>Semua tata letak tersimpan</span>
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            {{-- Action Buttons --}}
-            <div class="flex items-center gap-2">
+            {{-- Right: Action Buttons (Reset, Pratinjau, Simpan) --}}
+            <div class="flex items-center gap-2.5 flex-wrap">
                 <button type="button" 
                         onclick="resetToDefaultLayout()"
-                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 shadow-2xs transition cursor-pointer">
+                        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 hover:border-rose-200 shadow-2xs transition cursor-pointer">
                     <i class="fas fa-rotate-left"></i>
                     <span>Reset Bawaan</span>
                 </button>
                 <a href="{{ route('administrator.template-kartu.preview', $template->id) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition cursor-pointer">
+                   target="_blank"
+                   class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition cursor-pointer">
                     <i class="fas fa-eye text-indigo-500"></i>
                     <span>Pratinjau Hasil</span>
                 </a>
                 <button type="button" 
                         id="btnSaveLayout"
                         onclick="saveCardLayout()"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition cursor-pointer">
+                        class="btn-save-layout inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer">
                     <i class="fas fa-floppy-disk"></i>
                     <span>Simpan Tata Letak</span>
+                    <span class="text-[10px] bg-blue-500/80 px-1.5 py-0.5 rounded font-mono hidden sm:inline">Ctrl+S</span>
                 </button>
             </div>
         </div>
-    </x-slot>
+    </div>
 
     {{-- Sub Header: Template Switcher & Live Data Selector --}}
     <div class="mb-5 bg-white rounded-2xl border border-slate-200/80 p-3 px-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
@@ -54,6 +81,7 @@
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Template:</span>
             @foreach($allTemplates as $tpl)
                 <a href="{{ route('administrator.template-kartu.designer', $tpl->id) }}"
+                   onclick="return handleTabNavigation(event, '{{ route('administrator.template-kartu.designer', $tpl->id) }}', {{ $tpl->id === $template->id ? 'true' : 'false' }})"
                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition {{ $tpl->id === $template->id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200' }}">
                     <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tpl->warna_hex }};"></span>
                     <span class="capitalize">PAS {{ $tpl->kode_warna }}</span>
@@ -457,6 +485,17 @@
                         </div>
                     </div>
 
+                    {{-- Tombol Simpan di Sidebar Pengaturan --}}
+                    <div class="pt-4 border-t border-slate-100">
+                        <button type="button" 
+                                onclick="saveCardLayout()"
+                                class="btn-save-layout w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg transition cursor-pointer">
+                            <i class="fas fa-floppy-disk"></i>
+                            <span>Simpan Tata Letak Kartu</span>
+                            <span class="text-[10px] bg-blue-500/80 px-1.5 py-0.5 rounded font-mono hidden sm:inline">Ctrl+S</span>
+                        </button>
+                    </div>
+
                 </div>
             </div>
 
@@ -481,6 +520,84 @@
         </div>
 
     </div>
+
+    {{-- ========================================================================= --}}
+    {{-- MODAL KONFIRMASI KEMBALI (PERUBAHAN BELUM DISIMPAN)                      --}}
+    {{-- ========================================================================= --}}
+    <x-modal id="modalKonfirmasiKembali" 
+             maxWidth="max-w-md" 
+             title="Perubahan Belum Disimpan" 
+             subtitle="Konfirmasi sebelum meninggalkan halaman desainer" 
+             icon="fas fa-triangle-exclamation" 
+             iconColor="bg-amber-50 text-amber-600 border-amber-200">
+        <div class="space-y-3">
+            <div class="p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed flex items-start gap-3">
+                <i class="fas fa-circle-exclamation text-amber-600 mt-0.5 shrink-0 text-base"></i>
+                <div>
+                    Terdapat penyesuaian posisi tata letak pada <strong>Template {{ $template->nama_template }}</strong> yang <strong>belum disimpan</strong> ke database.
+                </div>
+            </div>
+            <p class="text-xs text-slate-500">
+                Jika Anda keluar tanpa menyimpan, penyesuaian posisi atau ukuran elemen yang baru saja Anda ubah akan dibatalkan.
+            </p>
+        </div>
+        <x-slot name="footer">
+            <button type="button" 
+                    onclick="closeModal('modalKonfirmasiKembali')" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                Batal
+            </button>
+            <button type="button" 
+                    onclick="confirmLeaveWithoutSaving()" 
+                    class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                <span>Abaikan & Keluar</span>
+            </button>
+            <button type="button" 
+                    id="btnModalSaveAndLeave"
+                    onclick="saveAndNavigate()" 
+                    class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fas fa-floppy-disk"></i>
+                <span>Simpan & Keluar</span>
+            </button>
+        </x-slot>
+    </x-modal>
+
+    {{-- ========================================================================= --}}
+    {{-- MODAL KONFIRMASI RESET KE BAWAAN SISTEM                                  --}}
+    {{-- ========================================================================= --}}
+    <x-modal id="modalKonfirmasiReset" 
+             maxWidth="max-w-md" 
+             title="Reset Tata Letak Bawaan" 
+             subtitle="Kembalikan semua elemen ke konfigurasi default sistem" 
+             icon="fas fa-rotate-left" 
+             iconColor="bg-rose-50 text-rose-600 border-rose-200">
+        <div class="space-y-3">
+            <div class="p-3.5 bg-rose-50 border border-rose-200/80 rounded-xl text-xs text-rose-900 leading-relaxed flex items-start gap-3">
+                <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 shrink-0 text-base"></i>
+                <div>
+                    Apakah Anda yakin ingin mengembalikan seluruh posisi, koordinat, dan ukuran elemen pada <strong>Template {{ $template->nama_template }}</strong> ke tata letak bawaan sistem?
+                </div>
+            </div>
+            <p class="text-xs text-slate-500">
+                Pengaturan kustom yang telah diatur sebelumnya akan dihapus dan posisi elemen akan kembali ke standar tata letak kartu bandara.
+            </p>
+        </div>
+        <x-slot name="footer">
+            <button type="button" 
+                    onclick="closeModal('modalKonfirmasiReset')" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                Batal
+            </button>
+            <button type="button" 
+                    id="btnConfirmReset"
+                    onclick="confirmResetLayout()" 
+                    class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fas fa-rotate-left"></i>
+                <span>Ya, Kembalikan ke Bawaan</span>
+            </button>
+        </x-slot>
+    </x-modal>
 
     {{-- ========================================================================= --}}
     {{-- JAVASCRIPT: CANVA-LIKE DRAG & DROP ENGINE                                 --}}
@@ -661,6 +778,101 @@
             }
         }
 
+        // Status perubahan tersimpan
+        let hasUnsavedChanges = false;
+
+        function markChangesUnsaved() {
+            hasUnsavedChanges = true;
+            const badge = document.getElementById('unsavedStatusBadge');
+            if (badge) {
+                badge.innerHTML = '<span class="inline-flex items-center gap-1.5 text-amber-600 font-semibold"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Ada perubahan belum disimpan</span>';
+            }
+        }
+
+        function markChangesSaved() {
+            hasUnsavedChanges = false;
+            const badge = document.getElementById('unsavedStatusBadge');
+            if (badge) {
+                badge.innerHTML = '<span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium"><i class="fas fa-circle-check text-emerald-500"></i> Semua tata letak tersimpan</span>';
+            }
+        }
+
+        // Navigasi terkontrol dengan modal kustom
+        let pendingNavigationUrl = null;
+
+        function handleBackNavigation(url) {
+            if (!hasUnsavedChanges) {
+                window.location.href = url;
+                return;
+            }
+            pendingNavigationUrl = url;
+            openModal('modalKonfirmasiKembali');
+        }
+
+        function handleTabNavigation(e, url, isCurrent = false) {
+            if (isCurrent) {
+                e.preventDefault();
+                return false;
+            }
+            if (!hasUnsavedChanges) {
+                return true;
+            }
+            e.preventDefault();
+            pendingNavigationUrl = url;
+            openModal('modalKonfirmasiKembali');
+            return false;
+        }
+
+        function confirmLeaveWithoutSaving() {
+            hasUnsavedChanges = false;
+            closeModal('modalKonfirmasiKembali');
+            if (pendingNavigationUrl) {
+                window.location.href = pendingNavigationUrl;
+            } else {
+                window.location.href = "{{ route('administrator.template-kartu.index') }}";
+            }
+        }
+
+        function saveAndNavigate() {
+            const btn = document.getElementById('btnModalSaveAndLeave');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...';
+            }
+
+            fetch(`{{ route('administrator.template-kartu.designer.save', $template->id) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    posisi_pengaturan: currentPositions
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                hasUnsavedChanges = false;
+                closeModal('modalKonfirmasiKembali');
+                showToastNotification('Tata letak berhasil disimpan. Mengalihkan...', 'success');
+                setTimeout(() => {
+                    if (pendingNavigationUrl) {
+                        window.location.href = pendingNavigationUrl;
+                    } else {
+                        window.location.href = "{{ route('administrator.template-kartu.index') }}";
+                    }
+                }, 300);
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-floppy-disk mr-1"></i> Simpan & Keluar';
+                }
+                showToastNotification('Gagal menyimpan tata letak kartu.', 'error');
+            });
+        }
+
         // 5. Update Posisi X/Y dari Slider
         function updateCurrentLayerPosition(prop, val) {
             if (!currentPositions[selectedLayerKey]) currentPositions[selectedLayerKey] = {};
@@ -668,6 +880,7 @@
 
             document.getElementById('val_' + prop).innerText = currentPositions[selectedLayerKey][prop] + '%';
             applyAllPositionsToCanvas();
+            markChangesUnsaved();
         }
 
         // 6. Update Properti Lain (Font, Warna, Bold, dll)
@@ -685,6 +898,7 @@
 
             applyAllPositionsToCanvas();
             populateInspector(selectedLayerKey);
+            markChangesUnsaved();
         }
 
         // 7. Geser Halus Menggunakan Nudge Buttons atau Tombol Panah Keyboard
@@ -705,6 +919,7 @@
             document.getElementById('val_top').innerText = cfg.top + '%';
 
             applyAllPositionsToCanvas();
+            markChangesUnsaved();
         }
 
         // 8. Event Listener Drag & Drop pada Canvas
@@ -755,6 +970,7 @@
                 document.getElementById('val_top').innerText = newTop + '%';
 
                 applyAllPositionsToCanvas();
+                markChangesUnsaved();
             });
 
             window.addEventListener('mouseup', () => {
@@ -762,9 +978,16 @@
             });
         }
 
-        // 9. Tombol Pintas Keyboard (&uarr; &darr; &larr; &rarr;)
+        // 9. Tombol Pintas Keyboard (&uarr; &darr; &larr; &rarr; & Ctrl+S)
         function initKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
+                // Shortcut Ctrl+S / Cmd+S untuk Simpan Desain Cepat
+                if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+                    e.preventDefault();
+                    saveCardLayout();
+                    return;
+                }
+
                 if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
                 if (e.key === 'ArrowLeft') {
@@ -830,9 +1053,19 @@
             applyAllPositionsToCanvas();
         }
 
-        // 11. Reset Layout ke Nilai Bawaan
+        // 11. Reset Layout ke Nilai Bawaan (Menggunakan Modal)
         function resetToDefaultLayout() {
-            if (!confirm('Kembalikan seluruh tata letak elemen kartu ke posisi bawaan?')) return;
+            openModal('modalKonfirmasiReset');
+        }
+
+        function confirmResetLayout() {
+            const btn = document.getElementById('btnConfirmReset');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Mereset...';
+            }
+
+            closeModal('modalKonfirmasiReset');
 
             currentPositions = JSON.parse(JSON.stringify(defaultPositions));
             applyAllPositionsToCanvas();
@@ -849,19 +1082,33 @@
             })
             .then(res => res.json())
             .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-rotate-left"></i> <span>Ya, Kembalikan ke Bawaan</span>';
+                }
+                markChangesSaved();
                 showToastNotification('Tata letak berhasil dikembalikan ke posisi bawaan!', 'success');
             })
             .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-rotate-left"></i> <span>Ya, Kembalikan ke Bawaan</span>';
+                }
+                markChangesUnsaved();
                 showToastNotification('Posisi di-reset secara lokal.', 'info');
             });
         }
 
         // 12. Simpan Tata Letak ke Database
         function saveCardLayout() {
-            const btn = document.getElementById('btnSaveLayout');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            const buttons = document.querySelectorAll('.btn-save-layout');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (!btn.dataset.originalHtml) {
+                    btn.dataset.originalHtml = btn.innerHTML;
+                }
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Menyimpan...</span>';
+            });
 
             fetch(`{{ route('administrator.template-kartu.designer.save', $template->id) }}`, {
                 method: 'POST',
@@ -876,15 +1123,30 @@
             })
             .then(res => res.json())
             .then(data => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
-                setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                markChangesSaved();
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    btn.innerHTML = '<i class="fas fa-check"></i> <span>Tersimpan!</span>';
+                    setTimeout(() => {
+                        btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                        if (btn.dataset.originalHtml) {
+                            btn.innerHTML = btn.dataset.originalHtml;
+                        }
+                    }, 2200);
+                });
 
                 showToastNotification(data.message || 'Tata letak kartu berhasil disimpan!', 'success');
             })
             .catch(err => {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    if (btn.dataset.originalHtml) {
+                        btn.innerHTML = btn.dataset.originalHtml;
+                    }
+                });
                 showToastNotification('Gagal menyimpan tata letak kartu.', 'error');
             });
         }

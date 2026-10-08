@@ -226,7 +226,7 @@ class ScanController extends Controller
         }
 
         // 3. Check Area Access Permissions
-        $userAreas = array_map('trim', explode(',', $kartu->area_akses ?? ''));
+        $userAreas = array_map('trim', explode(',', KartuPas::normalizeAreaAkses($kartu->area_akses ?? '')));
         if (!in_array($device->kode_area, $userAreas)) {
             $alasanTolakArea = 'Pemegang kartu tidak memiliki izin akses di Area ' . $device->kode_area;
 
@@ -295,7 +295,7 @@ class ScanController extends Controller
             ];
         }
 
-        $userAreas = array_values(array_filter(array_map('trim', explode(',', $kartu->area_akses ?? ''))));
+        $userAreas = array_values(array_filter(array_map('trim', explode(',', KartuPas::normalizeAreaAkses($kartu->area_akses ?? '')))));
 
         return [
             'id'                    => $log->id,

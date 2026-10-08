@@ -70,6 +70,173 @@
         }
 
         /* -------------------------------------------------------------------------- */
+        /* UNIFIED MODERN SELECT & DROPDOWN STYLES                                   */
+        /* -------------------------------------------------------------------------- */
+        select:not([multiple]):not([size]):not(.no-custom-select) {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: #ffffff;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.15em 1.15em;
+            padding-right: 2.25rem !important;
+            border-radius: 0.75rem; /* rounded-xl */
+            border-color: #e2e8f0;
+            color: #1e293b;
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+        }
+
+        select:not([multiple]):not([size]):not(.no-custom-select):hover {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+        }
+
+        select:not([multiple]):not([size]):not(.no-custom-select):focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background-color: #ffffff;
+        }
+
+        /* Searchable Dropdown Animations & Components */
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-dropdown-fade {
+            animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .searchable-input-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .searchable-input-box .searchable-search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .searchable-input-box input.searchable-input {
+            width: 100%;
+            padding-left: 2.25rem !important; /* Prevents text from overlapping search icon */
+            padding-right: 2rem !important;
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            line-height: 1.25rem;
+            color: #1e293b;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .searchable-input-box input.searchable-input:focus {
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .searchable-input-box .searchable-clear-btn {
+            position: absolute;
+            right: 0.625rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+            z-index: 5;
+            background: transparent;
+            border: none;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .searchable-input-box .searchable-clear-btn:hover {
+            color: #475569;
+        }
+
+        .searchable-input-box .searchable-clear-btn.hidden {
+            display: none !important;
+        }
+
+        /* Compact searchable list with max-height and visible scrollbar */
+        .searchable-list-scroll {
+            max-height: 185px !important; /* Shorter height, approx half of standard list for easy scrolling */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+
+        .searchable-list-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .searchable-list-scroll::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 999px;
+        }
+
+        .searchable-list-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        .searchable-list-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Modal Detail 5-Column Stats Grid & Table Scroll */
+        .stats-cards-grid,
+        .modal-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+        @media (min-width: 640px) {
+            .stats-cards-grid,
+            .modal-stats-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            }
+        }
+
+        .custom-table-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+        .custom-table-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-table-scroll::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 999px;
+        }
+        .custom-table-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+        .custom-table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* -------------------------------------------------------------------------- */
         /* FLOATING SIDEBAR STYLES                                                    */
         /* -------------------------------------------------------------------------- */
         .app-sidebar {
@@ -1683,6 +1850,141 @@
                 buttonsStyling: false
             });
         }
+
+        // Global Searchable Dropdown Helper Functions
+        window.toggleSearchableDropdown = function(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+
+            const isHidden = dropdown.classList.contains('hidden');
+
+            document.querySelectorAll('.searchable-dropdown-menu:not(.hidden)').forEach(d => {
+                if (d.id !== dropdownId) window.closeSearchableDropdown(d.id);
+            });
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                const trigger = document.querySelector(`[data-dropdown-target="${dropdownId}"]`);
+                if (trigger) {
+                    const chev = trigger.querySelector('.dropdown-chevron');
+                    if (chev) chev.classList.add('rotate-180');
+                }
+                const searchInput = dropdown.querySelector('.searchable-input');
+                if (searchInput) {
+                    searchInput.value = '';
+                    window.filterSearchableOptions(dropdownId, '');
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            } else {
+                window.closeSearchableDropdown(dropdownId);
+            }
+        };
+
+        window.closeSearchableDropdown = function(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            dropdown.classList.add('hidden');
+            const trigger = document.querySelector(`[data-dropdown-target="${dropdownId}"]`);
+            if (trigger) {
+                const chev = trigger.querySelector('.dropdown-chevron');
+                if (chev) chev.classList.remove('rotate-180');
+            }
+        };
+
+        window.filterSearchableOptions = function(dropdownId, query) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+
+            const q = query.trim().toLowerCase();
+            const items = dropdown.querySelectorAll('.searchable-option');
+            let matchCount = 0;
+
+            items.forEach(item => {
+                const text = (item.getAttribute('data-search-text') || item.textContent).toLowerCase();
+                if (!q || text.includes(q)) {
+                    item.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            const emptyState = dropdown.querySelector('.searchable-empty');
+            if (emptyState) {
+                if (matchCount === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+            }
+
+            const clearBtn = dropdown.querySelector('.searchable-clear-btn');
+            if (clearBtn) {
+                if (q) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+        };
+
+        window.clearSearchableInput = function(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            const searchInput = dropdown.querySelector('.searchable-input');
+            if (searchInput) {
+                searchInput.value = '';
+                window.filterSearchableOptions(dropdownId, '');
+                searchInput.focus();
+            }
+        };
+
+        window.selectSearchableOption = function(selectId, value, label, dropdownId) {
+            const selectEl = document.getElementById(selectId);
+            if (selectEl) {
+                selectEl.value = value;
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            const trigger = document.querySelector(`[data-dropdown-target="${dropdownId}"]`);
+            if (trigger) {
+                const labelSpan = trigger.querySelector('.dropdown-selected-label');
+                if (labelSpan) labelSpan.textContent = label;
+            }
+
+            const dropdown = document.getElementById(dropdownId);
+            if (dropdown) {
+                dropdown.querySelectorAll('.searchable-option').forEach(opt => {
+                    const isSelected = String(opt.getAttribute('data-value')) === String(value);
+                    if (isSelected) {
+                        opt.classList.add('bg-blue-50', 'text-blue-700', 'font-bold');
+                        opt.classList.remove('text-slate-700', 'hover:bg-slate-50');
+                        let check = opt.querySelector('.check-icon');
+                        if (!check) {
+                            check = document.createElement('i');
+                            check.className = 'fas fa-check text-blue-600 text-xs shrink-0 check-icon';
+                            opt.appendChild(check);
+                        }
+                    } else {
+                        opt.classList.remove('bg-blue-50', 'text-blue-700', 'font-bold');
+                        opt.classList.add('text-slate-700', 'hover:bg-slate-50');
+                        const check = opt.querySelector('.check-icon');
+                        if (check) check.remove();
+                    }
+                });
+            }
+
+            window.closeSearchableDropdown(dropdownId);
+        };
+
+        // Global click listener to close searchable dropdowns when clicked outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.searchable-dropdown-wrapper')) {
+                document.querySelectorAll('.searchable-dropdown-menu:not(.hidden)').forEach(d => {
+                    window.closeSearchableDropdown(d.id);
+                });
+            }
+        });
     </script>
 
 </body>

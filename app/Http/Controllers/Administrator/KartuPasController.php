@@ -84,7 +84,11 @@ class KartuPasController extends Controller
                 ->withErrors(['instansi_id' => 'Kuota kartu PAS untuk instansi "' . $instansi->nama_instansi . '" sudah habis! (Total kuota: ' . $instansi->kuota . ')']);
         }
 
-        $areaAksesStr = is_array($request->area_akses) ? implode(', ', $request->area_akses) : $request->area_akses;
+        $areaAksesStr = KartuPas::normalizeAreaAkses($request->area_akses);
+        $jabatanVal   = trim((string)$request->jabatan);
+        if (!empty($jabatanVal) && $jabatanVal !== '-') {
+            Jabatan::firstOrCreate(['nama_jabatan' => $jabatanVal]);
+        }
 
         KartuPas::create([
             'instansi_id'     => $instansi->id,
@@ -93,7 +97,7 @@ class KartuPasController extends Controller
             'email'           => $request->email,
             'nama_pemegang'   => $request->nama_pemegang,
             'area_akses'      => $areaAksesStr,
-            'jabatan'         => $request->jabatan,
+            'jabatan'         => $jabatanVal ?: null,
             'tanggal_terbit'  => $request->tanggal_terbit,
             'tanggal_berlaku' => $request->tanggal_berlaku,
             'status'          => 'aktif',
@@ -133,16 +137,25 @@ class KartuPasController extends Controller
             'email'           => ['nullable', 'email'],
             'tanggal_terbit'  => ['required', 'date'],
             'tanggal_berlaku' => ['required', 'date'],
-            'status'          => ['required', 'in:aktif,tidak_aktif,kadaluarsa'],
         ]);
 
         $instansi = Instansi::findOrFail($request->instansi_id);
 
+        // Penentuan status kartu secara otomatis:
+        // - Jika saat ini berstatus 'tidak_aktif' (telah dinonaktifkan khusus via tombol aksi), pertahankan 'tidak_aktif'
+        // - Jika bukan 'tidak_aktif', tentukan otomatis dari tanggal berlaku:
+        //   'kadaluarsa' jika tanggal berlaku sudah lewat (< now()), sebaliknya 'aktif'
+        if ($kartuPas->status === 'tidak_aktif') {
+            $newStatus = 'tidak_aktif';
+        } else {
+            $newStatus = \Carbon\Carbon::parse($request->tanggal_berlaku)->isPast() ? 'kadaluarsa' : 'aktif';
+        }
+
         // Jika ganti instansi atau status diaktifkan kembali, cek kuota tersisa
         $isChangingInstansi = ($kartuPas->instansi_id != $instansi->id);
-        $isActivating       = ($kartuPas->status !== 'aktif' && $request->status === 'aktif');
+        $isActivating       = ($kartuPas->status === 'tidak_aktif' && $newStatus !== 'tidak_aktif');
 
-        if (($isChangingInstansi || $isActivating) && $request->status === 'aktif') {
+        if (($isChangingInstansi || $isActivating) && $newStatus !== 'tidak_aktif') {
             if ($instansi->sisa_kuota <= 0) {
                 return redirect()->back()
                     ->withInput()
@@ -150,7 +163,11 @@ class KartuPasController extends Controller
             }
         }
 
-        $areaAksesStr = is_array($request->area_akses) ? implode(', ', $request->area_akses) : $request->area_akses;
+        $areaAksesStr = KartuPas::normalizeAreaAkses($request->area_akses);
+        $jabatanVal   = trim((string)$request->jabatan);
+        if (!empty($jabatanVal) && $jabatanVal !== '-') {
+            Jabatan::firstOrCreate(['nama_jabatan' => $jabatanVal]);
+        }
 
         $kartuPas->update([
             'nomor_kartu'     => $request->nomor_kartu,
@@ -159,10 +176,10 @@ class KartuPasController extends Controller
             'instansi_id'     => $instansi->id,
             'perusahaan'      => $instansi->nama_instansi,
             'area_akses'      => $areaAksesStr,
-            'jabatan'         => $request->jabatan,
+            'jabatan'         => $jabatanVal ?: null,
             'tanggal_terbit'  => $request->tanggal_terbit,
             'tanggal_berlaku' => $request->tanggal_berlaku,
-            'status'          => $request->status,
+            'status'          => $newStatus,
         ]);
 
         // Cek dan kirim notifikasi email secara otomatis jika data kartu diupdate mendekati masa kadaluarsa

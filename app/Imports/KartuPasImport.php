@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\KartuPas;
 use App\Models\Instansi;
+use App\Models\Jabatan;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\SkipsUnknownSheets;
@@ -104,13 +105,23 @@ class KartuPasSheetImport implements ToCollection, WithEvents
 
             $nomor       = trim((string)$row[$colCardIdx]);
             $nama        = trim((string)($row[$colCardIdx - 1] ?? ''));
-            $area        = trim((string)($row[$colCardIdx + 1] ?? ''));
-            $jabatan     = trim((string)($row[$colCardIdx + 2] ?? ''));
+            $areaRaw     = trim((string)($row[$colCardIdx + 1] ?? ''));
+            $area        = KartuPas::normalizeAreaAkses($areaRaw);
+            $jabatanRaw  = trim((string)($row[$colCardIdx + 2] ?? ''));
+            $jabatan     = trim($jabatanRaw, " `\t\n\r\0\x0B");
+            if ($jabatan === '-') $jabatan = '';
             $masaBerlaku = $row[$colCardIdx + 3] ?? null;
             $ketRaw      = trim((string)($row[$colCardIdx + 4] ?? ''));
 
             // Validasi nama & nomor
             if (empty($nomor) || empty($nama) || strtoupper($nama) === 'NAMA' || is_numeric($nama)) continue;
+
+            // Daftarkan jabatan ke master tabel jika ada
+            if (!empty($jabatan)) {
+                try {
+                    Jabatan::firstOrCreate(['nama_jabatan' => $jabatan]);
+                } catch (\Throwable $t) {}
+            }
 
             // Parse tanggal berlaku
             $tanggalBerlaku = $this->parseTanggal($masaBerlaku, $masaBerlaku);
@@ -158,8 +169,8 @@ class KartuPasSheetImport implements ToCollection, WithEvents
                     'instansi_id'     => $instansiId ?? $existing->instansi_id,
                     'nama_pemegang'   => $nama,
                     'perusahaan'      => $this->currentInstansi,
-                    'area_akses'      => $area,
-                    'jabatan'         => $jabatan,
+                    'area_akses'      => !empty($area) ? $area : $existing->area_akses,
+                    'jabatan'         => !empty($jabatan) ? $jabatan : $existing->jabatan,
                     'tanggal_terbit'  => $tanggalTerbit,
                     'tanggal_berlaku' => $tanggalBerlaku,
                     'tipe_permohonan' => $tipePermohonan,

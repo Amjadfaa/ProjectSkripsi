@@ -211,7 +211,7 @@
 
     {{-- SPA MODAL DETAIL INSTANSI & DAFTAR KARTU PAS --}}
     <div id="modalDetailInstansi" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 relative max-h-[92vh] flex flex-col border border-slate-200/80">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 relative max-h-[92vh] flex flex-col border border-slate-200/80 animate-dropdown-fade">
             {{-- Modal Header --}}
             <div class="flex justify-between items-center pb-4 border-b border-slate-100">
                 <div class="flex items-center gap-3">
@@ -228,19 +228,23 @@
                 </button>
             </div>
 
-            {{-- Stats Pills --}}
-            <div class="grid grid-cols-4 gap-3 my-4">
+            {{-- 5 Cards Sejajar Rapi (1 Baris Penuh, Tidak Memanjang ke Bawah) --}}
+            <div class="stats-cards-grid my-4" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem;">
                 <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-center">
                     <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Total Kuota</p>
                     <p class="text-xl font-black text-slate-800 mt-0.5" id="detail_total_kuota">0</p>
                 </div>
-                <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 text-center">
-                    <p class="text-[11px] text-emerald-700 font-bold uppercase tracking-wider">Kartu Aktif</p>
-                    <p class="text-xl font-black text-emerald-600 mt-0.5" id="detail_kartu_aktif">0</p>
+                <div class="bg-amber-50/60 border border-amber-200/80 rounded-xl p-3 text-center">
+                    <p class="text-[11px] text-amber-700 font-bold uppercase tracking-wider">Kuota Terpakai</p>
+                    <p class="text-xl font-black text-amber-600 mt-0.5" id="detail_kuota_terpakai">0</p>
                 </div>
                 <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-xl p-3 text-center">
                     <p class="text-[11px] text-indigo-700 font-bold uppercase tracking-wider">Sisa Kuota</p>
                     <p class="text-xl font-black text-indigo-600 mt-0.5" id="detail_sisa_kuota">0</p>
+                </div>
+                <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 text-center">
+                    <p class="text-[11px] text-emerald-700 font-bold uppercase tracking-wider">Kartu Aktif</p>
+                    <p class="text-xl font-black text-emerald-600 mt-0.5" id="detail_kartu_aktif">0</p>
                 </div>
                 <div class="bg-slate-100/60 border border-slate-200/80 rounded-xl p-3 text-center">
                     <p class="text-[11px] text-slate-600 font-bold uppercase tracking-wider">Nonaktif</p>
@@ -255,15 +259,16 @@
                 </h4>
                 <div class="w-64">
                     <div class="relative">
-                        <span class="absolute left-3 top-2 text-slate-400 text-xs"><i class="fas fa-search"></i></span>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"><i class="fas fa-search"></i></span>
                         <input type="text" id="inputSearchDetail" onkeyup="filterTableDetail()" placeholder="Cari nama / no. kartu..."
-                               class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition">
+                               style="padding-left: 2.25rem !important;"
+                               class="w-full pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition">
                     </div>
                 </div>
             </div>
 
             {{-- Table Container --}}
-            <div class="overflow-y-auto grow border border-slate-200/80 rounded-xl" style="max-height: 380px;">
+            <div class="overflow-y-auto grow border border-slate-200/80 rounded-xl custom-table-scroll" style="max-height: 380px;">
                 <table class="w-full text-left text-xs border-collapse" id="tableDetailKartu">
                     <thead class="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[11px] font-bold border-b border-slate-200/80 sticky top-0">
                         <tr>
@@ -764,6 +769,15 @@
             const tbody = document.getElementById('tbodyDetailKartu');
 
             modal.classList.remove('hidden');
+            document.getElementById('detail_total_kuota').textContent = '...';
+            document.getElementById('detail_kuota_terpakai').textContent = '...';
+            document.getElementById('detail_sisa_kuota').textContent = '...';
+            document.getElementById('detail_kartu_aktif').textContent = '...';
+            document.getElementById('detail_kartu_nonaktif').textContent = '...';
+            
+            const searchInput = document.getElementById('inputSearchDetail');
+            if (searchInput) searchInput.value = '';
+
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data instansi...</td></tr>';
 
             try {
@@ -775,8 +789,9 @@
                     document.getElementById('detail_nama_instansi').textContent = inst.nama_instansi;
                     document.getElementById('detail_alamat_instansi').textContent = inst.alamat || '-';
                     document.getElementById('detail_total_kuota').textContent = inst.kuota;
-                    document.getElementById('detail_kartu_aktif').textContent = inst.kartu_aktif;
+                    document.getElementById('detail_kuota_terpakai').textContent = inst.kartu_terpakai;
                     document.getElementById('detail_sisa_kuota').textContent = inst.sisa_kuota;
+                    document.getElementById('detail_kartu_aktif').textContent = inst.kartu_aktif;
                     document.getElementById('detail_kartu_nonaktif').textContent = inst.nonaktif;
 
                     renderTableDetail(result.kartu_pas);
@@ -812,14 +827,14 @@
 
                 let btnNonaktif = '<span class="text-slate-400">-</span>';
                 if (k.status === 'aktif') {
-                    btnNonaktif = `<button onclick="openModalNonaktifkan(${k.id})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition cursor-pointer"><i class="fas fa-ban text-[9px]"></i> Nonaktifkan</button>`;
+                    btnNonaktif = `<button type="button" onclick="openModalNonaktifkan(${k.id})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition cursor-pointer"><i class="fas fa-ban text-[9px]"></i> Nonaktifkan</button>`;
                 }
 
                 html += `
                     <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="px-3 py-2.5 font-mono font-bold text-slate-800 text-xs">${k.nomor_kartu}</td>
                         <td class="px-3 py-2.5 font-semibold text-slate-700 text-xs">${k.nama_pemegang}</td>
-                        <td class="px-3 py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700">${k.area_akses}</span></td>
+                        <td class="px-3 py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700">${k.area_akses || '-'}</span></td>
                         <td class="px-3 py-2.5 text-xs text-slate-600">${k.tanggal_berlaku}</td>
                         <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${badgeClass}">${statusLabel}</span></td>
                         <td class="px-3 py-2.5">${ketHtml}</td>
@@ -831,9 +846,10 @@
         }
 
         function filterTableDetail() {
-            const query = document.getElementById('inputSearchDetail').value.toLowerCase();
+            const query = (document.getElementById('inputSearchDetail').value || '').toLowerCase().trim();
             const rows = document.querySelectorAll('#tbodyDetailKartu tr');
             rows.forEach(tr => {
+                if (tr.querySelector('td[colspan]')) return;
                 const text = tr.textContent.toLowerCase();
                 tr.style.display = text.includes(query) ? '' : 'none';
             });

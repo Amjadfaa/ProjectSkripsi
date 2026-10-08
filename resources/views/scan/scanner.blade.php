@@ -7,8 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- html5-qrcode library for webcam QR scanning -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Ultra-Fast QR Scanner Libraries: html5-qrcode & jsQR -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" type="text/javascript"></script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -546,42 +547,160 @@
             }
         }
 
+        // ---------------------------------------------------------------------
+        // Turbo Scanning Loop (High-speed Native BarcodeDetector + jsQR)
+        // ---------------------------------------------------------------------
+        let turboScanActive = false;
+        let turboCanvas = null;
+        let turboCtx = null;
+        let nativeBarcodeDetector = null;
+
+        if ('BarcodeDetector' in window) {
+            try {
+                nativeBarcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+            } catch(e) {
+                nativeBarcodeDetector = null;
+            }
+        }
+
+        function startTurboScanner(videoEl) {
+            if (!videoEl) return;
+            turboScanActive = true;
+
+            if (!turboCanvas) {
+                turboCanvas = document.createElement('canvas');
+                turboCtx = turboCanvas.getContext('2d', { willReadFrequently: true });
+            }
+
+            let lastScanTime = 0;
+            const scanIntervalMs = 50; // ~20 checks per second
+            let failureStreak = 0;
+
+            async function scanFrame(timestamp) {
+                if (!turboScanActive || !isWebcamRunning) return;
+
+                if (videoEl.readyState >= 2 && !isProcessing && (timestamp - lastScanTime >= scanIntervalMs)) {
+                    lastScanTime = timestamp;
+
+                    const vw = videoEl.videoWidth;
+                    const vh = videoEl.videoHeight;
+
+                    if (vw > 0 && vh > 0) {
+                        let detectedCode = null;
+
+                        // Priority 1: Native Hardware BarcodeDetector (Fastest ~1-3ms)
+                        if (nativeBarcodeDetector) {
+                            try {
+                                const barcodes = await nativeBarcodeDetector.detect(videoEl);
+                                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                                    detectedCode = barcodes[0].rawValue.trim();
+                                }
+                            } catch(e) {}
+                        }
+
+                        // Priority 2: Ultra-Fast jsQR Engine (~8-15ms)
+                        if (!detectedCode && typeof jsQR === 'function') {
+                            let targetW = vw;
+                            let targetH = vh;
+                            if (vw > 800) {
+                                const scale = 800 / vw;
+                                targetW = 800;
+                                targetH = Math.round(vh * scale);
+                            }
+
+                            if (turboCanvas.width !== targetW || turboCanvas.height !== targetH) {
+                                turboCanvas.width = targetW;
+                                turboCanvas.height = targetH;
+                            }
+
+                            turboCtx.drawImage(videoEl, 0, 0, targetW, targetH);
+                            const imgData = turboCtx.getImageData(0, 0, targetW, targetH);
+
+                            const attemptMode = (failureStreak > 6) ? "attemptBoth" : "dontInvert";
+                            const res = jsQR(imgData.data, targetW, targetH, {
+                                inversionAttempts: attemptMode
+                            });
+
+                            if (res && res.data) {
+                                detectedCode = res.data.trim();
+                                failureStreak = 0;
+                            } else {
+                                failureStreak++;
+                            }
+                        }
+
+                        if (detectedCode && !isProcessing) {
+                            processQrCode(detectedCode);
+                        }
+                    }
+                }
+
+                if (turboScanActive && isWebcamRunning) {
+                    requestAnimationFrame(scanFrame);
+                }
+            }
+
+            requestAnimationFrame(scanFrame);
+        }
+
+        function stopTurboScanner() {
+            turboScanActive = false;
+        }
+
         function toggleWebcam() {
             const btnText = document.getElementById('btnText');
             const placeholder = document.getElementById('scannerPlaceholder');
             const readerEl = document.getElementById('reader');
 
             if (isWebcamRunning) {
+                stopTurboScanner();
                 if (html5QrcodeScanner) {
                     html5QrcodeScanner.stop().then(() => {
                         isWebcamRunning = false;
                         btnText.innerText = 'Start Webcam';
                         readerEl.classList.add('hidden');
+                        readerEl.innerHTML = '';
                         placeholder.classList.remove('hidden');
                     }).catch(err => {
-                        console.error("Stop failed", err);
+                        isWebcamRunning = false;
+                        readerEl.classList.add('hidden');
+                        readerEl.innerHTML = '';
+                        placeholder.classList.remove('hidden');
                     });
+                } else {
+                    isWebcamRunning = false;
+                    btnText.innerText = 'Start Webcam';
+                    readerEl.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
                 }
             } else {
                 placeholder.classList.add('hidden');
                 readerEl.classList.remove('hidden');
 
-                html5QrcodeScanner = new Html5Qrcode("reader");
+                const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
+                    ? [ Html5QrcodeSupportedFormats.QR_CODE ]
+                    : [];
 
-                // High speed 60 FPS & 95% full-view scanning configuration
-                const scanConfig = { 
-                    fps: 60, 
-                    qrbox: (viewfinderWidth, viewfinderHeight) => ({
-                        width: Math.floor(viewfinderWidth * 0.95),
-                        height: Math.floor(viewfinderHeight * 0.95)
-                    }),
+                html5QrcodeScanner = new Html5Qrcode("reader", {
+                    formatsToSupport: formatsToSupport,
                     experimentalFeatures: {
                         useBarCodeDetectorIfSupported: true
-                    }
+                    },
+                    verbose: false
+                });
+
+                const cameraConfig = { 
+                    facingMode: "environment",
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                };
+
+                const scanConfig = { 
+                    fps: 15
                 };
 
                 html5QrcodeScanner.start(
-                    { facingMode: "environment" },
+                    cameraConfig,
                     scanConfig,
                     (decodedText) => {
                         if (!isProcessing) {
@@ -592,8 +711,16 @@
                 ).then(() => {
                     isWebcamRunning = true;
                     btnText.innerText = 'Stop Webcam';
+
+                    setTimeout(() => {
+                        const videoEl = document.querySelector('#reader video');
+                        if (videoEl) {
+                            videoEl.style.objectFit = 'cover';
+                            startTurboScanner(videoEl);
+                        }
+                    }, 200);
                 }).catch(err => {
-                    alert('Gagal membuka webcam 60 FPS: ' + err);
+                    alert('Gagal membuka webcam: ' + err);
                     readerEl.classList.add('hidden');
                     placeholder.classList.remove('hidden');
                 });

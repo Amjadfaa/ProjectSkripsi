@@ -66,7 +66,8 @@
                     <td class="px-2 py-3.5 text-center">
                         <div class="flex flex-wrap items-center justify-center gap-1">
                             @php
-                                $areas = array_filter(array_map('trim', explode(',', $kartu->area_akses ?? '')));
+                                $normArea = \App\Models\KartuPas::normalizeAreaAkses($kartu->area_akses ?? '');
+                                $areas = array_filter(array_map('trim', explode(',', $normArea)));
                             @endphp
                             @forelse($areas as $area)
                                 <span class="px-2 py-0.5 rounded-md font-bold text-[10.5px] tracking-wider bg-blue-50 text-blue-700 border border-blue-200/70 inline-block shadow-2xs">

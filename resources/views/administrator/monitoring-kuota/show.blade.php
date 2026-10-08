@@ -8,23 +8,75 @@
     @endif
 
     <!-- Info Instansi -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-        <div class="grid grid-cols-4 gap-4">
-            <div class="text-center">
-                <p class="text-3xl font-bold text-gray-800">{{ $instansi->kuota }}</p>
-                <p class="text-sm text-gray-500">Total Kuota</p>
+    @php
+        $kartuAktif      = $kartuPas->where('status', 'aktif')->count();
+        $kartuKadaluarsa = $kartuPas->where('status', 'kadaluarsa')->count();
+        $kartuTerpakai   = $kartuAktif + $kartuKadaluarsa;
+        $sisaKuota       = max(0, $instansi->kuota - $kartuTerpakai);
+        $kartuNonaktif   = $kartuPas->where('status', 'tidak_aktif')->count();
+    @endphp
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5 mb-6">
+        <div class="modal-stats-grid">
+            <div class="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Kuota</span>
+                    <div class="w-6 h-6 rounded-lg bg-blue-100/80 text-blue-600 flex items-center justify-center text-[11px]">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-slate-800">{{ $instansi->kuota }}</p>
+                    <span class="text-[10px] font-semibold text-slate-400">Kapasitas Maksimal</span>
+                </div>
             </div>
-            <div class="text-center">
-                <p class="text-3xl font-bold text-green-600">{{ $kartuPas->where('status', 'aktif')->count() }}</p>
-                <p class="text-sm text-gray-500">Kartu Aktif</p>
+            <div class="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Kuota Terpakai</span>
+                    <div class="w-6 h-6 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-[11px]">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-amber-600">{{ $kartuTerpakai }}</p>
+                    @php $pct = $instansi->kuota > 0 ? min(100, round(($kartuTerpakai / $instansi->kuota) * 100)) : 0; @endphp
+                    <span class="text-[10px] font-bold text-amber-600/90">{{ $pct }}% Terpakai</span>
+                </div>
             </div>
-            <div class="text-center">
-                <p class="text-3xl font-bold text-blue-600">{{ $instansi->kuota - $kartuPas->where('status', 'aktif')->count() }}</p>
-                <p class="text-sm text-gray-500">Sisa Kuota</p>
+            <div class="bg-indigo-50/50 border border-indigo-200/80 rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Sisa Kuota</span>
+                    <div class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-[11px]">
+                        <i class="fas fa-circle-check"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-indigo-600">{{ $sisaKuota }}</p>
+                    <span class="text-[10px] font-semibold text-indigo-500">Slot Tersedia</span>
+                </div>
             </div>
-            <div class="text-center">
-                <p class="text-3xl font-bold text-gray-500">{{ $kartuPas->where('status', '!=', 'aktif')->count() }}</p>
-                <p class="text-sm text-gray-500">Nonaktif</p>
+            <div class="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-3.5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Kartu Aktif</span>
+                    <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-[11px]">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-emerald-600">{{ $kartuAktif }}</p>
+                    <span class="text-[10px] font-semibold text-emerald-600/90">Akses Berlaku</span>
+                </div>
+            </div>
+            <div class="bg-slate-100/70 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col justify-between col-span-2 sm:col-span-1">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-600">Nonaktif</span>
+                    <div class="w-6 h-6 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center text-[11px]">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-2xl font-black text-slate-600">{{ $kartuNonaktif }}</p>
+                    <span class="text-[10px] font-semibold text-slate-400">Tidak Berlaku</span>
+                </div>
             </div>
         </div>
     </div>

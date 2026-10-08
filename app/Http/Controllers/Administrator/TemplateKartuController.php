@@ -400,7 +400,7 @@ class TemplateKartuController extends Controller
                                     ? \Carbon\Carbon::parse($selectedKartu->tanggal_berlaku)->format('d M Y') 
                                     : '30 MAY 2027',
             'area_akses'      => $selectedKartu && $selectedKartu->area_akses 
-                                    ? array_filter(array_map('trim', explode(',', $selectedKartu->area_akses))) 
+                                    ? array_filter(array_map('trim', explode(',', KartuPas::normalizeAreaAkses($selectedKartu->area_akses)))) 
                                     : ($template->area_akses ?: ['A', 'B', 'C']),
             'foto'            => null,
         ];
@@ -439,7 +439,7 @@ class TemplateKartuController extends Controller
                                     ? \Carbon\Carbon::parse($selectedKartu->tanggal_berlaku)->format('d M Y') 
                                     : '30 MAY 2027',
             'area_akses'      => $selectedKartu && $selectedKartu->area_akses 
-                                    ? array_filter(array_map('trim', explode(',', $selectedKartu->area_akses))) 
+                                    ? array_filter(array_map('trim', explode(',', KartuPas::normalizeAreaAkses($selectedKartu->area_akses)))) 
                                     : ($template->area_akses ?: ['A', 'B', 'C']),
             'foto'            => null,
         ];
