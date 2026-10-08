@@ -125,7 +125,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="cameraSelect" onchange="onCameraChange()" 
-                                    class="hidden bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 cursor-pointer max-w-[160px] truncate"
+                                    class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 text-xs rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer max-w-[200px] z-20 relative"
                                     title="Pilih Perangkat Kamera">
                             </select>
                             <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
@@ -518,29 +518,43 @@
                                 const opt = document.createElement('option');
                                 opt.value = d.id;
                                 opt.textContent = d.label || `Kamera ${idx + 1}`;
+                                opt.className = 'bg-slate-900 text-white py-1';
                                 if (selectedCameraId && d.id === selectedCameraId) {
                                     opt.selected = true;
                                 }
                                 select.appendChild(opt);
                             });
-                            if (devices.length > 1) {
-                                select.classList.remove('hidden');
+
+                            if (!selectedCameraId || !devices.some(d => d.id === selectedCameraId)) {
+                                selectedCameraId = devices[0].id;
+                                select.value = selectedCameraId;
                             }
+                            select.classList.remove('hidden');
                         }
                     }
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.warn('initCameraList warning:', e);
+            }
         }
-        window.addEventListener('DOMContentLoaded', initCameraList);
+        window.addEventListener('DOMContentLoaded', () => {
+            initCameraList();
+            const select = document.getElementById('cameraSelect');
+            if (select) {
+                select.addEventListener('mousedown', (e) => e.stopPropagation());
+                select.addEventListener('click', (e) => e.stopPropagation());
+                select.addEventListener('focus', () => initCameraList());
+            }
+        });
 
-        function onCameraChange() {
+        async function onCameraChange() {
             const select = document.getElementById('cameraSelect');
             if (select && select.value) {
                 selectedCameraId = select.value;
                 localStorage.setItem('monpasku_selected_camera', selectedCameraId);
                 if (isWebcamRunning) {
-                    toggleWebcam();
-                    setTimeout(() => toggleWebcam(), 300);
+                    await stopWebcam();
+                    await startWebcamWithDevice(selectedCameraId);
                 }
             }
         }
@@ -617,9 +631,19 @@
         // Auto Focus Input Box for USB Barcode Scanners
         const qrInput = document.getElementById('qrInput');
         document.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'INPUT' && !e.target.closest('button')) {
-                qrInput?.focus();
+            if (
+                e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'A' || 
+                e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'SELECT' || 
+                e.target.tagName === 'OPTION' || 
+                e.target.closest('button') || 
+                e.target.closest('select') || 
+                e.target.closest('a')
+            ) {
+                return;
             }
+            qrInput?.focus();
         });
         window.addEventListener('load', () => qrInput?.focus());
 
@@ -720,70 +744,71 @@
             turboScanActive = false;
         }
 
-        function toggleWebcam() {
+        async function stopWebcam() {
+            stopTurboScanner();
             const btnText = document.getElementById('btnText');
             const placeholder = document.getElementById('scannerPlaceholder');
             const readerEl = document.getElementById('reader');
             const scanline = document.getElementById('scanlineBeam');
 
-            if (isWebcamRunning) {
-                stopTurboScanner();
-                if (html5QrcodeScanner) {
-                    html5QrcodeScanner.stop().then(() => {
-                        isWebcamRunning = false;
-                        btnText.innerText = 'Nyalakan Kamera';
-                        readerEl.classList.add('hidden');
-                        readerEl.innerHTML = '';
-                        placeholder.classList.remove('hidden');
-                        scanline.classList.add('hidden');
-                    }).catch(err => {
-                        isWebcamRunning = false;
-                        btnText.innerText = 'Nyalakan Kamera';
-                        readerEl.classList.add('hidden');
-                        readerEl.innerHTML = '';
-                        placeholder.classList.remove('hidden');
-                        scanline.classList.add('hidden');
-                    });
-                } else {
-                    isWebcamRunning = false;
-                    btnText.innerText = 'Nyalakan Kamera';
-                    readerEl.classList.add('hidden');
-                    placeholder.classList.remove('hidden');
-                    scanline.classList.add('hidden');
+            if (html5QrcodeScanner) {
+                try {
+                    await html5QrcodeScanner.stop();
+                } catch(err) {
+                    console.warn('Error stopping html5QrcodeScanner:', err);
                 }
+            }
+            isWebcamRunning = false;
+            if (btnText) btnText.innerText = 'Nyalakan Kamera';
+            if (readerEl) {
+                readerEl.classList.add('hidden');
+                readerEl.innerHTML = '';
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (scanline) scanline.classList.add('hidden');
+        }
+
+        async function startWebcamWithDevice(preferredCameraId = null) {
+            const btnText = document.getElementById('btnText');
+            const placeholder = document.getElementById('scannerPlaceholder');
+            const readerEl = document.getElementById('reader');
+            const scanline = document.getElementById('scanlineBeam');
+
+            placeholder.classList.add('hidden');
+            readerEl.classList.remove('hidden');
+            scanline.classList.remove('hidden');
+
+            const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
+                ? [ Html5QrcodeSupportedFormats.QR_CODE ]
+                : [];
+
+            html5QrcodeScanner = new Html5Qrcode("reader", {
+                formatsToSupport: formatsToSupport,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                verbose: false
+            });
+
+            const scanConfig = { fps: 15 };
+
+            const targetCameraId = preferredCameraId || selectedCameraId;
+
+            // Note: html5Qrcode.start accepts either:
+            // 1. A string cameraId (e.g. from getCameras())
+            // 2. OR an object with EXACTLY 1 key, e.g. { facingMode: "environment" }
+            let primaryConfig;
+            if (targetCameraId) {
+                primaryConfig = targetCameraId;
+            } else if (availableCameras && availableCameras.length > 0) {
+                primaryConfig = availableCameras[0].id;
             } else {
-                placeholder.classList.add('hidden');
-                readerEl.classList.remove('hidden');
-                scanline.classList.remove('hidden');
+                primaryConfig = { facingMode: "environment" };
+            }
 
-                const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
-                    ? [ Html5QrcodeSupportedFormats.QR_CODE ]
-                    : [];
-
-                // Initialize Html5Qrcode exclusively for QR code with native barcode detector support
-                html5QrcodeScanner = new Html5Qrcode("reader", {
-                    formatsToSupport: formatsToSupport,
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    },
-                    verbose: false
-                });
-
-                const cameraConfig = selectedCameraId 
-                    ? { deviceId: { exact: selectedCameraId } }
-                    : { 
-                        facingMode: "environment",
-                        width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 }
-                      };
-
-                // Optimal 15 FPS: Prevents event-loop blockage; NO qrbox means 100% full-frame uncropped scanning
-                const scanConfig = { 
-                    fps: 15
-                };
-
-                html5QrcodeScanner.start(
-                    cameraConfig,
+            const attemptStart = (config) => {
+                return html5QrcodeScanner.start(
+                    config,
                     scanConfig,
                     (decodedText) => {
                         if (!isProcessing) {
@@ -791,26 +816,44 @@
                         }
                     },
                     (err) => {}
-                ).then(() => {
-                    isWebcamRunning = true;
-                    btnText.innerText = 'Matikan Kamera';
+                );
+            };
 
-                    // Attach Turbo Scanner to active video stream
-                    setTimeout(() => {
-                        const videoEl = document.querySelector('#reader video');
-                        if (videoEl) {
-                            videoEl.style.objectFit = 'cover';
-                            startTurboScanner(videoEl);
-                        }
-                    }, 200);
+            try {
+                await attemptStart(primaryConfig);
+            } catch(firstErr) {
+                console.warn('Camera start primary attempt failed, trying fallback:', firstErr);
+                try {
+                    // Fallback to user-facing mode if environment or deviceId failed
+                    await attemptStart({ facingMode: "user" });
+                } catch(secondErr) {
+                    console.error('All camera start attempts failed:', secondErr);
+                    alert('Gagal membuka kamera webcam: ' + (secondErr?.message || secondErr));
+                    await stopWebcam();
+                    return;
+                }
+            }
 
-                    initCameraList();
-                }).catch(err => {
-                    alert('Gagal membuka kamera webcam: ' + err);
-                    readerEl.classList.add('hidden');
-                    placeholder.classList.remove('hidden');
-                    scanline.classList.add('hidden');
-                });
+            isWebcamRunning = true;
+            if (btnText) btnText.innerText = 'Matikan Kamera';
+
+            // Attach Turbo Scanner to active video stream
+            setTimeout(() => {
+                const videoEl = document.querySelector('#reader video');
+                if (videoEl) {
+                    videoEl.style.objectFit = 'cover';
+                    startTurboScanner(videoEl);
+                }
+            }, 200);
+
+            await initCameraList();
+        }
+
+        function toggleWebcam() {
+            if (isWebcamRunning) {
+                stopWebcam();
+            } else {
+                startWebcamWithDevice(selectedCameraId);
             }
         }
 

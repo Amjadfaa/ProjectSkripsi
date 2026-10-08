@@ -185,14 +185,20 @@
             
             <!-- Live WebCam Card -->
             <div class="glass-card rounded-2xl p-5 flex-1 flex flex-col">
-                <div class="flex items-center justify-between mb-3.5 shrink-0">
+                <div class="flex items-center justify-between mb-3.5 shrink-0 flex-wrap gap-2">
                     <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                         <i class="fas fa-qrcode text-blue-400 text-sm"></i> Kamera Barcode Live Scanner (60 FPS)
                     </h2>
-                    <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
-                            class="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-1.5 rounded-xl font-bold shadow-md shadow-blue-600/30 transition flex items-center gap-1.5">
-                        <i class="fas fa-camera"></i> <span id="btnText">Start Webcam</span>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <select id="cameraSelect" onchange="onCameraChange()" 
+                                class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 text-xs rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-blue-400 focus:outline-none cursor-pointer max-w-[200px] z-20 relative"
+                                title="Pilih Perangkat Kamera">
+                        </select>
+                        <button type="button" id="toggleWebcamBtn" onclick="toggleWebcam()"
+                                class="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-1.5 rounded-xl font-bold shadow-md shadow-blue-600/30 transition flex items-center gap-1.5">
+                            <i class="fas fa-camera"></i> <span id="btnText">Start Webcam</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Viewfinder Box -->
@@ -435,6 +441,63 @@
         let cooldownTimerInterval = null;
         const lastScanTimes = {}; // Anti-redundancy cooldown map: { cardNo: timestamp }
 
+        let availableCameras = [];
+        let selectedCameraId = localStorage.getItem('monpasku_scan_selected_camera') || '';
+
+        async function initCameraList() {
+            try {
+                if (typeof Html5Qrcode !== 'undefined' && Html5Qrcode.getCameras) {
+                    const devices = await Html5Qrcode.getCameras();
+                    if (devices && devices.length > 0) {
+                        availableCameras = devices;
+                        const select = document.getElementById('cameraSelect');
+                        if (select) {
+                            select.innerHTML = '';
+                            devices.forEach((d, idx) => {
+                                const opt = document.createElement('option');
+                                opt.value = d.id;
+                                opt.textContent = d.label || `Kamera ${idx + 1}`;
+                                opt.className = 'bg-slate-900 text-white py-1';
+                                if (selectedCameraId && d.id === selectedCameraId) {
+                                    opt.selected = true;
+                                }
+                                select.appendChild(opt);
+                            });
+
+                            if (!selectedCameraId || !devices.some(d => d.id === selectedCameraId)) {
+                                selectedCameraId = devices[0].id;
+                                select.value = selectedCameraId;
+                            }
+                            select.classList.remove('hidden');
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn('initCameraList warning:', e);
+            }
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            initCameraList();
+            const select = document.getElementById('cameraSelect');
+            if (select) {
+                select.addEventListener('mousedown', (e) => e.stopPropagation());
+                select.addEventListener('click', (e) => e.stopPropagation());
+                select.addEventListener('focus', () => initCameraList());
+            }
+        });
+
+        async function onCameraChange() {
+            const select = document.getElementById('cameraSelect');
+            if (select && select.value) {
+                selectedCameraId = select.value;
+                localStorage.setItem('monpasku_scan_selected_camera', selectedCameraId);
+                if (isWebcamRunning) {
+                    await stopWebcam();
+                    await startWebcamWithDevice(selectedCameraId);
+                }
+            }
+        }
+
         // Digital Clock
         function updateClock() {
             const now = new Date();
@@ -532,9 +595,19 @@
         // Auto Focus Input Box for USB Barcode Scanners
         const qrInput = document.getElementById('qrInput');
         document.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'INPUT') {
-                qrInput.focus();
+            if (
+                e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'A' || 
+                e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'SELECT' || 
+                e.target.tagName === 'OPTION' || 
+                e.target.closest('button') || 
+                e.target.closest('select') || 
+                e.target.closest('a')
+            ) {
+                return;
             }
+            qrInput.focus();
         });
         window.onload = () => qrInput.focus();
 
@@ -647,60 +720,67 @@
             turboScanActive = false;
         }
 
-        function toggleWebcam() {
+        async function stopWebcam() {
+            stopTurboScanner();
             const btnText = document.getElementById('btnText');
             const placeholder = document.getElementById('scannerPlaceholder');
             const readerEl = document.getElementById('reader');
 
-            if (isWebcamRunning) {
-                stopTurboScanner();
-                if (html5QrcodeScanner) {
-                    html5QrcodeScanner.stop().then(() => {
-                        isWebcamRunning = false;
-                        btnText.innerText = 'Start Webcam';
-                        readerEl.classList.add('hidden');
-                        readerEl.innerHTML = '';
-                        placeholder.classList.remove('hidden');
-                    }).catch(err => {
-                        isWebcamRunning = false;
-                        readerEl.classList.add('hidden');
-                        readerEl.innerHTML = '';
-                        placeholder.classList.remove('hidden');
-                    });
-                } else {
-                    isWebcamRunning = false;
-                    btnText.innerText = 'Start Webcam';
-                    readerEl.classList.add('hidden');
-                    placeholder.classList.remove('hidden');
+            if (html5QrcodeScanner) {
+                try {
+                    await html5QrcodeScanner.stop();
+                } catch(err) {
+                    console.warn('Error stopping html5QrcodeScanner:', err);
                 }
+            }
+            isWebcamRunning = false;
+            if (btnText) btnText.innerText = 'Start Webcam';
+            if (readerEl) {
+                readerEl.classList.add('hidden');
+                readerEl.innerHTML = '';
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+        }
+
+        async function startWebcamWithDevice(preferredCameraId = null) {
+            const btnText = document.getElementById('btnText');
+            const placeholder = document.getElementById('scannerPlaceholder');
+            const readerEl = document.getElementById('reader');
+
+            placeholder.classList.add('hidden');
+            readerEl.classList.remove('hidden');
+
+            const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
+                ? [ Html5QrcodeSupportedFormats.QR_CODE ]
+                : [];
+
+            html5QrcodeScanner = new Html5Qrcode("reader", {
+                formatsToSupport: formatsToSupport,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                verbose: false
+            });
+
+            const scanConfig = { fps: 15 };
+
+            const targetCameraId = preferredCameraId || selectedCameraId;
+
+            // Note: html5Qrcode.start accepts either:
+            // 1. A string cameraId (e.g. from getCameras())
+            // 2. OR an object with EXACTLY 1 key, e.g. { facingMode: "environment" }
+            let primaryConfig;
+            if (targetCameraId) {
+                primaryConfig = targetCameraId;
+            } else if (availableCameras && availableCameras.length > 0) {
+                primaryConfig = availableCameras[0].id;
             } else {
-                placeholder.classList.add('hidden');
-                readerEl.classList.remove('hidden');
+                primaryConfig = { facingMode: "environment" };
+            }
 
-                const formatsToSupport = (typeof Html5QrcodeSupportedFormats !== 'undefined')
-                    ? [ Html5QrcodeSupportedFormats.QR_CODE ]
-                    : [];
-
-                html5QrcodeScanner = new Html5Qrcode("reader", {
-                    formatsToSupport: formatsToSupport,
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    },
-                    verbose: false
-                });
-
-                const cameraConfig = { 
-                    facingMode: "environment",
-                    width: { ideal: 1280, max: 1920 },
-                    height: { ideal: 720, max: 1080 }
-                };
-
-                const scanConfig = { 
-                    fps: 15
-                };
-
-                html5QrcodeScanner.start(
-                    cameraConfig,
+            const attemptStart = (config) => {
+                return html5QrcodeScanner.start(
+                    config,
                     scanConfig,
                     (decodedText) => {
                         if (!isProcessing) {
@@ -708,22 +788,43 @@
                         }
                     },
                     (errorMessage) => {}
-                ).then(() => {
-                    isWebcamRunning = true;
-                    btnText.innerText = 'Stop Webcam';
+                );
+            };
 
-                    setTimeout(() => {
-                        const videoEl = document.querySelector('#reader video');
-                        if (videoEl) {
-                            videoEl.style.objectFit = 'cover';
-                            startTurboScanner(videoEl);
-                        }
-                    }, 200);
-                }).catch(err => {
-                    alert('Gagal membuka webcam: ' + err);
-                    readerEl.classList.add('hidden');
-                    placeholder.classList.remove('hidden');
-                });
+            try {
+                await attemptStart(primaryConfig);
+            } catch(firstErr) {
+                console.warn('Camera start primary attempt failed, trying fallback:', firstErr);
+                try {
+                    await attemptStart({ facingMode: "user" });
+                } catch(secondErr) {
+                    console.error('All camera start attempts failed:', secondErr);
+                    alert('Gagal membuka webcam: ' + (secondErr?.message || secondErr));
+                    await stopWebcam();
+                    return;
+                }
+            }
+
+            isWebcamRunning = true;
+            if (btnText) btnText.innerText = 'Stop Webcam';
+
+            // Attach Turbo Scanner to active video stream
+            setTimeout(() => {
+                const videoEl = document.querySelector('#reader video');
+                if (videoEl) {
+                    videoEl.style.objectFit = 'cover';
+                    startTurboScanner(videoEl);
+                }
+            }, 200);
+
+            await initCameraList();
+        }
+
+        function toggleWebcam() {
+            if (isWebcamRunning) {
+                stopWebcam();
+            } else {
+                startWebcamWithDevice(selectedCameraId);
             }
         }
 
