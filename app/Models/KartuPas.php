@@ -23,6 +23,7 @@ class KartuPas extends Model
         'tanggal_berlaku',
         'status',
         'tipe_permohonan',
+        'keterangan',
         'keterangan_nonaktif',
         'catatan_nonaktif',
     ];
@@ -32,9 +33,28 @@ class KartuPas extends Model
         'tanggal_berlaku' => 'date',
     ];
 
+    public function getKeteranganAttribute($value)
+    {
+        return $value ?: ucfirst($this->tipe_permohonan ?? 'Baru');
+    }
+
     protected static function booted()
     {
         static::saving(function ($kartu) {
+            // Sinkronisasi otomatis keterangan dan tipe_permohonan
+            if (!empty($kartu->keterangan)) {
+                $ketUpper = strtoupper($kartu->keterangan);
+                if (str_contains($ketUpper, 'PERPANJANG')) {
+                    $kartu->tipe_permohonan = 'perpanjangan';
+                } elseif (empty($kartu->tipe_permohonan)) {
+                    $kartu->tipe_permohonan = 'baru';
+                }
+            } elseif (!empty($kartu->tipe_permohonan)) {
+                $kartu->keterangan = ucfirst(strtolower($kartu->tipe_permohonan));
+            } else {
+                $kartu->keterangan = 'Baru';
+                $kartu->tipe_permohonan = 'baru';
+            }
             // Normalisasi area_akses ke format per huruf dipisah koma (contoh: 'ABC' -> 'A, B, C')
             if (isset($kartu->area_akses)) {
                 $kartu->area_akses = self::normalizeAreaAkses($kartu->area_akses);

@@ -13,6 +13,7 @@
                 <th class="px-3 py-3.5 font-bold w-[170px]">Jabatan</th>
                 <th class="px-3 py-3.5 font-bold w-[115px] whitespace-nowrap">Masa Berlaku</th>
                 <th class="px-2 py-3.5 font-bold w-[100px] text-center whitespace-nowrap">Status</th>
+                <th class="px-2 py-3.5 font-bold w-[105px] text-center whitespace-nowrap">Keterangan</th>
                 <th class="px-3 py-3.5 font-bold w-[175px] text-center whitespace-nowrap">Aksi</th>
             </tr>
         </thead>
@@ -132,6 +133,25 @@
                         @endif
                     </td>
 
+                    <!-- Keterangan (Baru / Perpanjangan) -->
+                    <td class="px-2 py-3.5 whitespace-nowrap text-center">
+                        @php
+                            $ket = $kartu->keterangan ?? ucfirst($kartu->tipe_permohonan ?? 'Baru');
+                            $isPerpanjangan = str_contains(strtolower($ket), 'perpanjang');
+                        @endphp
+                        @if($isPerpanjangan)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs">
+                                <i class="fas fa-rotate text-[10px]"></i>
+                                {{ $ket }}
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs">
+                                <i class="fas fa-plus text-[10px]"></i>
+                                {{ $ket }}
+                            </span>
+                        @endif
+                    </td>
+
                     <!-- Aksi -->
                     <td class="px-3 py-3.5 whitespace-nowrap text-center">
                         <div class="flex items-center justify-center gap-1.5">
@@ -182,7 +202,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="px-4 py-12 text-center text-slate-500">
+                    <td colspan="10" class="px-4 py-12 text-center text-slate-500">
                         <div class="flex flex-col items-center justify-center">
                             <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mb-2">
                                 <i class="fas fa-id-card"></i>

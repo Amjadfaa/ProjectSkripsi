@@ -73,6 +73,7 @@ class KartuPasController extends Controller
             'email'           => ['nullable', 'email', 'max:255'],
             'tanggal_terbit'  => ['required', 'date'],
             'tanggal_berlaku' => ['required', 'date'],
+            'keterangan'      => ['nullable', 'string', 'max:255'],
         ]);
 
         $instansi = Instansi::findOrFail($request->instansi_id);
@@ -100,6 +101,7 @@ class KartuPasController extends Controller
             'jabatan'         => $jabatanVal ?: null,
             'tanggal_terbit'  => $request->tanggal_terbit,
             'tanggal_berlaku' => $request->tanggal_berlaku,
+            'keterangan'      => $request->keterangan ?: 'Baru',
             'status'          => 'aktif',
         ]);
 
@@ -137,6 +139,7 @@ class KartuPasController extends Controller
             'email'           => ['nullable', 'email'],
             'tanggal_terbit'  => ['required', 'date'],
             'tanggal_berlaku' => ['required', 'date'],
+            'keterangan'      => ['nullable', 'string', 'max:255'],
         ]);
 
         $instansi = Instansi::findOrFail($request->instansi_id);
@@ -179,6 +182,7 @@ class KartuPasController extends Controller
             'jabatan'         => $jabatanVal ?: null,
             'tanggal_terbit'  => $request->tanggal_terbit,
             'tanggal_berlaku' => $request->tanggal_berlaku,
+            'keterangan'      => $request->keterangan ?: ($kartuPas->keterangan ?: 'Baru'),
             'status'          => $newStatus,
         ]);
 

@@ -367,9 +367,15 @@
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Status Masa Berlaku</span>
-                                        <div id="resStatusMasa" class="mt-0.5 font-bold">--</div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Status Masa Berlaku</span>
+                                            <div id="resStatusMasa" class="mt-0.5 font-bold">--</div>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400 uppercase text-[10px] font-extrabold block">Keterangan Kartu</span>
+                                            <div id="resKeterangan" class="mt-0.5 font-bold">--</div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1005,6 +1011,19 @@
                 resStatusMasa.innerHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">Masih Berlaku</span>';
             } else {
                 resStatusMasa.innerHTML = '<span class="text-slate-400">-</span>';
+            }
+
+            const resKeterangan = document.getElementById('resKeterangan');
+            if (resKeterangan) {
+                const ketText = c.keterangan || (c.tipe_permohonan ? (c.tipe_permohonan.charAt(0).toUpperCase() + c.tipe_permohonan.slice(1)) : '-');
+                const isPerp = ketText.toLowerCase().includes('perpanjang');
+                if (ketText !== '-') {
+                    resKeterangan.innerHTML = isPerp 
+                        ? `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300 inline-flex items-center gap-1 w-fit"><i class="fas fa-rotate text-[9px]"></i> ${ketText}</span>`
+                        : `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-sky-100 text-sky-800 border border-sky-300 inline-flex items-center gap-1 w-fit"><i class="fas fa-plus text-[9px]"></i> ${ketText}</span>`;
+                } else {
+                    resKeterangan.innerHTML = '<span class="text-slate-400">-</span>';
+                }
             }
 
             // Render area list di Dossier

@@ -338,6 +338,10 @@
                             <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Status Kartu</span>
                             <span id="resStatusKartu" class="font-bold text-xs block mt-0.5"></span>
                         </div>
+                        <div class="bg-black/25 p-3 rounded-xl border border-white/10">
+                            <span class="text-[10px] opacity-70 block font-semibold uppercase tracking-wider text-slate-300">Keterangan Kartu</span>
+                            <span id="resKeterangan" class="font-bold text-xs block mt-0.5">--</span>
+                        </div>
                     </div>
 
                     <!-- Notes / Catatan Form Input -->
@@ -990,6 +994,19 @@
             const resAreaAkses = document.getElementById('resAreaAkses');
             const resMasaBerlaku = document.getElementById('resMasaBerlaku');
             const resStatusKartu = document.getElementById('resStatusKartu');
+            const resKeterangan = document.getElementById('resKeterangan');
+
+            if (resKeterangan) {
+                const ket = (res.data && (res.data.keterangan || (res.data.tipe_permohonan ? (res.data.tipe_permohonan.charAt(0).toUpperCase() + res.data.tipe_permohonan.slice(1)) : '')));
+                if (ket) {
+                    const isPerp = ket.toLowerCase().includes('perpanjang');
+                    resKeterangan.innerHTML = isPerp 
+                        ? `<span class="bg-purple-950/80 text-purple-300 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-purple-700/50 inline-flex items-center gap-1"><i class="fas fa-rotate text-[9px]"></i> ${ket}</span>`
+                        : `<span class="bg-sky-950/80 text-sky-300 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-sky-700/50 inline-flex items-center gap-1"><i class="fas fa-plus text-[9px]"></i> ${ket}</span>`;
+                } else {
+                    resKeterangan.innerText = '-';
+                }
+            }
 
             if (isExpired) {
                 playDeniedSound();

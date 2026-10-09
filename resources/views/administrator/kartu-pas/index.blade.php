@@ -565,7 +565,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Terbit <span class="text-rose-500">*</span></label>
                     <input type="date" id="tambah_tanggal_terbit" name="tanggal_terbit" value="{{ old('_form_source') === 'tambah' ? old('tanggal_terbit', date('Y-m-d')) : date('Y-m-d') }}"
@@ -573,10 +573,18 @@
                     @if(old('_form_source') === 'tambah') @error('tanggal_terbit') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berlaku / Kadaluarsa <span class="text-rose-500">*</span></label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berlaku <span class="text-rose-500">*</span></label>
                     <input type="date" id="tambah_tanggal_berlaku" name="tanggal_berlaku" value="{{ old('_form_source') === 'tambah' ? old('tanggal_berlaku') : '' }}"
                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 font-mono" required>
                     @if(old('_form_source') === 'tambah') @error('tanggal_berlaku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan <span class="text-rose-500">*</span></label>
+                    <select id="tambah_keterangan" name="keterangan" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-blue-500">
+                        <option value="Baru" {{ old('_form_source') === 'tambah' && old('keterangan') === 'Baru' ? 'selected' : '' }}>Baru</option>
+                        <option value="Perpanjangan" {{ old('_form_source') === 'tambah' && old('keterangan') === 'Perpanjangan' ? 'selected' : '' }}>Perpanjangan</option>
+                    </select>
+                    @if(old('_form_source') === 'tambah') @error('keterangan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror @endif
                 </div>
             </div>
 
@@ -766,7 +774,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Terbit <span class="text-rose-500">*</span></label>
                     <input type="date" id="edit_tanggal_terbit" name="tanggal_terbit" 
@@ -776,6 +784,14 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berlaku <span class="text-rose-500">*</span></label>
                     <input type="date" id="edit_tanggal_berlaku" name="tanggal_berlaku" 
                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan <span class="text-rose-500">*</span></label>
+                    <select id="edit_keterangan" name="keterangan" 
+                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-amber-500">
+                        <option value="Baru">Baru</option>
+                        <option value="Perpanjangan">Perpanjangan</option>
+                    </select>
                 </div>
             </div>
 
@@ -1534,6 +1550,12 @@
             }
             if (kartu.tanggal_berlaku) {
                 document.getElementById('edit_tanggal_berlaku').value = kartu.tanggal_berlaku.substring(0, 10);
+            }
+
+            const ketVal = kartu.keterangan || (kartu.tipe_permohonan ? (kartu.tipe_permohonan.charAt(0).toUpperCase() + kartu.tipe_permohonan.slice(1)) : 'Baru');
+            const editKetEl = document.getElementById('edit_keterangan');
+            if (editKetEl) {
+                editKetEl.value = (ketVal.toLowerCase().includes('perpanjang')) ? 'Perpanjangan' : 'Baru';
             }
 
             openModal('modalEditKartu');

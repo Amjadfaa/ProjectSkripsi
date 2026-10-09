@@ -303,6 +303,8 @@ class ScanController extends Controller
             'nama_pemegang'         => $kartu->nama_pemegang,
             'perusahaan'            => $kartu->perusahaan,
             'jabatan'               => $kartu->jabatan,
+            'keterangan'            => $kartu->keterangan ?? ucfirst($kartu->tipe_permohonan ?? 'Baru'),
+            'tipe_permohonan'       => $kartu->tipe_permohonan ?? 'baru',
             'area_akses'            => $userAreas,
             'area_dimiliki'         => $kartu->area_akses,
             'area_kamera'           => $device->kode_area,

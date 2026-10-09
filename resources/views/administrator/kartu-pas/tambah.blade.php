@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block font-medium text-gray-700">Tanggal Terbit</label>
                     <input type="date" name="tanggal_terbit" value="{{ old('tanggal_terbit', date('Y-m-d')) }}"
@@ -239,6 +239,14 @@
                     <input type="date" name="tanggal_berlaku" value="{{ old('tanggal_berlaku') }}"
                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
                     @error('tanggal_berlaku') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700">Keterangan</label>
+                    <select name="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="Baru" {{ old('keterangan', 'Baru') == 'Baru' ? 'selected' : '' }}>Baru</option>
+                        <option value="Perpanjangan" {{ old('keterangan') == 'Perpanjangan' ? 'selected' : '' }}>Perpanjangan</option>
+                    </select>
+                    @error('keterangan') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

@@ -260,7 +260,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal Terbit</label>
                     <input type="date" name="tanggal_terbit"
@@ -274,6 +274,17 @@
                            value="{{ old('tanggal_berlaku', optional($kartuPas->tanggal_berlaku)->format('Y-m-d')) }}"
                            class="block w-full border-gray-300 rounded-lg shadow-sm text-sm" required>
                     @error('tanggal_berlaku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Keterangan</label>
+                    @php
+                        $currKet = old('keterangan', $kartuPas->keterangan ?? ucfirst($kartuPas->tipe_permohonan ?? 'Baru'));
+                    @endphp
+                    <select name="keterangan" class="block w-full border-gray-300 rounded-lg shadow-sm text-sm">
+                        <option value="Baru" {{ strtolower($currKet) === 'baru' ? 'selected' : '' }}>Baru</option>
+                        <option value="Perpanjangan" {{ str_contains(strtolower($currKet), 'perpanjang') ? 'selected' : '' }}>Perpanjangan</option>
+                    </select>
+                    @error('keterangan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

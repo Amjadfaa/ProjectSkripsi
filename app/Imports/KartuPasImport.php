@@ -174,6 +174,7 @@ class KartuPasSheetImport implements ToCollection, WithEvents
                     'tanggal_terbit'  => $tanggalTerbit,
                     'tanggal_berlaku' => $tanggalBerlaku,
                     'tipe_permohonan' => $tipePermohonan,
+                    'keterangan'      => !empty($ketRaw) ? ucfirst(strtolower($ketRaw)) : ucfirst($tipePermohonan),
                     'status'          => $tanggalBerlaku->isPast() ? 'kadaluarsa' : 'aktif',
                     'updated_at'      => $tanggalTerbit,
                 ]);
@@ -190,6 +191,7 @@ class KartuPasSheetImport implements ToCollection, WithEvents
                     'tanggal_terbit'  => $tanggalTerbit,
                     'tanggal_berlaku' => $tanggalBerlaku,
                     'tipe_permohonan' => $tipePermohonan,
+                    'keterangan'      => !empty($ketRaw) ? ucfirst(strtolower($ketRaw)) : ucfirst($tipePermohonan),
                     'status'          => $tanggalBerlaku->isPast() ? 'kadaluarsa' : 'aktif',
                     'created_at'      => $tanggalTerbit,
                     'updated_at'      => $tanggalTerbit,
