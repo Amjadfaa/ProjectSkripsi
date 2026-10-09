@@ -14,11 +14,13 @@
     </x-slot>
 
     @php
-        $totalKuotaAll    = $allInstansis->sum('kuota');
-        $totalAktifAll    = $allInstansis->sum('kartu_aktif');
-        $totalNonaktifAll = $allInstansis->sum('kartu_nonaktif');
-        $totalSisaAll     = $allInstansis->sum('sisa_kuota');
-        $totalPersenAll   = $totalKuotaAll > 0 ? round(min(($totalAktifAll / $totalKuotaAll) * 100, 100), 1) : 0;
+        $totalKuotaAll      = $allInstansis->sum('kuota');
+        $totalTerpakaiAll   = $allInstansis->sum('kartu_terpakai');
+        $totalAktifAll      = $allInstansis->sum('kartu_aktif');
+        $totalKadaluarsaAll = $allInstansis->sum('kartu_kadaluarsa');
+        $totalNonaktifAll   = $allInstansis->sum('kartu_nonaktif');
+        $totalSisaAll       = $allInstansis->sum('sisa_kuota');
+        $totalPersenAll     = $totalKuotaAll > 0 ? round(min(($totalTerpakaiAll / $totalKuotaAll) * 100, 100), 1) : 0;
     @endphp
 
     {{-- KPI STAT CARDS --}}
@@ -35,14 +37,14 @@
             </div>
         </div>
 
-        {{-- Kartu Aktif --}}
+        {{-- Kuota Terpakai --}}
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex items-center justify-between group hover:shadow-sm transition-shadow">
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kartu PAS Aktif</p>
-                <h3 id="kpiTotalAktif" class="text-2xl font-black text-emerald-600 mt-1 tracking-tight">{{ number_format($totalAktifAll) }}</h3>
-                <p class="text-[11px] text-emerald-500 mt-1 font-medium">Terpakai di lapangan</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kuota Terpakai</p>
+                <h3 id="kpiTotalTerpakai" class="text-2xl font-black text-amber-600 mt-1 tracking-tight">{{ number_format($totalTerpakaiAll) }}</h3>
+                <p id="kpiTerpakaiDetail" class="text-[11px] text-amber-700/80 mt-1 font-semibold">{{ number_format($totalAktifAll) }} aktif • {{ number_format($totalKadaluarsaAll) }} kadaluarsa</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
                 <i class="fas fa-id-card"></i>
             </div>
         </div>
@@ -52,7 +54,7 @@
             <div>
                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sisa Kuota</p>
                 <h3 id="kpiTotalSisa" class="text-2xl font-black text-indigo-600 mt-1 tracking-tight">{{ number_format($totalSisaAll) }}</h3>
-                <p class="text-[11px] text-indigo-500 mt-1 font-medium">Siap dialokasikan</p>
+                <p class="text-[11px] text-indigo-500 mt-1 font-medium">Slot siap dialokasikan</p>
             </div>
             <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
                 <i class="fas fa-ticket-simple"></i>
@@ -87,7 +89,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-sm text-slate-800 tracking-tight">Perbandingan Kuota per Instansi</h3>
-                        <p class="text-[11px] text-slate-400">Total Kuota vs Kartu Aktif vs Sisa Kuota</p>
+                        <p class="text-[11px] text-slate-400">Total Kuota vs Kuota Terpakai vs Sisa Kuota</p>
                     </div>
                 </div>
             </div>
@@ -105,28 +107,33 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-sm text-slate-800 tracking-tight">Distribusi Kuota</h3>
-                        <p class="text-[11px] text-slate-400">Proporsi Status Alokasi</p>
+                        <p class="text-[11px] text-slate-400">Proporsi Penggunaan Alokasi Kuota</p>
                     </div>
                 </div>
                 <div class="h-52 relative flex items-center justify-center">
                     <canvas id="chartKuotaDoughnut"></canvas>
                 </div>
             </div>
-            <div class="grid grid-cols-3 text-center border-t border-slate-100 pt-3 mt-2 text-xs">
-                <div>
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>
-                    <span class="text-slate-500">Aktif</span>
-                    <p id="doughnutStatAktif" class="font-bold text-slate-800">{{ $totalAktifAll }}</p>
+            <div class="space-y-2 border-t border-slate-100 pt-3 mt-2">
+                <div class="grid grid-cols-3 text-center text-xs">
+                    <div>
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="text-slate-500 text-[11px]">Aktif</span>
+                        <p id="doughnutStatAktif" class="font-black text-slate-800 mt-0.5">{{ $totalAktifAll }}</p>
+                    </div>
+                    <div>
+                        <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>
+                        <span class="text-slate-500 text-[11px]">Kadaluarsa</span>
+                        <p id="doughnutStatKadaluarsa" class="font-black text-amber-600 mt-0.5">{{ $totalKadaluarsaAll }}</p>
+                    </div>
+                    <div>
+                        <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1"></span>
+                        <span class="text-slate-500 text-[11px]">Sisa Kuota</span>
+                        <p id="doughnutStatSisa" class="font-black text-indigo-600 mt-0.5">{{ $totalSisaAll }}</p>
+                    </div>
                 </div>
-                <div>
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500 mr-1"></span>
-                    <span class="text-slate-500">Sisa</span>
-                    <p id="doughnutStatSisa" class="font-bold text-slate-800">{{ $totalSisaAll }}</p>
-                </div>
-                <div>
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-400 mr-1"></span>
-                    <span class="text-slate-500">Nonaktif</span>
-                    <p id="doughnutStatNonaktif" class="font-bold text-slate-800">{{ $totalNonaktifAll }}</p>
+                <div class="text-center pt-2 border-t border-slate-100/80 text-[11px] text-slate-500">
+                    <i class="fas fa-user-slash text-slate-400 mr-1"></i> Kartu Nonaktif (Dicabut): <strong id="doughnutStatNonaktif" class="text-slate-700 font-bold">{{ $totalNonaktifAll }}</strong>
                 </div>
             </div>
         </div>
@@ -347,10 +354,10 @@
             // Data untuk Chart — gunakan allInstansis (semua data, bukan pagination)
             const instansiData = @json($allInstansis);
 
-            const labels     = instansiData.map(i => i.nama_instansi);
-            const totalKuota = instansiData.map(i => i.kuota);
-            const kartuAktif = instansiData.map(i => i.kartu_aktif);
-            const sisaKuota  = instansiData.map(i => i.sisa_kuota);
+            const labels        = instansiData.map(i => i.nama_instansi);
+            const totalKuota    = instansiData.map(i => i.kuota);
+            const kartuTerpakai = instansiData.map(i => i.kartu_terpakai);
+            const sisaKuota     = instansiData.map(i => i.sisa_kuota);
 
             // BAR CHART
             const ctxBar = document.getElementById('chartKuotaBar').getContext('2d');
@@ -366,9 +373,9 @@
                             borderRadius: 6,
                         },
                         {
-                            label: 'Kartu Aktif',
-                            data: kartuAktif,
-                            backgroundColor: '#10b981',
+                            label: 'Kuota Terpakai',
+                            data: kartuTerpakai,
+                            backgroundColor: '#f59e0b',
                             borderRadius: 6,
                         },
                         {
@@ -416,10 +423,10 @@
             chartKuotaDoughnutInstance = new Chart(ctxDoughnut, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Kartu Aktif', 'Sisa Kuota', 'Nonaktif'],
+                    labels: ['Kartu Aktif', 'Kadaluarsa', 'Sisa Kuota'],
                     datasets: [{
-                        data: [{{ $totalAktifAll }}, {{ $totalSisaAll }}, {{ $totalNonaktifAll }}],
-                        backgroundColor: ['#10b981', '#6366f1', '#94a3b8'],
+                        data: [{{ $totalAktifAll }}, {{ $totalKadaluarsaAll }}, {{ $totalSisaAll }}],
+                        backgroundColor: ['#10b981', '#f59e0b', '#6366f1'],
                         borderWidth: 3,
                         borderColor: '#ffffff'
                     }]
@@ -440,22 +447,24 @@
             if (chartKuotaBarInstance) {
                 chartKuotaBarInstance.data.labels = chartData.labels;
                 chartKuotaBarInstance.data.datasets[0].data = chartData.totalKuota;
-                chartKuotaBarInstance.data.datasets[1].data = chartData.kartuAktif;
+                chartKuotaBarInstance.data.datasets[1].data = chartData.kartuTerpakai;
                 chartKuotaBarInstance.data.datasets[2].data = chartData.sisaKuota;
                 chartKuotaBarInstance.update();
             }
             if (chartKuotaDoughnutInstance) {
                 chartKuotaDoughnutInstance.data.datasets[0].data = [
                     chartData.totalAktifAll,
-                    chartData.totalSisaAll,
-                    chartData.totalNonaktifAll
+                    chartData.totalKadaluarsaAll,
+                    chartData.totalSisaAll
                 ];
                 chartKuotaDoughnutInstance.update();
             }
             const elAktif = document.getElementById('doughnutStatAktif');
+            const elKadaluarsa = document.getElementById('doughnutStatKadaluarsa');
             const elSisa = document.getElementById('doughnutStatSisa');
             const elNonaktif = document.getElementById('doughnutStatNonaktif');
             if (elAktif) elAktif.innerText = chartData.totalAktifAll;
+            if (elKadaluarsa) elKadaluarsa.innerText = chartData.totalKadaluarsaAll;
             if (elSisa) elSisa.innerText = chartData.totalSisaAll;
             if (elNonaktif) elNonaktif.innerText = chartData.totalNonaktifAll;
         }
@@ -463,13 +472,15 @@
         // Update KPI Cards dynamically
         function updateKpis(kpi) {
             const elTotalKuota = document.getElementById('kpiTotalKuota');
-            const elTotalAktif = document.getElementById('kpiTotalAktif');
+            const elTotalTerpakai = document.getElementById('kpiTotalTerpakai');
+            const elTerpakaiDetail = document.getElementById('kpiTerpakaiDetail');
             const elTotalSisa = document.getElementById('kpiTotalSisa');
             const elTotalPersen = document.getElementById('kpiTotalPersen');
             const elProgressBar = document.getElementById('kpiProgressBar');
 
             if (elTotalKuota) elTotalKuota.innerText = kpi.totalKuota;
-            if (elTotalAktif) elTotalAktif.innerText = kpi.totalAktif;
+            if (elTotalTerpakai) elTotalTerpakai.innerText = kpi.totalTerpakai;
+            if (elTerpakaiDetail) elTerpakaiDetail.innerText = `${kpi.totalAktif} aktif • ${kpi.totalKadaluarsa} kadaluarsa`;
             if (elTotalSisa) elTotalSisa.innerText = kpi.totalSisa;
             if (elTotalPersen) {
                 elTotalPersen.innerText = kpi.totalPersen + '%';

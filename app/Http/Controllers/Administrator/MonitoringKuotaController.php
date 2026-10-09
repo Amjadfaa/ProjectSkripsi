@@ -54,24 +54,38 @@ class MonitoringKuotaController extends Controller
             ->withQueryString();
 
         if ($request->ajax() || $request->wantsJson()) {
+            $totalKuotaAll      = $allInstansis->sum('kuota');
+            $totalTerpakaiAll   = $allInstansis->sum('kartu_terpakai');
+            $totalAktifAll      = $allInstansis->sum('kartu_aktif');
+            $totalKadaluarsaAll = $allInstansis->sum('kartu_kadaluarsa');
+            $totalSisaAll       = $allInstansis->sum('sisa_kuota');
+            $totalNonaktifAll   = $allInstansis->sum('kartu_nonaktif');
+            $totalPersenAll     = $totalKuotaAll > 0 ? round(min(($totalTerpakaiAll / $totalKuotaAll) * 100, 100), 1) : 0;
+
             return response()->json([
                 'table_html'     => view('administrator.monitoring-kuota.partials.table', compact('instansis'))->render(),
                 'total_instansi' => $instansis->total(),
                 'kpi' => [
-                    'totalKuota'    => number_format($allInstansis->sum('kuota')),
-                    'totalAktif'    => number_format($allInstansis->sum('kartu_aktif')),
-                    'totalSisa'     => number_format($allInstansis->sum('sisa_kuota')),
-                    'totalPersen'   => $allInstansis->sum('kuota') > 0 ? round(min(($allInstansis->sum('kartu_aktif') / $allInstansis->sum('kuota')) * 100, 100), 1) : 0,
-                    'totalNonaktif' => number_format($allInstansis->sum('kartu_nonaktif')),
+                    'totalKuota'      => number_format($totalKuotaAll),
+                    'totalTerpakai'   => number_format($totalTerpakaiAll),
+                    'totalAktif'      => number_format($totalAktifAll),
+                    'totalKadaluarsa' => number_format($totalKadaluarsaAll),
+                    'totalSisa'       => number_format($totalSisaAll),
+                    'totalPersen'     => $totalPersenAll,
+                    'totalNonaktif'   => number_format($totalNonaktifAll),
                 ],
                 'chart' => [
-                    'labels'          => $allInstansis->pluck('nama_instansi')->values()->toArray(),
-                    'totalKuota'      => $allInstansis->pluck('kuota')->values()->toArray(),
-                    'kartuAktif'      => $allInstansis->pluck('kartu_aktif')->values()->toArray(),
-                    'sisaKuota'       => $allInstansis->pluck('sisa_kuota')->values()->toArray(),
-                    'totalAktifAll'   => (int) $allInstansis->sum('kartu_aktif'),
-                    'totalSisaAll'    => (int) $allInstansis->sum('sisa_kuota'),
-                    'totalNonaktifAll' => (int) $allInstansis->sum('kartu_nonaktif'),
+                    'labels'             => $allInstansis->pluck('nama_instansi')->values()->toArray(),
+                    'totalKuota'         => $allInstansis->pluck('kuota')->values()->toArray(),
+                    'kartuTerpakai'      => $allInstansis->pluck('kartu_terpakai')->values()->toArray(),
+                    'kartuAktif'         => $allInstansis->pluck('kartu_aktif')->values()->toArray(),
+                    'kartuKadaluarsa'    => $allInstansis->pluck('kartu_kadaluarsa')->values()->toArray(),
+                    'sisaKuota'          => $allInstansis->pluck('sisa_kuota')->values()->toArray(),
+                    'totalTerpakaiAll'   => (int) $totalTerpakaiAll,
+                    'totalAktifAll'      => (int) $totalAktifAll,
+                    'totalKadaluarsaAll' => (int) $totalKadaluarsaAll,
+                    'totalSisaAll'       => (int) $totalSisaAll,
+                    'totalNonaktifAll'   => (int) $totalNonaktifAll,
                 ]
             ]);
         }

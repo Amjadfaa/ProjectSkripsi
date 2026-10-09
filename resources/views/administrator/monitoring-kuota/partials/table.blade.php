@@ -3,7 +3,7 @@
         <x-slot name="header">
             <th class="px-4 py-3.5 font-bold">Instansi / Perusahaan</th>
             <th class="px-4 py-3.5 font-bold text-center">Total Kuota</th>
-            <th class="px-4 py-3.5 font-bold text-center">Kartu Aktif</th>
+            <th class="px-4 py-3.5 font-bold text-center">Kuota Terpakai</th>
             <th class="px-4 py-3.5 font-bold text-center">Sisa Kuota</th>
             <th class="px-4 py-3.5 font-bold text-center">Nonaktif</th>
             <th class="px-4 py-3.5 font-bold" style="min-width: 180px;">Persentase Pemakaian</th>
@@ -13,9 +13,9 @@
 
         @forelse($instansis as $instansi)
             @php
-                $persen    = $instansi->kuota > 0 ? min(($instansi->kartu_aktif / $instansi->kuota) * 100, 100) : 0;
-                $warnaBar  = $persen >= 90 ? 'bg-rose-500' : ($persen >= 75 ? 'bg-amber-500' : 'bg-emerald-500');
-                $warnaText = $persen >= 90 ? 'text-rose-600' : ($persen >= 75 ? 'text-amber-600' : 'text-emerald-600');
+                $persen    = $instansi->kuota > 0 ? min(($instansi->kartu_terpakai / $instansi->kuota) * 100, 100) : 0;
+                $warnaBar  = $persen >= 90 ? 'bg-rose-500' : ($persen >= 75 ? 'bg-amber-500' : 'bg-blue-600');
+                $warnaText = $persen >= 90 ? 'text-rose-600' : ($persen >= 75 ? 'text-amber-600' : 'text-blue-600');
                 $warnaBg   = $persen >= 90 ? 'bg-rose-50/50' : '';
             @endphp
             <tr class="hover:bg-slate-50/80 transition-colors {{ $warnaBg }}">
@@ -39,23 +39,46 @@
                     </span>
                 </td>
 
-                {{-- Kartu Aktif --}}
+                {{-- Kuota Terpakai (Kartu Aktif + Kadaluarsa) --}}
                 <td class="px-4 py-3.5 text-center">
-                    <span class="inline-flex items-center justify-center min-w-[36px] px-2.5 py-1 rounded-lg text-sm font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 shadow-2xs">
-                        {{ $instansi->kartu_aktif }}
-                    </span>
+                    <div class="inline-flex flex-col items-center">
+                        <span class="inline-flex items-center justify-center min-w-[36px] px-2.5 py-1 rounded-lg text-sm font-black {{ $instansi->kartu_terpakai > 0 ? 'text-amber-800 bg-amber-50 border-amber-200/90' : 'text-slate-400 bg-slate-50 border-slate-200/60' }} border shadow-2xs">
+                            {{ $instansi->kartu_terpakai }}
+                        </span>
+                        @if($instansi->kartu_terpakai > 0)
+                            <div class="flex items-center justify-center gap-1 mt-1 text-[10px] whitespace-nowrap">
+                                <span class="text-emerald-700 font-bold" title="Kartu Masa Berlaku Aktif"><i class="fas fa-circle-check text-[9px] text-emerald-600"></i> {{ $instansi->kartu_aktif }} aktif</span>
+                                @if($instansi->kartu_kadaluarsa > 0)
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-amber-700 font-bold" title="Kartu Kadaluarsa (Tetap memegang kuota sampai diperpanjang atau dinonaktifkan)"><i class="fas fa-clock text-[9px] text-amber-600"></i> {{ $instansi->kartu_kadaluarsa }} exp</span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-[10px] text-slate-400 mt-1 whitespace-nowrap">0 terpakai</span>
+                        @endif
+                    </div>
                 </td>
 
                 {{-- Sisa Kuota --}}
                 <td class="px-4 py-3.5 text-center">
-                    <span class="inline-flex items-center justify-center min-w-[36px] px-2.5 py-1 rounded-lg text-sm font-black {{ $instansi->sisa_kuota <= 0 ? 'text-rose-700 bg-rose-50 border-rose-200/80' : 'text-indigo-700 bg-indigo-50 border-indigo-200/80' }} border shadow-2xs">
-                        {{ $instansi->sisa_kuota }}
-                    </span>
+                    <div class="inline-flex flex-col items-center">
+                        <span class="inline-flex items-center justify-center min-w-[36px] px-2.5 py-1 rounded-lg text-sm font-black {{ $instansi->sisa_kuota <= 0 ? 'text-rose-700 bg-rose-50 border-rose-200/80' : 'text-indigo-700 bg-indigo-50 border-indigo-200/80' }} border shadow-2xs">
+                            {{ $instansi->sisa_kuota }}
+                        </span>
+                        <span class="text-[10px] font-semibold {{ $instansi->sisa_kuota <= 0 ? 'text-rose-500' : 'text-slate-400' }} mt-1 whitespace-nowrap">
+                            {{ $instansi->sisa_kuota <= 0 ? 'Habis' : 'Slot sisa' }}
+                        </span>
+                    </div>
                 </td>
 
-                {{-- Nonaktif --}}
+                {{-- Nonaktif (Kuota Dicabut) --}}
                 <td class="px-4 py-3.5 text-center">
-                    <span class="text-sm font-semibold text-slate-500">{{ $instansi->kartu_nonaktif }}</span>
+                    <div class="inline-flex flex-col items-center" title="Pegawai resign / pensiun (kuota telah dicabut & dikembalikan ke sisa kuota)">
+                        <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-0.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200/70 shadow-2xs">
+                            {{ $instansi->kartu_nonaktif }}
+                        </span>
+                        <span class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">Dicabut</span>
+                    </div>
                 </td>
 
                 {{-- Persentase Pemakaian --}}
@@ -66,7 +89,7 @@
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="font-bold {{ $warnaText }}">{{ round($persen, 1) }}%</span>
-                            <span class="text-slate-400 text-[10px] font-mono">{{ $instansi->kartu_aktif }}/{{ $instansi->kuota }}</span>
+                            <span class="text-slate-400 text-[10px] font-mono" title="{{ $instansi->kartu_terpakai }} kuota terpakai dari total {{ $instansi->kuota }} kuota">{{ $instansi->kartu_terpakai }}/{{ $instansi->kuota }}</span>
                         </div>
                     </div>
                 </td>
