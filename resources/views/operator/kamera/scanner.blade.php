@@ -379,12 +379,40 @@
                                     </div>
                                 </div>
 
-                                <!-- Catatan Sistem / Alasan Penolakan -->
-                                <div id="catatanBox" class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
-                                    <i class="fas fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
+                                <!-- Alasan Penolakan Sistem (Hanya tampil jika ada penolakan) -->
+                                <div id="systemReasonBox" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-3 text-xs text-rose-900 flex items-start gap-2.5">
+                                    <i class="fas fa-triangle-exclamation text-rose-600 mt-0.5 text-sm shrink-0"></i>
                                     <div class="flex-1 leading-snug">
-                                        <strong>Catatan Verifikasi:</strong>
-                                        <span id="resCatatanText" class="ml-1 text-slate-700">--</span>
+                                        <strong class="text-rose-950 font-black">Penyebab Ditolak:</strong>
+                                        <span id="resSystemReasonText" class="ml-1 text-rose-800 font-semibold">--</span>
+                                    </div>
+                                </div>
+
+                                <!-- Catatan Petugas (Diisi Manual Oleh Petugas, Bukan Otomatis) -->
+                                <div id="manualCatatanBox" class="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-3.5 text-xs shadow-2xs space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label for="inputCatatanManual" class="font-extrabold text-amber-950 flex items-center gap-1.5 text-xs">
+                                            <i class="fas fa-pen-to-square text-amber-600"></i>
+                                            <span>Catatan Petugas (Manual):</span>
+                                        </label>
+                                        <span id="catatanSaveStatus" class="text-[11px] font-bold"></span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" id="inputCatatanManual"
+                                            placeholder="Ketik catatan manual di sini lalu klik Kirim..."
+                                            class="flex-1 bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm transition"
+                                            maxlength="500" autocomplete="off">
+                                        <button type="button" id="btnKirimCatatan" onclick="submitManualCatatan()"
+                                            class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-extrabold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs cursor-pointer whitespace-nowrap">
+                                            <i class="fas fa-paper-plane text-[10px]"></i>
+                                            <span id="btnKirimCatatanText">Kirim</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="flex items-center justify-between text-[10px] text-amber-800/80">
+                                        <span>Tekan <kbd class="px-1 py-0.5 bg-amber-100 rounded text-[9px] font-mono border border-amber-300">Enter</kbd> atau klik Kirim untuk simpan ke riwayat</span>
+                                        <span id="catatanCharCount" class="text-slate-400 font-mono">0/500</span>
                                     </div>
                                 </div>
                             </div>
@@ -434,12 +462,12 @@
                             <th class="px-5 py-3">Perusahaan</th>
                             <th class="px-5 py-3 text-center">Arah</th>
                             <th class="px-5 py-3 text-center">Status Izin</th>
-                            <th class="px-5 py-3">Keterangan</th>
+                            <th class="px-5 py-3">Catatan / Keterangan</th>
                         </tr>
                     </thead>
                     <tbody id="recentLogsTableBody" class="divide-y divide-slate-100">
                         @forelse($recentLogs as $log)
-                            <tr class="hover:bg-slate-50/80 transition-colors">
+                            <tr class="hover:bg-slate-50/80 transition-colors" id="log-row-{{ $log->id }}">
                                 <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">
                                     {{ \Carbon\Carbon::parse($log->waktu_scan)->format('H:i:s') }}
                                 </td>
@@ -468,8 +496,17 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs truncate" title="{{ $log->alasan ?? $log->catatan }}">
-                                    {{ $log->alasan ?? $log->catatan ?? '-' }}
+                                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs" id="log-col-catatan-{{ $log->id }}">
+                                    @if($log->catatan)
+                                        <span class="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 truncate max-w-xs" title="{{ $log->catatan }}">
+                                            <i class="fas fa-sticky-note text-[10px] text-amber-600 shrink-0"></i> <span class="truncate">{{ $log->catatan }}</span>
+                                        </span>
+                                        @if($log->status_akses === 'ditolak' && $log->alasan)
+                                            <span class="block text-[10px] text-rose-500 font-medium truncate mt-0.5" title="{{ $log->alasan }}">{{ $log->alasan }}</span>
+                                        @endif
+                                    @else
+                                        <span class="truncate block text-slate-600" title="{{ $log->alasan ?? '-' }}">{{ $log->alasan ?? '-' }}</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -493,6 +530,7 @@
         let html5QrcodeScanner = null;
         let isProcessing = false;
         let audioEnabled = true;
+        let lastScannedLogId = null;
 
         // Ultra-Fast Turbo Scanner State (Multi-Engine Pipeline)
         let turboScanActive = false;
@@ -634,24 +672,44 @@
             }
         }
 
-        // Auto Focus Input Box for USB Barcode Scanners
+        // Auto Focus Input Box for USB Barcode Scanners (Kecuali elemen input/catatan manual)
         const qrInput = document.getElementById('qrInput');
         document.addEventListener('click', function(e) {
             if (
                 e.target.tagName === 'BUTTON' || 
                 e.target.tagName === 'A' || 
                 e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'TEXTAREA' || 
                 e.target.tagName === 'SELECT' || 
                 e.target.tagName === 'OPTION' || 
                 e.target.closest('button') || 
                 e.target.closest('select') || 
-                e.target.closest('a')
+                e.target.closest('a') ||
+                e.target.closest('#manualCatatanBox')
             ) {
                 return;
             }
             qrInput?.focus();
         });
         window.addEventListener('load', () => qrInput?.focus());
+
+        // Event listener karakter dan shortcut enter untuk input catatan manual
+        window.addEventListener('DOMContentLoaded', () => {
+            const inputCatatan = document.getElementById('inputCatatanManual');
+            const charCount = document.getElementById('catatanCharCount');
+            if (inputCatatan) {
+                inputCatatan.addEventListener('input', () => {
+                    if (charCount) charCount.innerText = `${inputCatatan.value.length}/500`;
+                });
+                inputCatatan.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        submitManualCatatan();
+                    }
+                });
+            }
+        });
 
         function handleManualSubmit(e) {
             e.preventDefault();
@@ -898,7 +956,10 @@
             } finally {
                 setTimeout(() => {
                     isProcessing = false;
-                    qrInput?.focus();
+                    const inputCatatan = document.getElementById('inputCatatanManual');
+                    if (document.activeElement !== inputCatatan && !document.activeElement?.closest('#manualCatatanBox')) {
+                        qrInput?.focus();
+                    }
                 }, 1200);
             }
         }
@@ -1026,24 +1087,96 @@
                 }
             }
 
-            // Render area list di Dossier
+            // Render Izin Area Akses Pemegang di Dossier
+            // Sesuai permintaan: Area kamera aktif (misal Area A) saja yang tampil & di-highlight, area B atau C di-hide
             resAreaList.innerHTML = '';
-            const areaArray = Array.isArray(c.area_akses) ? c.area_akses : (typeof c.area_akses === 'string' ? c.area_akses.split(',').map(s=>s.trim()) : []);
-            if (areaArray.length > 0) {
-                areaArray.forEach(area => {
-                    const isMatch = area === '{{ $device->kode_area }}';
-                    const badge = document.createElement('span');
-                    badge.className = isMatch 
-                        ? 'px-2.5 py-0.5 rounded-md text-xs font-black bg-emerald-600 text-white shadow-xs border border-emerald-700'
-                        : 'px-2 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200';
-                    badge.innerText = area;
-                    resAreaList.appendChild(badge);
-                });
+            const cameraArea = '{{ $device->kode_area }}'.trim().toUpperCase();
+            const cleanAreas = (Array.isArray(c.area_akses) ? c.area_akses : (typeof c.area_akses === 'string' ? c.area_akses.split(',').map(s=>s.trim()) : []))
+                .map(a => String(a).trim().toUpperCase())
+                .filter(Boolean);
+
+            const hasActiveCameraArea = cleanAreas.includes(cameraArea);
+
+            if (hasActiveCameraArea) {
+                // Tampilkan HANYA Area kamera saat ini (di-highlight), area lain (B, C, dsb.) di-hide saja
+                const activeBadge = document.createElement('span');
+                activeBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-sm border border-emerald-700 animate-pulse';
+                activeBadge.innerHTML = `<i class="fas fa-check-circle text-emerald-200 text-[11px]"></i> Area ${cameraArea} <span class="bg-emerald-700 text-emerald-100 text-[10px] font-bold px-1.5 py-0.5 rounded-md">Diizinkan di Pos Ini</span>`;
+                resAreaList.appendChild(activeBadge);
+
+                // Area lain (B, C, dsb.) di-hide
+                const otherAreas = cleanAreas.filter(a => a !== cameraArea);
+                if (otherAreas.length > 0) {
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.type = 'button';
+                    toggleBtn.className = 'text-[10px] text-slate-500 hover:text-slate-800 font-bold ml-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer flex items-center gap-1';
+                    toggleBtn.innerHTML = `<span>+${otherAreas.length} area di-hide</span> <i class="fas fa-chevron-down text-[8px]"></i>`;
+
+                    const hiddenBox = document.createElement('div');
+                    hiddenBox.className = 'hidden w-full flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-slate-200';
+                    otherAreas.forEach(oa => {
+                        const ob = document.createElement('span');
+                        ob.className = 'px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200';
+                        ob.innerText = `Area ${oa}`;
+                        hiddenBox.appendChild(ob);
+                    });
+
+                    toggleBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        hiddenBox.classList.toggle('hidden');
+                        const isHidden = hiddenBox.classList.contains('hidden');
+                        toggleBtn.innerHTML = isHidden 
+                            ? `<span>+${otherAreas.length} area di-hide</span> <i class="fas fa-chevron-down text-[8px]"></i>`
+                            : `<span>Sembunyikan area lain</span> <i class="fas fa-chevron-up text-[8px]"></i>`;
+                    };
+
+                    resAreaList.appendChild(toggleBtn);
+                    resAreaList.appendChild(hiddenBox);
+                }
+            } else if (cleanAreas.length > 0) {
+                // Pemegang kartu tidak memiliki izin untuk pos area kamera saat ini
+                const deniedBadge = document.createElement('span');
+                deniedBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-600 text-white shadow-sm border border-rose-700';
+                deniedBadge.innerHTML = `<i class="fas fa-ban text-rose-200 text-[11px]"></i> Area ${cameraArea} <span class="bg-rose-700 text-rose-100 text-[10px] font-bold px-1.5 py-0.5 rounded-md">Tidak Diizinkan</span>`;
+                resAreaList.appendChild(deniedBadge);
+
+                const infoText = document.createElement('span');
+                infoText.className = 'text-[11px] text-rose-700 font-bold ml-1.5 block sm:inline mt-1 sm:mt-0';
+                infoText.innerText = `(Izin kartu hanya: ${cleanAreas.join(', ')})`;
+                resAreaList.appendChild(infoText);
             } else {
-                resAreaList.innerText = '-';
+                resAreaList.innerHTML = '<span class="text-slate-400 italic">Tidak ada area terdaftar</span>';
             }
 
-            resCatatanText.innerText = data.alasan || data.keterangan || '-';
+            // Catatan Petugas (Manual) & Alasan Penolakan Sistem
+            lastScannedLogId = (c.id || data.id || (data.data && data.data.id)) || null;
+
+            const inputCatatan = document.getElementById('inputCatatanManual');
+            const catatanStatus = document.getElementById('catatanSaveStatus');
+            const catatanChar = document.getElementById('catatanCharCount');
+            if (inputCatatan) {
+                // Catatan diisi manual oleh petugas, tidak otomatis terisi sistem
+                inputCatatan.value = c.catatan || '';
+                if (catatanChar) {
+                    catatanChar.innerText = `${inputCatatan.value.length}/500`;
+                }
+            }
+            if (catatanStatus) {
+                catatanStatus.innerHTML = '';
+            }
+
+            // Tampilkan Banner Alasan Penolakan jika akses ditolak/kadaluarsa
+            const reasonBox = document.getElementById('systemReasonBox');
+            const reasonText = document.getElementById('resSystemReasonText');
+            if (reasonBox && reasonText) {
+                if (!isValid && (data.alasan || data.message || data.pesan)) {
+                    reasonText.innerText = data.alasan || data.message || data.pesan || '-';
+                    reasonBox.classList.remove('hidden');
+                } else {
+                    reasonBox.classList.add('hidden');
+                }
+            }
+
             scanTimestamp.innerText = 'Waktu Scan: ' + new Date().toLocaleTimeString('id-ID');
 
             // ========================================================
@@ -1097,7 +1230,7 @@
                     cardElMasaBerlaku.classList.add('hidden');
                 }
 
-                // 3. Area Akses
+                // 3. Area Akses (Highlight kode area kamera saat ini)
                 if (pos.area_akses && pos.area_akses.visible !== false) {
                     cardElAreaAkses.style.top = (pos.area_akses.top ?? 27) + '%';
                     cardElAreaAkses.style.left = (pos.area_akses.left ?? 12) + '%';
@@ -1112,9 +1245,12 @@
                     }
 
                     cardElAreaAkses.innerHTML = '';
-                    areaArray.forEach(code => {
+                    cleanAreas.forEach(code => {
+                        const isCurrentCamera = code === cameraArea;
                         const span = document.createElement('span');
-                        span.className = 'block leading-tight drop-shadow-sm';
+                        span.className = isCurrentCamera 
+                            ? 'block leading-tight drop-shadow-md text-emerald-300 font-black scale-110 underline decoration-2 underline-offset-2'
+                            : 'block leading-tight drop-shadow-sm opacity-40';
                         span.innerText = code;
                         cardElAreaAkses.appendChild(span);
                     });
@@ -1202,13 +1338,30 @@
             const noData = document.getElementById('noDataRow');
             if (noData) noData.remove();
 
+            const c = data.data || data.kartu || {};
+            const logId = c.id || data.id || ('temp-' + Date.now());
+
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50/80 transition-colors animate-fade-in';
+            tr.id = `log-row-${logId}`;
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID');
             const isValid = (data.success === true) || (data.status === 'diterima');
-            const c = data.data || data.kartu || {};
+
+            let catatanHtml = '';
+            if (c.catatan) {
+                catatanHtml = `
+                    <span class="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 truncate max-w-xs" title="${c.catatan}">
+                        <i class="fas fa-sticky-note text-[10px] text-amber-600 shrink-0"></i> <span class="truncate">${c.catatan}</span>
+                    </span>
+                `;
+                if (!isValid && (data.alasan || data.message)) {
+                    catatanHtml += `<span class="block text-[10px] text-rose-500 font-medium truncate mt-0.5" title="${data.alasan || data.message}">${data.alasan || data.message}</span>`;
+                }
+            } else {
+                catatanHtml = `<span class="truncate block text-slate-600" title="${data.alasan || data.message || '-'}">${data.alasan || data.message || '-'}</span>`;
+            }
 
             tr.innerHTML = `
                 <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${timeStr}</td>
@@ -1226,8 +1379,8 @@
                         : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><i class="fas fa-times-circle text-[10px]"></i> DITOLAK</span>'
                     }
                 </td>
-                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs truncate" title="${data.alasan || data.message || ''}">
-                    ${data.alasan || data.message || '-'}
+                <td class="px-5 py-3 text-xs text-slate-600 max-w-xs" id="log-col-catatan-${logId}">
+                    ${catatanHtml}
                 </td>
             `;
 
@@ -1236,6 +1389,76 @@
             // Jaga hanya 10 baris
             if (tbody.children.length > 10) {
                 tbody.removeChild(tbody.lastChild);
+            }
+        }
+
+        // Fungsi simpan catatan manual yang diketik oleh petugas
+        async function submitManualCatatan() {
+            if (!lastScannedLogId) {
+                alert('Silakan lakukan scan kartu PAS terlebih dahulu sebelum menyimpan catatan.');
+                return;
+            }
+
+            const input = document.getElementById('inputCatatanManual');
+            const statusEl = document.getElementById('catatanSaveStatus');
+            const btn = document.getElementById('btnKirimCatatan');
+            const btnText = document.getElementById('btnKirimCatatanText');
+            const noteText = input.value.trim();
+
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btnText.innerText = 'Menyimpan...';
+            statusEl.innerHTML = '<span class="text-slate-400"><i class="fas fa-spinner fa-spin"></i> Menyimpan...</span>';
+
+            try {
+                const response = await fetch(`/scan/catatan/${lastScannedLogId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ catatan: noteText })
+                });
+
+                const res = await response.json();
+
+                if (res.success) {
+                    statusEl.innerHTML = '<span class="text-emerald-700 font-extrabold flex items-center gap-1 animate-fade-in"><i class="fas fa-check-circle text-emerald-600"></i> Tersimpan di riwayat</span>';
+                    setTimeout(() => {
+                        statusEl.innerHTML = '';
+                    }, 4000);
+
+                    // Update row di tabel riwayat pemindaian terkini
+                    updateLogRowCatatan(lastScannedLogId, noteText);
+                } else {
+                    statusEl.innerHTML = `<span class="text-rose-600 font-bold">${res.message || 'Gagal menyimpan'}</span>`;
+                }
+            } catch(err) {
+                console.error("Gagal simpan catatan:", err);
+                statusEl.innerHTML = '<span class="text-rose-600 font-bold">Koneksi error</span>';
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btnText.innerText = 'Kirim';
+            }
+        }
+
+        // Fungsi memperbarui tampilan catatan di baris tabel riwayat
+        function updateLogRowCatatan(logId, noteText) {
+            const col = document.getElementById(`log-col-catatan-${logId}`);
+            if (col) {
+                if (noteText) {
+                    col.innerHTML = `
+                        <span class="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 truncate max-w-xs" title="${noteText}">
+                            <i class="fas fa-sticky-note text-[10px] text-amber-600 shrink-0"></i> <span class="truncate">${noteText}</span>
+                        </span>
+                    `;
+                } else {
+                    col.innerHTML = '<span class="text-slate-400">-</span>';
+                }
             }
         }
     </script>

@@ -23,3 +23,5 @@ yarn-error.log
 *design_database*
 *.mwb
 *.pgerd
+erd.mmd
+erd.md

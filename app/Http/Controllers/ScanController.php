@@ -86,8 +86,9 @@ class ScanController extends Controller
             ], 403);
         }
 
-        $nomorKartu = trim($request->qr_code);
-        $waktuNow   = Carbon::now();
+        $nomorKartu     = trim($request->qr_code);
+        $waktuNow       = Carbon::now();
+        $catatanManual  = $request->filled('catatan') ? trim($request->input('catatan')) : null;
 
         // Determine tipe_aktivitas (masuk / keluar)
         $tipeAktivitas = 'masuk';
@@ -116,10 +117,13 @@ class ScanController extends Controller
                 'message' => 'JEDA SCAN (Anti-Redundansi 1 Menit)',
                 'alasan'  => 'Kartu ini baru saja di-scan ' . $secondsAgo . 's lalu (Tunggu ' . $remaining . 's)',
                 'data'    => [
+                    'id'             => $recentScan->id,
                     'nomor_kartu'    => $recentScan->nomor_kartu,
                     'nama_pemegang'  => $recentScan->nama_pemegang,
                     'perusahaan'     => $recentScan->perusahaan,
                     'tipe_aktivitas' => $recentScan->tipe_aktivitas,
+                    'catatan'        => $recentScan->catatan,
+                    'alasan'         => $recentScan->alasan,
                     'remaining'      => $remaining,
                     'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
@@ -141,6 +145,7 @@ class ScanController extends Controller
                 'perusahaan'       => '-',
                 'status_akses'     => 'ditolak',
                 'alasan'           => $alasanTolak,
+                'catatan'          => $catatanManual,
                 'waktu_scan'       => $waktuNow,
             ]);
 
@@ -154,6 +159,8 @@ class ScanController extends Controller
                     'id'             => $log->id,
                     'nomor_kartu'    => $nomorKartu,
                     'tipe_aktivitas' => $tipeAktivitas,
+                    'catatan'        => $log->catatan,
+                    'alasan'         => $log->alasan,
                     'waktu'          => $waktuNow->translatedFormat('l, d F Y - H:i:s') . ' WIT',
                 ]
             ]);
@@ -185,6 +192,7 @@ class ScanController extends Controller
                 'perusahaan'       => $kartu->perusahaan,
                 'status_akses'     => 'ditolak',
                 'alasan'           => $alasanKadaluarsa,
+                'catatan'          => $catatanManual,
                 'waktu_scan'       => $waktuNow,
             ]);
 
@@ -212,6 +220,7 @@ class ScanController extends Controller
                 'perusahaan'       => $kartu->perusahaan,
                 'status_akses'     => 'ditolak',
                 'alasan'           => $alasanNonaktif,
+                'catatan'          => $catatanManual,
                 'waktu_scan'       => $waktuNow,
             ]);
 
@@ -239,6 +248,7 @@ class ScanController extends Controller
                 'perusahaan'       => $kartu->perusahaan,
                 'status_akses'     => 'ditolak',
                 'alasan'           => $alasanTolakArea,
+                'catatan'          => $catatanManual,
                 'waktu_scan'       => $waktuNow,
             ]);
 
@@ -262,6 +272,7 @@ class ScanController extends Controller
             'perusahaan'       => $kartu->perusahaan,
             'status_akses'     => 'diterima',
             'alasan'           => 'Akses Diterima (' . strtoupper($tipeAktivitas) . ') di Area ' . $device->kode_area,
+            'catatan'          => $catatanManual,
             'waktu_scan'       => $waktuNow,
         ]);
 
@@ -313,6 +324,8 @@ class ScanController extends Controller
             'status_kartu'          => $kartu->status,
             'is_kadaluarsa'         => $isExpired,
             'tipe_aktivitas'        => $tipeAktivitas,
+            'catatan'               => $log->catatan,
+            'alasan'                => $log->alasan,
             'foto'                  => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
             'foto_url'              => $kartu->foto ? asset('storage/' . $kartu->foto) : null,
             'template'              => $templateData,
